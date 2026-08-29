@@ -1,7 +1,7 @@
 import express from "express";
 import cors from 'cors'
 import errorHandler from "./middleware/error.middleware.js";
-import router from "./modules/auth/auth.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 import logger from "./middleware/logger.middleware.js";
 
 const app = express();
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 });
 
 // auth routes
-app.use("/api/auth", router);
+app.use("/api/auth", authRoutes);
 
 // 404 handler
 app.use((req, res) => {
