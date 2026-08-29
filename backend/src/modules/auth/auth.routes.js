@@ -2,8 +2,10 @@ import express from "express";
 import {
   register,
   verifyOtp,
-  login
+  login,
+  getProfile
 } from "./auth.controller.js";
+import protect from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -15,6 +17,10 @@ router.post("/verify-otp", verifyOtp);
 
 // for login
 router.post("/login",login)
+
+// to get profile
+
+router.get('/profile',protect,getProfile)
 
 
 export default router;

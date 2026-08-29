@@ -205,3 +205,28 @@ export const login = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get the currently logged-in user's profile
+export const getProfile = async (req, res, next) => {
+    try {
+        // req.user was added by the protect middleware
+        const user = req.user;
+
+        // Send the user's basic profile information
+        sendSuccessResponse(
+            res,
+            200,
+            {
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                isVerified: user.isVerified
+            },
+            "Profile fetched successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the error handler
+        next(error);
+    }
+};
