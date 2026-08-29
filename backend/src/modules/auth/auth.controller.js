@@ -1,11 +1,16 @@
 import crypto from 'crypto'
 import bcrypt from 'bcrypt'
+import jwt from "jsonwebtoken";
 
 import User from './auth.model.js'
 import transporter from '../../integrations/email/mail.js'
 import ApiError from '../../utils/Apierror.js'
 import sendSuccessResponse from '../../utils/ApiResponse.js'
-import { validateRegistration,validateVerifyOtp } from './auth.validation.js'
+import {
+    validateRegistration,
+    validateVerifyOtp,
+    validateLogin
+} from './auth.validation.js'
 
 
 export const register = async (req, res, next) => {
@@ -132,6 +137,71 @@ export const verifyOtp = async (req, res, next) => {
 
     } catch (error) {
         // Pass unexpected errors to the error handler
+        next(error);
+    }
+};
+
+// Login an existing user
+export const login = async (req, res, next) => {
+    try {
+        // Validate the login data
+        const error = validateLogin(req.body);
+
+        // Stop if validation fails
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Get email and password from the request
+        const { email, password } = req.body;
+
+        // Convert email to lowercase and remove extra spaces
+        const normalizedEmail = email.trim().toLowerCase();
+
+        // Find the user by email
+        const user = await User.findOne({ email: normalizedEmail });
+
+        // Check whether the email exists
+        if (!user) {
+            return next(new ApiError(401, "Invalid email or password"));
+        }
+
+        // User must verify their email before logging in
+        if (!user.isVerified) {
+            return next(new ApiError(403, "Please verify your email first"));
+        }
+
+        // Compare the entered password with the stored password hash
+        const passwordMatch = await user.isPasswordCorrect(password);
+
+        // Stop if the password is incorrect
+        if (!passwordMatch) {
+            return next(new ApiError(401, "Invalid email or password"));
+        }
+
+        // Create a JWT containing the user's ID
+        const token = jwt.sign(
+            {
+                userId: user._id
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1h"
+            }
+        );
+
+        // Send successful login response with the JWT
+        sendSuccessResponse(
+            res,
+            200,
+            {
+                token
+            },
+            "Login successful"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the central error handler
         next(error);
     }
 };

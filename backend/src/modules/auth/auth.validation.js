@@ -54,3 +54,21 @@ export const validateVerifyOtp = (body) => {
     // Return null when validation passes
     return null;
 };
+
+// Validate the login request
+export const validateLogin = (body) => {
+    const { email, password } = body;
+
+    // Check that both fields were provided
+    if (!email || !password) {
+        return "Email and password are required";
+    }
+
+    // Check whether the email has a valid format
+    if (!EMAIL_REGEX.test(email.trim())) {
+        return "Please enter a valid email";
+    }
+
+    // Return null when validation passes
+    return null;
+};
