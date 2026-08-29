@@ -36,3 +36,21 @@ export const validateRegistration = (body) => {
         }
     };
 };
+
+// Validate the OTP verification request
+export const validateVerifyOtp = (body) => {
+    const { email, otp } = body;
+
+    // Check that both email and OTP were provided
+    if (!email || !otp) {
+        return "Email and OTP are required";
+    }
+
+    // OTP must contain exactly 6 digits
+    if (!/^[0-9]{6}$/.test(otp)) {
+        return "OTP must be 6 digits";
+    }
+
+    // Return null when validation passes
+    return null;
+};

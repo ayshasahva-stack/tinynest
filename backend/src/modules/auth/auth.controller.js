@@ -5,7 +5,7 @@ import User from './auth.model.js'
 import transporter from '../../integrations/email/mail.js'
 import ApiError from '../../utils/Apierror.js'
 import sendSuccessResponse from '../../utils/ApiResponse.js'
-import { validateRegistration } from './auth.validation.js'
+import { validateRegistration,validateVerifyOtp } from './auth.validation.js'
 
 
 export const register = async (req, res, next) => {
@@ -56,3 +56,82 @@ export const register = async (req, res, next) => {
     }
 
 }
+
+// Verify the OTP sent to the user's email
+export const verifyOtp = async (req, res, next) => {
+    try {
+        // Validate the email and OTP
+        const error = validateVerifyOtp(req.body);
+
+        // Stop if validation fails
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Get email and OTP from the request
+        const { email, otp } = req.body;
+
+        // Find the user using their email
+        const user = await User.findOne({ email });
+
+        // Check whether the user exists
+        if (!user) {
+            return next(new ApiError(404, "User not found"));
+        }
+
+        // Check whether the user is already verified
+        if (user.isVerified) {
+            return next(new ApiError(400, "User is already verified"));
+        }
+
+        // Check whether an OTP exists
+        if (!user.otp || !user.otpExpire) {
+            return next(new ApiError(400, "Please request a new OTP"));
+        }
+
+        // Check whether the OTP has expired
+        if (new Date() > user.otpExpire) {
+
+            // Remove the expired OTP
+            user.otp = null;
+            user.otpExpire = null;
+
+            // Save the changes
+            await user.save();
+
+            return next(
+                new ApiError(400, "OTP expired. Please request a new OTP")
+            );
+        }
+
+        // Compare the entered OTP with the hashed OTP in MongoDB
+        const isOtpCorrect = await bcrypt.compare(otp, user.otp);
+
+        // Stop if the OTP is incorrect
+        if (!isOtpCorrect) {
+            return next(new ApiError(400, "Invalid OTP"));
+        }
+
+        // Mark the user's email as verified
+        user.isVerified = true;
+
+        // Remove the OTP after successful verification
+        user.otp = null;
+        user.otpExpire = null;
+
+        // Save the updated user
+        await user.save();
+
+        // Send a successful response
+        sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Email verified successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the error handler
+        next(error);
+    }
+};
