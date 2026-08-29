@@ -8,15 +8,18 @@ const app = express();
 
 app.use(express.json());
 app.use(cors())
+app.use(logger);
 
+
+// Temporary test route
 app.get("/", (req, res) => {
     res.send("tinynest API is running successfully");
 });
-app.use(logger);
 
+// auth routes
 app.use("/api/auth", router);
 
-
+// 404 handler
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -24,5 +27,7 @@ app.use((req, res) => {
     })
 })
 
+// error handler
 app.use(errorHandler)
+
 export default app;
