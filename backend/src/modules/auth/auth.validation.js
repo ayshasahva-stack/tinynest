@@ -72,3 +72,21 @@ export const validateLogin = (body) => {
     // Return null when validation passes
     return null;
 };
+
+// Validate the resend OTP request
+export const validateResendOtp = (body) => {
+    const { email } = body;
+
+    // Check whether email was provided
+    if (!email) {
+        return "Email is required";
+    }
+
+    // Check whether the email format is valid
+    if (!EMAIL_REGEX.test(email.trim())) {
+        return "Please enter a valid email";
+    }
+
+    // Return null when validation passes
+    return null;
+};

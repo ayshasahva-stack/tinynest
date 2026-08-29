@@ -9,7 +9,8 @@ import sendSuccessResponse from '../../utils/ApiResponse.js'
 import {
     validateRegistration,
     validateVerifyOtp,
-    validateLogin
+    validateLogin,
+    validateResendOtp
 } from './auth.validation.js'
 
 
@@ -223,6 +224,71 @@ export const getProfile = async (req, res, next) => {
                 isVerified: user.isVerified
             },
             "Profile fetched successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the error handler
+        next(error);
+    }
+};
+
+// Resend a new OTP to the user's email
+export const resendOtp = async (req, res, next) => {
+    try {
+        // Validate the email
+        const error = validateResendOtp(req.body);
+
+        // Stop if validation fails
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Get and normalize the email
+        const email = req.body.email.trim().toLowerCase();
+
+        // Find the user by email
+        const user = await User.findOne({ email });
+
+        // Check whether the user exists
+        if (!user) {
+            return next(new ApiError(404, "User not found"));
+        }
+
+        // Don't send OTP to an already verified user
+        if (user.isVerified) {
+            return next(new ApiError(400, "Email is already verified"));
+        }
+
+        // Generate a new 6-digit OTP
+        const otp = crypto.randomInt(100000, 1000000).toString();
+
+        // Hash the new OTP before storing it
+        const hashedOtp = await bcrypt.hash(otp, 10);
+
+        // Set the new OTP expiry to 10 minutes
+        const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Update the user's OTP information
+        user.otp = hashedOtp;
+        user.otpExpire = otpExpire;
+
+        // Save the updated user
+        await user.save();
+
+        // Send the new OTP to the user's email
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Your new tinynest verification OTP",
+            text: `Your new verification OTP is ${otp}. It expires in 10 minutes.`
+        });
+
+        // Send a successful response
+        sendSuccessResponse(
+            res,
+            200,
+            null,
+            "A new OTP has been sent to your email"
         );
 
     } catch (error) {
