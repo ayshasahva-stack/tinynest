@@ -15,6 +15,8 @@ app.get("/", (req, res) => {
 app.use(logger);
 
 app.use("/api/auth", router);
+
+
 app.use((req, res) => {
     res.status(404).json({
         success: false,
