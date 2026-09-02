@@ -33,6 +33,15 @@ const userSchema = new mongoose.Schema(
             type: Date,
             default: null
         },
+        resetOtp: {
+            type: String,
+            default: null
+        },
+        resetOtpExpire: {
+            type: Date,
+            default: null
+        },
+
         role: {
             type: String,
             enum: ["user", "admin"],
@@ -55,7 +64,7 @@ userSchema.pre("save", async function () {
     // Hash the plain-text password
     this.password = await bcrypt.hash(this.password, 10);
 
-    
+
 });
 
 // Check whether the entered password matches the stored hash

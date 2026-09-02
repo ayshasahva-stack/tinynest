@@ -10,7 +10,10 @@ import {
     validateRegistration,
     validateVerifyOtp,
     validateLogin,
-    validateResendOtp
+    validateResendOtp,
+    validateForgotPassword,
+    validateVerifyResetOtp,
+    validateResetPassword,
 } from './auth.validation.js'
 
 
@@ -293,6 +296,246 @@ export const resendOtp = async (req, res, next) => {
 
     } catch (error) {
         // Pass unexpected errors to the error handler
+        next(error);
+    }
+};
+
+// Send a password-reset OTP to the user's email
+export const forgotPassword = async (req, res, next) => {
+    try {
+        // Validate the email from the request
+        const error = validateForgotPassword(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Normalize the email before searching
+        const normalizedEmail = req.body.email.trim().toLowerCase();
+
+        // Find the user with this email
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
+
+        // Don't reveal whether an email exists
+        // This helps prevent account enumeration
+        if (!user) {
+            return sendSuccessResponse(
+                res,
+                200,
+                null,
+                "If an account exists with this email, a reset OTP has been sent"
+            );
+        }
+
+        // Generate a random 6-digit OTP
+        const resetOtp = crypto
+            .randomInt(100000, 1000000)
+            .toString();
+
+        // Hash the OTP before storing it in MongoDB
+        const hashedResetOtp = await bcrypt.hash(resetOtp, 10);
+
+        // OTP will expire after 10 minutes
+        const resetOtpExpire = new Date(
+            Date.now() + 10 * 60 * 1000
+        );
+
+        // Save the hashed OTP and expiry time
+        user.resetOtp = hashedResetOtp;
+        user.resetOtpExpire = resetOtpExpire;
+
+        await user.save();
+
+        // Send the reset OTP to the user's email
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: normalizedEmail,
+            subject: "Reset your tinynest password",
+            text: `Your password reset OTP is ${resetOtp}. It expires in 10 minutes.`
+        });
+
+        // Send success response
+        sendSuccessResponse(
+            res,
+            200,
+            null,
+            "If an account exists with this email, a reset OTP has been sent"
+        );
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Verify the OTP used for password reset
+// Verify the OTP used for password reset
+export const verifyResetOtp = async (req, res, next) => {
+    try {
+        // Validate the request
+        const error = validateVerifyResetOtp(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Normalize the email
+        const normalizedEmail = req.body.email
+            .trim()
+            .toLowerCase();
+
+        const { otp } = req.body;
+
+        // Find the user
+        const user = await User.findOne({
+            email: normalizedEmail
+        });
+
+        // Don't reveal whether the account exists
+        if (!user) {
+            return next(
+                new ApiError(400, "Invalid or expired OTP")
+            );
+        }
+
+        // Make sure a reset OTP exists
+        if (!user.resetOtp || !user.resetOtpExpire) {
+            return next(
+                new ApiError(400, "Invalid or expired OTP")
+            );
+        }
+
+        // Check whether the OTP has expired
+        if (new Date() > user.resetOtpExpire) {
+            user.resetOtp = null;
+            user.resetOtpExpire = null;
+
+            await user.save();
+
+            return next(
+                new ApiError(
+                    400,
+                    "OTP expired. Please request a new OTP"
+                )
+            );
+        }
+
+        // Compare the entered OTP with the hashed OTP
+        const isOtpCorrect = await bcrypt.compare(
+            otp,
+            user.resetOtp
+        );
+
+        if (!isOtpCorrect) {
+            return next(
+                new ApiError(400, "Invalid OTP")
+            );
+        }
+
+        // Generate a temporary token after successful OTP verification
+        const resetToken = jwt.sign(
+            {
+                userId: user._id,
+                purpose: "password-reset"
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "10m"
+            }
+        );
+
+        // Clear the OTP because it has already been used
+        user.resetOtp = null;
+        user.resetOtpExpire = null;
+
+        await user.save();
+
+        // Return the temporary reset token
+        sendSuccessResponse(
+            res,
+            200,
+            {
+                resetToken
+            },
+            "Reset OTP verified successfully"
+        );
+
+    } catch (error) {
+        next(error);
+    }
+};
+// Reset the user's password using the temporary reset token
+export const resetPassword = async (req, res, next) => {
+    try {
+        // Validate the request
+        const error = validateResetPassword(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        const { resetToken, newPassword } = req.body;
+
+        // Verify the temporary reset token
+        const decoded = jwt.verify(
+            resetToken,
+            process.env.JWT_SECRET
+        );
+
+        // Make sure this token was specifically created
+        // for password reset
+        if (decoded.purpose !== "password-reset") {
+            return next(
+                new ApiError(401, "Invalid reset token")
+            );
+        }
+
+        // Find the user from the ID stored in the token
+        const user = await User.findById(decoded.userId);
+
+        if (!user) {
+            return next(
+                new ApiError(404, "User not found")
+            );
+        }
+
+        // Set the new password
+        // The Mongoose pre-save hook will hash it automatically
+        user.password = newPassword;
+
+        // Save the updated password
+        await user.save();
+
+        // Send success response
+        sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Password reset successfully"
+        );
+
+    } catch (error) {
+
+        // JWT errors mean the token is invalid or expired
+        if (error.name === "TokenExpiredError") {
+            return next(
+                new ApiError(
+                    401,
+                    "Reset token has expired. Please start again"
+                )
+            );
+        }
+
+        if (error.name === "JsonWebTokenError") {
+            return next(
+                new ApiError(
+                    401,
+                    "Invalid reset token"
+                )
+            );
+        }
+
         next(error);
     }
 };

@@ -5,6 +5,9 @@ import {
   resendOtp,
   login,
   getProfile,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
 
 } from "./auth.controller.js";
 import protect from "../../middleware/auth.middleware.js";
@@ -26,6 +29,13 @@ router.post("/login",login)
 // Get logged-in user's profile
 router.get('/profile',protect,getProfile)
 
+// Send a password-reset OTP
+router.post("/forgot-password", forgotPassword);
 
+// Verify password reset OTP
+router.post("/verify-reset-otp", verifyResetOtp);
+
+// Reset the user's password
+router.post("/reset-password", resetPassword);
 
 export default router;

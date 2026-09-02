@@ -90,3 +90,58 @@ export const validateResendOtp = (body) => {
     // Return null when validation passes
     return null;
 };
+
+// Validate the forgot-password request
+export const validateForgotPassword = (body) => {
+    const { email } = body;
+
+    // Make sure email was provided
+    if (!email) {
+        return "Email is required";
+    }
+
+    // Make sure email has a valid format
+    if (!EMAIL_REGEX.test(email.trim())) {
+        return "Please enter a valid email";
+    }
+
+    return null;
+};
+
+// Validate the reset OTP request
+export const validateVerifyResetOtp = (body) => {
+    const { email, otp } = body;
+
+    // Make sure email and OTP were provided
+    if (!email || !otp) {
+        return "Email and OTP are required";
+    }
+
+    // Validate email format
+    if (!EMAIL_REGEX.test(email.trim())) {
+        return "Please enter a valid email";
+    }
+
+    // OTP must contain exactly 6 digits
+    if (!/^\d{6}$/.test(otp)) {
+        return "OTP must be 6 digits";
+    }
+
+    return null;
+};
+// Validate the reset-password request
+export const validateResetPassword = (body) => {
+    const { resetToken, newPassword } = body;
+
+    // Make sure both values were provided
+    if (!resetToken || !newPassword) {
+        return "Reset token and new password are required";
+    }
+
+    // Make sure the new password meets our minimum requirement
+    if (newPassword.length < 6) {
+        return "Password must be at least 6 characters";
+    }
+
+    return null;
+};
