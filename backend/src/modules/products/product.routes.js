@@ -4,7 +4,8 @@ import {
     createProduct,
     getProducts,
     getProductById,
-    updateProduct
+    updateProduct,
+    deleteProduct,
 } from "./product.controller.js";
 
 import protect from "../../middleware/auth.middleware.js";
@@ -22,11 +23,9 @@ router.get("/", getProducts);
 // Get a single product - public
 router.get("/:id", getProductById);
 // Update product - admin only
-router.put(
-    "/:id",
-    protect,
-    authorizeAdmin,
-    updateProduct
-);
+router.put("/:id",protect,authorizeAdmin,updateProduct);
+
+// Delete product - admin only
+router.delete( "/:id", protect, authorizeAdmin, deleteProduct);
 
 export default router;

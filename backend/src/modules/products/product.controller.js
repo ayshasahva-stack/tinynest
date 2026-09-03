@@ -235,3 +235,39 @@ export const updateProduct = async (req, res, next) => {
         next(error);
     }
 };
+// Delete an existing product
+export const deleteProduct = async (req, res, next) => {
+    try {
+        // Get the product ID from the URL
+        const { id } = req.params;
+
+        // Check whether the ID has a valid MongoDB format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(
+                new ApiError(400, "Invalid product ID")
+            );
+        }
+
+        // Find and delete the product
+        const product = await Product.findByIdAndDelete(id);
+
+        // Return an error if the product doesn't exist
+        if (!product) {
+            return next(
+                new ApiError(404, "Product not found")
+            );
+        }
+
+        // Send a successful response
+        sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Product deleted successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
