@@ -57,3 +57,74 @@ export const createProduct = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get all products
+export const getProducts = async (req, res, next) => {
+    try {
+        // Get query parameters from the URL
+        const {
+            page = 1,
+            limit = 10,
+            search = "",
+            category
+        } = req.query;
+
+        // Convert pagination values from strings to numbers
+        const pageNumber = Number(page);
+        const limitNumber = Number(limit);
+
+        // Calculate how many products should be skipped
+        const skip = (pageNumber - 1) * limitNumber;
+
+        // Build the MongoDB filter
+        const filter = {};
+
+        // Search products by title
+        if (search.trim()) {
+            filter.title = {
+                $regex: search.trim(),
+                $options: "i"
+            };
+        }
+
+        // Filter products by category
+        if (category && category.trim()) {
+            filter.category = category.trim();
+        }
+
+        // Get products and total count at the same time
+        const [products, totalProducts] = await Promise.all([
+            Product.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNumber),
+
+            Product.countDocuments(filter)
+        ]);
+
+        // Calculate total pages
+        const totalPages = Math.ceil(
+            totalProducts / limitNumber
+        );
+
+        // Send the products and pagination information
+        sendSuccessResponse(
+            res,
+            200,
+            {
+                products,
+                pagination: {
+                    currentPage: pageNumber,
+                    limit: limitNumber,
+                    totalProducts,
+                    totalPages
+                }
+            },
+            "Products fetched successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
