@@ -3,6 +3,7 @@ import cors from 'cors'
 import errorHandler from "./middleware/error.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import logger from "./middleware/logger.middleware.js";
+import productRoutes  from "./modules/products/product.routes.js"
 
 const app = express();
 
@@ -18,6 +19,8 @@ app.get("/", (req, res) => {
 
 // auth routes
 app.use("/api/auth", authRoutes);
+// Product API routes
+app.use("/api/products", productRoutes);
 
 // 404 handler
 app.use((req, res) => {
