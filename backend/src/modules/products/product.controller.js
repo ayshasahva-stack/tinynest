@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Product from "./product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
@@ -121,6 +122,43 @@ export const getProducts = async (req, res, next) => {
                 }
             },
             "Products fetched successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
+
+// Get a single product by its ID
+export const getProductById = async (req, res, next) => {
+    try {
+        // Get the product ID from the URL
+        const { id } = req.params;
+
+        // Check whether the ID has a valid MongoDB format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(
+                new ApiError(400, "Invalid product ID")
+            );
+        }
+
+        // Find the product in MongoDB
+        const product = await Product.findById(id);
+
+        // Return an error if the product doesn't exist
+        if (!product) {
+            return next(
+                new ApiError(404, "Product not found")
+            );
+        }
+
+        // Return the requested product
+        sendSuccessResponse(
+            res,
+            200,
+            product,
+            "Product fetched successfully"
         );
 
     } catch (error) {
