@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import Product from "./product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateProduct } from "./product.validation.js";
+import { validateProduct,
+    validateProductUpdate,
+ } from "./product.validation.js";
 
 // Create a new product
 export const createProduct = async (req, res, next) => {
@@ -159,6 +161,73 @@ export const getProductById = async (req, res, next) => {
             200,
             product,
             "Product fetched successfully"
+        );
+
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
+
+// Update an existing product
+export const updateProduct = async (req, res, next) => {
+    try {
+        // Get the product ID from the URL
+        const { id } = req.params;
+
+        // Check whether the ID has a valid MongoDB format
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(
+                new ApiError(400, "Invalid product ID")
+            );
+        }
+
+        // Validate the fields being updated
+        const error = validateProductUpdate(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Find the existing product
+        const product = await Product.findById(id);
+
+        if (!product) {
+            return next(
+                new ApiError(404, "Product not found")
+            );
+        }
+
+        // List of fields that admins are allowed to update
+        const allowedFields = [
+            "title",
+            "description",
+            "price",
+            "discount",
+            "category",
+            "brand",
+            "ageGroup",
+            "images",
+            "stock",
+            "tags"
+        ];
+
+        // Update only the allowed fields
+        allowedFields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                product[field] = req.body[field];
+            }
+        });
+
+        // Save the updated product
+        await product.save();
+
+        // Return the updated product
+        sendSuccessResponse(
+            res,
+            200,
+            product,
+            "Product updated successfully"
         );
 
     } catch (error) {
