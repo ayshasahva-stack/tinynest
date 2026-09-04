@@ -261,3 +261,40 @@ export const removeFromCart = async (req, res, next) => {
         next(error);
     }
 };
+// Remove all products from the user's cart
+export const clearCart = async (req, res, next) => {
+    try {
+        // Find the logged-in user's cart
+        const cart = await Cart.findOne({
+            user: req.user._id
+        });
+
+        // Return an empty cart if it doesn't exist
+        if (!cart) {
+            return sendSuccessResponse(
+                res,
+                200,
+                {
+                    items: []
+                },
+                "Cart cleared successfully"
+            );
+        }
+
+        // Remove all items from the cart
+        cart.items = [];
+
+        // Save the updated cart
+        await cart.save();
+
+        // Return the empty cart
+        sendSuccessResponse(
+            res,
+            200,
+            cart,
+            "Cart cleared successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
