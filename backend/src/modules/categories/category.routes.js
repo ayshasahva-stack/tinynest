@@ -4,7 +4,8 @@ import {
     createCategory,
     getCategories,
     getCategoryById,
-    updateCategory
+    updateCategory,
+    deleteCategory,
 } from "./category.controller.js";
 
 import protect from "../../middleware/auth.middleware.js";
@@ -20,4 +21,8 @@ router.get("/", getCategories);
 router.get("/:id", getCategoryById);
 // Admin can update a category
 router.put("/:id", protect, authorizeAdmin, updateCategory);
+// Admin can deactivate a category
+router.delete("/:id", protect, authorizeAdmin, deleteCategory);
+
+
 export default router;

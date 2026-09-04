@@ -180,3 +180,42 @@ export const updateCategory = async (req, res, next) => {
         next(error);
     }
 };
+// Deactivate a category instead of permanently deleting it
+export const deleteCategory = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Check whether the category ID is valid
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(new ApiError(400, "Invalid category ID"));
+        }
+
+        // Find the category
+        const category = await Category.findById(id);
+
+        if (!category) {
+            return next(new ApiError(404, "Category not found"));
+        }
+
+        // Check if the category is already inactive
+        if (!category.isActive) {
+            return next(new ApiError(400, "Category is already inactive"));
+        }
+
+        // Soft delete the category
+        category.isActive = false;
+
+        await category.save();
+
+        // Return the updated category
+        sendSuccessResponse(
+            res,
+            200,
+            category,
+            "Category deactivated successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
