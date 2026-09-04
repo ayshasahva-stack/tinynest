@@ -4,6 +4,7 @@ import errorHandler from "./middleware/error.middleware.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import logger from "./middleware/logger.middleware.js";
 import productRoutes  from "./modules/products/product.routes.js"
+import categoryRoutes from "./modules/categories/category.routes.js";
 
 const app = express();
 
@@ -21,6 +22,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 // Product API routes
 app.use("/api/products", productRoutes);
+// Category API routes
+app.use("/api/categories", categoryRoutes);
 
 // 404 handler
 app.use((req, res) => {
