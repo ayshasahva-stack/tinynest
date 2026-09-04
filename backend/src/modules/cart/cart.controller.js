@@ -208,3 +208,56 @@ export const updateCartQuantity = async (req, res, next) => {
         next(error);
     }
 };
+// Remove a product from the user's cart
+export const removeFromCart = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        // Validate the product ID from the URL
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return next(new ApiError(400, "Invalid product ID"));
+        }
+
+        // Find the logged-in user's cart
+        const cart = await Cart.findOne({
+            user: req.user._id
+        });
+
+        if (!cart) {
+            return next(new ApiError(404, "Cart not found"));
+        }
+
+        // Check whether the product exists in the cart
+        const itemExists = cart.items.some(
+            (item) =>
+                item.product.toString() === productId
+        );
+
+        if (!itemExists) {
+            return next(
+                new ApiError(404, "Product not found in cart")
+            );
+        }
+
+        // Remove the product from the cart
+        cart.items = cart.items.filter(
+            (item) =>
+                item.product.toString() !== productId
+        );
+
+        // Save the updated cart
+        await cart.save();
+
+        // Populate product information for the response
+        await cart.populate("items.product");
+
+        sendSuccessResponse(
+            res,
+            200,
+            cart,
+            "Product removed from cart successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
