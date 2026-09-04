@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Category from "./category.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
@@ -66,6 +67,39 @@ export const getCategories = async (req, res, next) => {
             200,
             categories,
             "Categories fetched successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
+// Get a single category by ID
+export const getCategoryById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Check whether the provided ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(new ApiError(400, "Invalid category ID"));
+        }
+
+        // Find the category by ID
+        const category = await Category.findOne({
+            _id: id,
+            isActive: true
+        });
+
+        // Return an error if the category does not exist
+        if (!category) {
+            return next(new ApiError(404, "Category not found"));
+        }
+
+        // Send the category to the client
+        sendSuccessResponse(
+            res,
+            200,
+            category,
+            "Category fetched successfully"
         );
     } catch (error) {
         // Pass unexpected errors to the centralized error handler
