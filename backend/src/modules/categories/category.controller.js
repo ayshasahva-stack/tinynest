@@ -2,7 +2,10 @@ import mongoose from "mongoose";
 import Category from "./category.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateCategory } from "./category.validation.js";
+import {
+    validateCategory,
+    validateCategoryUpdate
+} from "./category.validation.js";
 
 // Create a new category
 export const createCategory = async (req, res, next) => {
@@ -103,6 +106,77 @@ export const getCategoryById = async (req, res, next) => {
         );
     } catch (error) {
         // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
+
+// Update a category
+export const updateCategory = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Check whether the category ID is valid
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return next(new ApiError(400, "Invalid category ID"));
+        }
+
+        // Validate the fields provided for update
+        const error = validateCategoryUpdate(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Find the category
+        const category = await Category.findById(id);
+
+        if (!category) {
+            return next(new ApiError(404, "Category not found"));
+        }
+
+        // If name is being updated, normalize it
+        if (req.body.name !== undefined) {
+            const normalizedName = req.body.name.trim().toLowerCase();
+
+            // Check whether another category already uses this name
+            const existingCategory = await Category.findOne({
+                name: normalizedName,
+                _id: { $ne: id }
+            });
+
+            if (existingCategory) {
+                return next(new ApiError(409, "Category already exists"));
+            }
+
+            category.name = normalizedName;
+        }
+
+        // Update description if provided
+        if (req.body.description !== undefined) {
+            category.description = req.body.description.trim();
+        }
+
+        // Update image if provided
+        if (req.body.image !== undefined) {
+            category.image = req.body.image.trim();
+        }
+
+        // Update active status if provided
+        if (req.body.isActive !== undefined) {
+            category.isActive = req.body.isActive;
+        }
+
+        // Save the updated category
+        await category.save();
+
+        // Return the updated category
+        sendSuccessResponse(
+            res,
+            200,
+            category,
+            "Category updated successfully"
+        );
+    } catch (error) {
         next(error);
     }
 };
