@@ -96,3 +96,35 @@ export const addToCart = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get the logged-in user's cart
+export const getMyCart = async (req, res, next) => {
+    try {
+        // Find the cart belonging to the logged-in user
+        const cart = await Cart.findOne({
+            user: req.user._id
+        }).populate("items.product");
+
+        // Return an empty cart if the user has not added anything yet
+        if (!cart) {
+            return sendSuccessResponse(
+                res,
+                200,
+                {
+                    items: []
+                },
+                "Cart fetched successfully"
+            );
+        }
+
+        // Return the user's cart
+        sendSuccessResponse(
+            res,
+            200,
+            cart,
+            "Cart fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
