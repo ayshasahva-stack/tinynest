@@ -5,6 +5,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import logger from "./middleware/logger.middleware.js";
 import productRoutes  from "./modules/products/product.routes.js"
 import categoryRoutes from "./modules/categories/category.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
 
 const app = express();
 
@@ -24,6 +25,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 // Category API routes
 app.use("/api/categories", categoryRoutes);
+// Cart api routes
+app.use("/api/cart", cartRoutes);
+
+
 
 // 404 handler
 app.use((req, res) => {
