@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 // Validate product data before creating a product
 export const validateProduct = (body) => {
     const {
@@ -22,8 +23,14 @@ export const validateProduct = (body) => {
         return "Product description is required";
     }
 
-    if (!category || !category.trim()) {
+    // Check that a category ID was provided
+    if (!category) {
         return "Product category is required";
+    }
+
+    // Check that the category ID has a valid MongoDB ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(category)) {
+        return "Product category must be a valid category ID";
     }
 
     if (!brand || !brand.trim()) {
@@ -140,11 +147,11 @@ export const validateProductUpdate = (body) => {
 
     // Validate category only if it was provided
     if (category !== undefined) {
-        if (
-            typeof category !== "string" ||
-            !category.trim()
-        ) {
-            return "Product category must be valid text";
+        if (category !== undefined) {
+            // Check that the category ID is valid
+            if (!mongoose.Types.ObjectId.isValid(category)) {
+                return "Product category must be a valid category ID";
+            }
         }
     }
 

@@ -2,9 +2,11 @@ import mongoose from "mongoose";
 import Product from "./product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateProduct,
+import Category from "../categories/category.model.js";
+import {
+    validateProduct,
     validateProductUpdate,
- } from "./product.validation.js";
+} from "./product.validation.js";
 
 // Create a new product
 export const createProduct = async (req, res, next) => {
@@ -14,6 +16,17 @@ export const createProduct = async (req, res, next) => {
 
         if (error) {
             return next(new ApiError(400, error));
+        }
+        // Check that the category exists and is active
+        const categoryDoc = await Category.findOne({
+            _id: req.body.category,
+            isActive: true
+        });
+
+        if (!categoryDoc) {
+            return next(
+                new ApiError(400, "Category not found or inactive")
+            );
         }
 
         // Get the product fields from the request body
@@ -36,7 +49,7 @@ export const createProduct = async (req, res, next) => {
             description: description.trim(),
             price,
             discount: discount ?? 0,
-            category: category.trim(),
+            category: category,
             brand: brand.trim(),
             ageGroup: ageGroup.trim(),
             images,
@@ -46,6 +59,10 @@ export const createProduct = async (req, res, next) => {
 
         // Save the product to MongoDB
         await product.save();
+
+        // Load the category information for the response
+        await product.populate("category");
+
 
         // Send the created product to the client
         sendSuccessResponse(
@@ -90,14 +107,19 @@ export const getProducts = async (req, res, next) => {
             };
         }
 
-        // Filter products by category
+        // Filter products by category ID
         if (category && category.trim()) {
+            if (!mongoose.Types.ObjectId.isValid(category.trim())) {
+                return next(new ApiError(400, "Invalid category ID"));
+            }
+
             filter.category = category.trim();
         }
 
         // Get products and total count at the same time
         const [products, totalProducts] = await Promise.all([
             Product.find(filter)
+                .populate("category")
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNumber),
@@ -146,7 +168,8 @@ export const getProductById = async (req, res, next) => {
         }
 
         // Find the product in MongoDB
-        const product = await Product.findById(id);
+        const product = await Product.findById(id)
+            .populate("category");
 
         // Return an error if the product doesn't exist
         if (!product) {
@@ -188,7 +211,17 @@ export const updateProduct = async (req, res, next) => {
         if (error) {
             return next(new ApiError(400, error));
         }
+        // If category is being updated, verify that it exists and is active
+        if (req.body.category !== undefined) {
+            const category = await Category.findOne({
+                _id: req.body.category,
+                isActive: true
+            });
 
+            if (!category) {
+                return next(new ApiError(400, "Category not found or inactive"));
+            }
+        }
         // Find the existing product
         const product = await Product.findById(id);
 
@@ -219,8 +252,10 @@ export const updateProduct = async (req, res, next) => {
             }
         });
 
-        // Save the updated product
         await product.save();
+
+        // Load the category information for the response
+        await product.populate("category");
 
         // Return the updated product
         sendSuccessResponse(
