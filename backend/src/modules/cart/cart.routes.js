@@ -1,7 +1,9 @@
 import express from "express";
 import protect from "../../middleware/auth.middleware.js";
-import { addToCart,
+import {
+    addToCart,
     getMyCart,
+    updateCartQuantity,
 } from "./cart.controller.js";
 
 const router = express.Router();
@@ -10,4 +12,8 @@ const router = express.Router();
 router.post("/", protect, addToCart);
 // Get the logged-in user's cart
 router.get("/", protect, getMyCart);
+// Update the quantity of a product in the cart
+router.put("/:productId", protect, updateCartQuantity);
+
+
 export default router;

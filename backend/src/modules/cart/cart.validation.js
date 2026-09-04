@@ -31,3 +31,25 @@ export const validateCartItem = (body) => {
 
     return null;
 };
+
+// Validate data when updating cart item quantity
+export const validateCartQuantity = (body) => {
+    const { quantity } = body;
+
+    // Quantity is required
+    if (quantity === undefined) {
+        return "Quantity is required";
+    }
+
+    // Quantity must be a number
+    if (typeof quantity !== "number") {
+        return "Quantity must be a number";
+    }
+
+    // Quantity must be at least 1
+    if (quantity < 1) {
+        return "Quantity must be at least 1";
+    }
+
+    return null;
+};

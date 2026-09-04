@@ -1,8 +1,12 @@
+import mongoose from "mongoose";
 import Cart from "./cart.model.js";
 import Product from "../products/product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateCartItem } from "./cart.validation.js";
+import {
+    validateCartItem,
+    validateCartQuantity,
+} from "./cart.validation.js";
 
 // Add a product to the user's cart
 export const addToCart = async (req, res, next) => {
@@ -123,6 +127,82 @@ export const getMyCart = async (req, res, next) => {
             200,
             cart,
             "Cart fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Update the quantity of a product already in the cart
+export const updateCartQuantity = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        // Validate the product ID from the URL
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return next(new ApiError(400, "Invalid product ID"));
+        }
+
+        // Validate the requested quantity
+        const error = validateCartQuantity(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        const { quantity } = req.body;
+
+        // Find the product
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        // Check that the requested quantity is available
+        if (quantity > product.stock) {
+            return next(
+                new ApiError(
+                    400,
+                    `Only ${product.stock} items are available`
+                )
+            );
+        }
+
+        // Find the logged-in user's cart
+        const cart = await Cart.findOne({
+            user: req.user._id
+        });
+
+        if (!cart) {
+            return next(new ApiError(404, "Cart not found"));
+        }
+
+        // Find the product inside the cart
+        const cartItem = cart.items.find(
+            (item) =>
+                item.product.toString() === productId
+        );
+
+        if (!cartItem) {
+            return next(
+                new ApiError(404, "Product not found in cart")
+            );
+        }
+
+        // Update the quantity
+        cartItem.quantity = quantity;
+
+        // Save the updated cart
+        await cart.save();
+
+        // Populate product information for the response
+        await cart.populate("items.product");
+
+        sendSuccessResponse(
+            res,
+            200,
+            cart,
+            "Cart quantity updated successfully"
         );
     } catch (error) {
         next(error);
