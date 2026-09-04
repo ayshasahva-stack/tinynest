@@ -52,3 +52,23 @@ export const createCategory = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get all active categories
+export const getCategories = async (req, res, next) => {
+    try {
+        // Find only categories that are active
+        const categories = await Category.find({ isActive: true })
+            .sort({ createdAt: -1 });
+
+        // Send categories to the client
+        sendSuccessResponse(
+            res,
+            200,
+            categories,
+            "Categories fetched successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the centralized error handler
+        next(error);
+    }
+};
