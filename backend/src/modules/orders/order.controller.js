@@ -176,3 +176,62 @@ export const getMyOrderById = async (req, res, next) => {
         next(error);
     }
 };
+// Cancel an order belonging to the logged-in user
+export const cancelMyOrder = async (req, res, next) => {
+    try {
+        // Get the order ID from the URL
+        const { orderId } = req.params;
+
+        // Find only the order belonging to the logged-in user
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        });
+
+        // Make sure the order exists
+        if (!order) {
+            return next(new ApiError(404, "Order not found"));
+        }
+
+        // Only pending and confirmed orders can be cancelled
+        if (
+            order.status !== "pending" &&
+            order.status !== "confirmed"
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "This order cannot be cancelled"
+                )
+            );
+        }
+
+        // Restore the ordered quantity back to product stock
+        for (const item of order.items) {
+            await Product.findByIdAndUpdate(
+                item.product,
+                {
+                    $inc: {
+                        stock: item.quantity
+                    }
+                }
+            );
+        }
+
+        // Change the order status
+        order.status = "cancelled";
+
+        // Save the updated order
+        await order.save();
+
+        // Return the cancelled order
+        sendSuccessResponse(
+            res,
+            200,
+            order,
+            "Order cancelled successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

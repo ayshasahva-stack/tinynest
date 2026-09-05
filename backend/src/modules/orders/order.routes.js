@@ -4,6 +4,7 @@ import {
     createOrder,
     getMyOrders,
     getMyOrderById,
+    cancelMyOrder,
 } from "./order.controller.js";
 
 const router = express.Router();
@@ -14,5 +15,7 @@ router.post("/", protect, createOrder);
 router.get("/", protect, getMyOrders);
 // Get one order belonging to the logged-in user
 router.get("/:orderId", protect, getMyOrderById);
+// Cancel an order belonging to the logged-in user
+router.patch("/:orderId/cancel", protect, cancelMyOrder);
 
 export default router;
