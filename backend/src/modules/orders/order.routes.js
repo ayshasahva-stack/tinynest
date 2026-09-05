@@ -2,7 +2,8 @@ import express from "express";
 import protect from "../../middleware/auth.middleware.js";
 import {
     createOrder,
-    getMyOrders
+    getMyOrders,
+    getMyOrderById,
 } from "./order.controller.js";
 
 const router = express.Router();
@@ -11,5 +12,7 @@ const router = express.Router();
 router.post("/", protect, createOrder);
 // Get all orders belonging to the logged-in user
 router.get("/", protect, getMyOrders);
+// Get one order belonging to the logged-in user
+router.get("/:orderId", protect, getMyOrderById);
 
 export default router;
