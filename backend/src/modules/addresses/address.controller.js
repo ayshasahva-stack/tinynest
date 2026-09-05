@@ -65,3 +65,31 @@ export const getMyAddresses = async (req, res, next) => {
         next(error);
     }
 };
+// Get one address belonging to the logged-in user
+export const getMyAddressById = async (req, res, next) => {
+    try {
+        // Get the address ID from the URL
+        const { addressId } = req.params;
+
+        // Find the address and make sure it belongs to the logged-in user
+        const address = await Address.findOne({
+            _id: addressId,
+            user: req.user._id
+        });
+
+        // If the address doesn't exist or belongs to another user
+        if (!address) {
+            return next(new ApiError(404, "Address not found"));
+        }
+
+        // Return the address
+        sendSuccessResponse(
+            res,
+            200,
+            address,
+            "Address fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
