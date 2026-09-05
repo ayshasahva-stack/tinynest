@@ -7,6 +7,7 @@ import {
     getMyOrderById,
     cancelMyOrder,
     getAllOrders,
+    updateOrderStatus,
 } from "./order.controller.js";
 
 const router = express.Router();
@@ -17,6 +18,8 @@ router.post("/", protect, createOrder);
 router.get("/", protect, getMyOrders);
 // Get all customer orders - Admin only
 router.get("/admin", protect, authorizeAdmin, getAllOrders);
+// Update order status - Admin only
+router.patch( "/:orderId/status", protect, authorizeAdmin, updateOrderStatus);
 // Get one order belonging to the logged-in user
 router.get("/:orderId", protect, getMyOrderById);
 // Cancel an order belonging to the logged-in user

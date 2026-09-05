@@ -259,3 +259,72 @@ export const getAllOrders = async (req, res, next) => {
         next(error);
     }
 };
+// Update the status of an order - Admin only
+export const updateOrderStatus = async (req, res, next) => {
+    try {
+        // Get the order ID from the URL
+        const { orderId } = req.params;
+
+        // Get the new status from the request body
+        const { status } = req.body;
+
+        // Allowed order statuses
+        const allowedStatuses = [
+            "pending",
+            "confirmed",
+            "processing",
+            "shipped",
+            "delivered",
+            "cancelled"
+        ];
+
+        // Make sure a status was provided
+        if (!status) {
+            return next(
+                new ApiError(400, "Order status is required")
+            );
+        }
+
+        // Make sure the status is valid
+        if (!allowedStatuses.includes(status)) {
+            return next(
+                new ApiError(400, "Invalid order status")
+            );
+        }
+
+        // Find the order
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return next(
+                new ApiError(404, "Order not found")
+            );
+        }
+
+        // A cancelled order cannot be changed again
+        if (order.status === "cancelled") {
+            return next(
+                new ApiError(
+                    400,
+                    "Cancelled orders cannot be updated"
+                )
+            );
+        }
+
+        // Update the order status
+        order.status = status;
+
+        // Save the updated order
+        await order.save();
+
+        // Return the updated order
+        sendSuccessResponse(
+            res,
+            200,
+            order,
+            "Order status updated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
