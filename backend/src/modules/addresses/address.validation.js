@@ -42,3 +42,62 @@ export const validateAddress = (body) => {
 
     return null;
 };
+// Validate address data when updating an address
+export const validateAddressUpdate = (body) => {
+    // Make sure the request body contains something
+    if (!body || Object.keys(body).length === 0) {
+        return "At least one field is required to update the address";
+    }
+
+    // Fields that are allowed to be updated
+    const allowedFields = [
+        "fullName",
+        "phone",
+        "addressLine",
+        "city",
+        "state",
+        "postalCode",
+        "country",
+        "isDefault"
+    ];
+
+    // Check for fields that are not allowed
+    for (const field of Object.keys(body)) {
+        if (!allowedFields.includes(field)) {
+            return `${field} is not allowed`;
+        }
+    }
+
+    // Check provided string fields
+    const stringFields = [
+        "fullName",
+        "phone",
+        "addressLine",
+        "city",
+        "state",
+        "postalCode",
+        "country"
+    ];
+
+    for (const field of stringFields) {
+        if (
+            body[field] !== undefined &&
+            (
+                body[field] === null ||
+                String(body[field]).trim() === ""
+            )
+        ) {
+            return `${field} cannot be empty`;
+        }
+    }
+
+    // isDefault must be boolean if provided
+    if (
+        body.isDefault !== undefined &&
+        typeof body.isDefault !== "boolean"
+    ) {
+        return "isDefault must be a boolean";
+    }
+
+    return null;
+};

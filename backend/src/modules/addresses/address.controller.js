@@ -1,7 +1,9 @@
 import Address from "./address.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateAddress } from "./address.validation.js";
+import { validateAddress,
+    validateAddressUpdate,
+ } from "./address.validation.js";
 
 // Create a new address for the logged-in user
 export const createAddress = async (req, res, next) => {
@@ -88,6 +90,61 @@ export const getMyAddressById = async (req, res, next) => {
             200,
             address,
             "Address fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Update an address belonging to the logged-in user
+export const updateAddress = async (req, res, next) => {
+    try {
+        // Get the address ID from the URL
+        const { addressId } = req.params;
+
+        // Validate the update data
+        const validationError = validateAddressUpdate(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Find only the address belonging to the logged-in user
+        const address = await Address.findOne({
+            _id: addressId,
+            user: req.user._id
+        });
+
+        if (!address) {
+            return next(new ApiError(404, "Address not found"));
+        }
+
+        // If the address is being made the default,
+        // remove default status from the user's other addresses
+        if (req.body.isDefault === true) {
+            await Address.updateMany(
+                {
+                    user: req.user._id,
+                    _id: { $ne: addressId },
+                    isDefault: true
+                },
+                {
+                    $set: { isDefault: false }
+                }
+            );
+        }
+
+        // Update only the fields provided by the client
+        Object.assign(address, req.body);
+
+        // Save the updated address
+        await address.save();
+
+        // Return the updated address
+        sendSuccessResponse(
+            res,
+            200,
+            address,
+            "Address updated successfully"
         );
     } catch (error) {
         next(error);

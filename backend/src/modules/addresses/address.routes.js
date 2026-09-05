@@ -3,6 +3,7 @@ import protect from "../../middleware/auth.middleware.js";
 import { createAddress,
     getMyAddresses,
     getMyAddressById,
+    updateAddress,
  } from "./address.controller.js";
 
 const router = express.Router();
@@ -13,5 +14,7 @@ router.post("/", protect, createAddress);
 router.get("/", protect, getMyAddresses);
 // Get one address belonging to the logged-in user
 router.get("/:addressId", protect, getMyAddressById);
+// Update one of the logged-in user's addresses
+router.patch("/:addressId", protect, updateAddress);
 
 export default router;
