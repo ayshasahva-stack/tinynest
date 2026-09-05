@@ -5,6 +5,7 @@ import { createAddress,
     getMyAddressById,
     updateAddress,
     deleteAddress,
+    setDefaultAddress,
  } from "./address.controller.js";
 
 const router = express.Router();
@@ -17,7 +18,10 @@ router.get("/", protect, getMyAddresses);
 router.get("/:addressId", protect, getMyAddressById);
 // Update one of the logged-in user's addresses
 router.patch("/:addressId", protect, updateAddress);
+// set default address
+router.patch("/:addressId/default", protect, setDefaultAddress);
 // delete address
 router.delete("/:addressId", protect, deleteAddress);
+
 
 export default router;

@@ -179,3 +179,38 @@ export const deleteAddress = async (req, res, next) => {
         next(error);
     }
 };
+// Set an address as the default address
+export const setDefaultAddress = async (req, res, next) => {
+    try {
+        const { addressId } = req.params;
+
+        // Find the address and make sure it belongs to the logged-in user
+        const address = await Address.findOne({
+            _id: addressId,
+            user: req.user._id
+        });
+
+        if (!address) {
+            return next(new ApiError(404, "Address not found"));
+        }
+
+        // Remove default status from all other addresses
+        await Address.updateMany(
+            { user: req.user._id },
+            { $set: { isDefault: false } }
+        );
+
+        // Set the selected address as default
+        address.isDefault = true;
+        await address.save();
+
+        return sendSuccessResponse(
+            res,
+            200,
+            address,
+            "Default address updated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
