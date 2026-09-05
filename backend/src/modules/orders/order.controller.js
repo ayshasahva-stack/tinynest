@@ -235,3 +235,27 @@ export const cancelMyOrder = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get all orders for the admin
+export const getAllOrders = async (req, res, next) => {
+    try {
+        // Get all orders from the database
+        const orders = await Order.find()
+            // Include basic user information
+            .populate("user", "email phone")
+            // Include product information for each order item
+            .populate("items.product")
+            // Show newest orders first
+            .sort({ createdAt: -1 });
+
+        // Send all orders to the admin
+        sendSuccessResponse(
+            res,
+            200,
+            orders,
+            "All orders fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

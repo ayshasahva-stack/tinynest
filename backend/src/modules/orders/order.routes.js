@@ -1,10 +1,12 @@
 import express from "express";
 import protect from "../../middleware/auth.middleware.js";
+import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     createOrder,
     getMyOrders,
     getMyOrderById,
     cancelMyOrder,
+    getAllOrders,
 } from "./order.controller.js";
 
 const router = express.Router();
@@ -13,6 +15,8 @@ const router = express.Router();
 router.post("/", protect, createOrder);
 // Get all orders belonging to the logged-in user
 router.get("/", protect, getMyOrders);
+// Get all customer orders - Admin only
+router.get("/admin", protect, authorizeAdmin, getAllOrders);
 // Get one order belonging to the logged-in user
 router.get("/:orderId", protect, getMyOrderById);
 // Cancel an order belonging to the logged-in user
