@@ -150,3 +150,32 @@ export const updateAddress = async (req, res, next) => {
         next(error);
     }
 };
+// Delete an address belonging to the logged-in user
+export const deleteAddress = async (req, res, next) => {
+    try {
+        const { addressId } = req.params;
+
+        // Find the address and make sure it belongs to the logged-in user
+        const address = await Address.findOne({
+            _id: addressId,
+            user: req.user._id
+        });
+
+        // Address not found or belongs to another user
+        if (!address) {
+            return next(new ApiError(404, "Address not found"));
+        }
+
+        // Delete the address
+        await Address.findByIdAndDelete(addressId);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Address deleted successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
