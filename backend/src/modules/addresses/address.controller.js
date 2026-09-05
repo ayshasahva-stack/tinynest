@@ -43,3 +43,25 @@ export const createAddress = async (req, res, next) => {
         next(error);
     }
 };
+// Get all addresses belonging to the logged-in user
+export const getMyAddresses = async (req, res, next) => {
+    try {
+        // Find only the addresses owned by the authenticated user
+        const addresses = await Address.find({
+            user: req.user._id
+        }).sort({
+            isDefault: -1,
+            createdAt: -1
+        });
+
+        // Return the user's addresses
+        sendSuccessResponse(
+            res,
+            200,
+            addresses,
+            "Addresses fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
