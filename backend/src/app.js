@@ -7,6 +7,7 @@ import productRoutes  from "./modules/products/product.routes.js"
 import categoryRoutes from "./modules/categories/category.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
+import orderRoutes from "./modules/orders/order.routes.js";
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/cart", cartRoutes);
 // wishlist api routes
 app.use("/api/wishlist", wishlistRoutes);
+// order api route
+app.use("/api/orders", orderRoutes);
 
 
 // 404 handler
