@@ -221,3 +221,41 @@ export const getAllReviews = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: delete any review
+export const adminDeleteReview = async (req, res, next) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Validate the review ID
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(
+                new ApiError(400, "Review ID must be a valid review ID")
+            );
+        }
+
+        // Find the review
+        const review = await Review.findById(reviewId);
+
+        if (!review) {
+            return next(new ApiError(404, "Review not found"));
+        }
+
+        // Store the product ID before deleting the review
+        const productId = review.product;
+
+        // Delete the review
+        await Review.findByIdAndDelete(reviewId);
+
+        // Recalculate the product's average rating
+        await updateProductRating(productId);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Review deleted successfully by admin"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

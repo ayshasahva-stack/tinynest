@@ -7,6 +7,7 @@ import {
     updateMyReview,
     deleteMyReview,
     getAllReviews,
+    adminDeleteReview,
 } from "./review.controller.js";
 
 const router = express.Router();
@@ -19,6 +20,8 @@ router.get("/product/:productId", getProductReviews);
 router.get("/admin", protect, authorizeAdmin, getAllReviews);
 // Update the logged-in user's own review
 router.patch("/:reviewId", protect, updateMyReview);
+// Admin: delete any review
+router.delete("/admin/:reviewId",protect,authorizeAdmin, adminDeleteReview);
 // Delete the logged-in user's own review
 router.delete("/:reviewId", protect, deleteMyReview);
 
