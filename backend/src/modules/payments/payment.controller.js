@@ -1,10 +1,12 @@
+import mongoose from "mongoose";
 import Payment from "./payment.model.js";
 import Order from "../orders/order.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import {
     validatePaymentOrder,
-    validatePayment
+    validatePayment,
+    validatePaymentStatus
 } from "./payment.validation.js";
 
 // Create a payment record for the logged-in user's order
@@ -119,6 +121,56 @@ export const getAllPayments = async (req, res, next) => {
             200,
             payments,
             "All payments fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: update payment status
+export const updatePaymentStatus = async (req, res, next) => {
+    try {
+        const { paymentId } = req.params;
+
+        // Check whether the payment ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(paymentId)) {
+            return next(
+                new ApiError(400, "Payment ID must be a valid payment ID")
+            );
+        }
+
+        // Validate the status sent by the admin
+        const validationError = validatePaymentStatus(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Find the payment
+        const payment = await Payment.findById(paymentId);
+
+        if (!payment) {
+            return next(new ApiError(404, "Payment not found"));
+        }
+
+        // Update the payment status
+        payment.status = req.body.status;
+
+        // Set paidAt only when payment becomes paid
+        if (req.body.status === "paid") {
+            payment.paidAt = new Date();
+        } else {
+            // Remove paidAt if payment is no longer marked as paid
+            payment.paidAt = null;
+        }
+
+        await payment.save();
+
+        // Return the updated payment
+        return sendSuccessResponse(
+            res,
+            200,
+            payment,
+            "Payment status updated successfully"
         );
     } catch (error) {
         next(error);

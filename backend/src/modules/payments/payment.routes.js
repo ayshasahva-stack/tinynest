@@ -5,6 +5,7 @@ import {
     createPayment,
     getMyPayment,
     getAllPayments,
+    updatePaymentStatus
 } from "./payment.controller.js";
 
 const router = express.Router();
@@ -13,6 +14,8 @@ const router = express.Router();
 router.post("/:orderId", protect, createPayment);
 // Admin: get all payments
 router.get("/admin", protect, authorizeAdmin, getAllPayments);
+// Admin: update payment status
+router.patch( "/:paymentId/status", protect, authorizeAdmin,updatePaymentStatus);
 // Get payment for the logged-in user's order
 router.get("/:orderId", protect, getMyPayment);
 
