@@ -1,7 +1,11 @@
-    import Coupon from "./coupon.model.js";
+import mongoose from "mongoose";
+import Coupon from "./coupon.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateCoupon } from "./coupon.validation.js";
+import {
+    validateCoupon,
+    validateCouponUpdate,
+} from "./coupon.validation.js";
 
 // Admin: create a new coupon
 export const createCoupon = async (req, res, next) => {
@@ -100,6 +104,81 @@ export const getAllCoupons = async (req, res, next) => {
             200,
             coupons,
             "All coupons fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: update an existing coupon
+export const updateCoupon = async (req, res, next) => {
+    try {
+        const { couponId } = req.params;
+
+        // Validate MongoDB coupon ID
+        if (!mongoose.Types.ObjectId.isValid(couponId)) {
+            return next(
+                new ApiError(400, "Coupon ID must be a valid coupon ID")
+            );
+        }
+
+        // Validate update data
+        const validationError = validateCouponUpdate(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Find the coupon
+        const coupon = await Coupon.findById(couponId);
+
+        if (!coupon) {
+            return next(new ApiError(404, "Coupon not found"));
+        }
+
+        // Normalize the code if it is being updated
+        if (req.body.code !== undefined) {
+            const normalizedCode = req.body.code.trim().toUpperCase();
+
+            // Check whether another coupon already uses this code
+            const existingCoupon = await Coupon.findOne({
+                code: normalizedCode,
+                _id: { $ne: couponId }
+            });
+
+            if (existingCoupon) {
+                return next(
+                    new ApiError(400, "Coupon code already exists")
+                );
+            }
+
+            coupon.code = normalizedCode;
+        }
+
+        // Update only fields provided by the admin
+        const fields = [
+            "discountType",
+            "discountValue",
+            "minOrderAmount",
+            "maxDiscount",
+            "startDate",
+            "expiryDate",
+            "usageLimit",
+            "isActive"
+        ];
+
+        for (const field of fields) {
+            if (req.body[field] !== undefined) {
+                coupon[field] = req.body[field];
+            }
+        }
+
+        await coupon.save();
+
+        return sendSuccessResponse(
+            res,
+            200,
+            coupon,
+            "Coupon updated successfully"
         );
     } catch (error) {
         next(error);

@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 export const validateCoupon = (body) => {
     const {
         code,
@@ -95,6 +97,115 @@ export const validateCoupon = (body) => {
 
     // Validate active status
     if (isActive !== undefined && typeof isActive !== "boolean") {
+        return "isActive must be a boolean";
+    }
+
+    return null;
+};
+// Validate coupon data when updating an existing coupon
+export const validateCouponUpdate = (body) => {
+    if (!body || Object.keys(body).length === 0) {
+        return "At least one field is required to update the coupon";
+    }
+
+    // These are the only fields an admin can update
+    const allowedFields = [
+        "code",
+        "discountType",
+        "discountValue",
+        "minOrderAmount",
+        "maxDiscount",
+        "startDate",
+        "expiryDate",
+        "usageLimit",
+        "isActive"
+    ];
+
+    // Prevent unknown fields from being updated
+    for (const field of Object.keys(body)) {
+        if (!allowedFields.includes(field)) {
+            return `${field} is not allowed`;
+        }
+    }
+
+    // Validate coupon code if provided
+    if (
+        body.code !== undefined &&
+        (typeof body.code !== "string" || body.code.trim() === "")
+    ) {
+        return "Coupon code cannot be empty";
+    }
+
+    // Validate discount type if provided
+    if (
+        body.discountType !== undefined &&
+        !["percentage", "fixed"].includes(body.discountType)
+    ) {
+        return "Discount type must be percentage or fixed";
+    }
+
+    // Validate discount value if provided
+    if (body.discountValue !== undefined) {
+        if (
+            typeof body.discountValue !== "number" ||
+            body.discountValue <= 0
+        ) {
+            return "Discount value must be greater than 0";
+        }
+    }
+
+    // Validate minimum order amount
+    if (body.minOrderAmount !== undefined) {
+        if (
+            typeof body.minOrderAmount !== "number" ||
+            body.minOrderAmount < 0
+        ) {
+            return "Minimum order amount must be a valid positive number";
+        }
+    }
+
+    // Validate maximum discount
+    if (body.maxDiscount !== undefined && body.maxDiscount !== null) {
+        if (
+            typeof body.maxDiscount !== "number" ||
+            body.maxDiscount <= 0
+        ) {
+            return "Maximum discount must be greater than 0";
+        }
+    }
+
+    // Validate dates if provided
+    if (body.startDate !== undefined) {
+        const startDate = new Date(body.startDate);
+
+        if (Number.isNaN(startDate.getTime())) {
+            return "Start date must be a valid date";
+        }
+    }
+
+    if (body.expiryDate !== undefined) {
+        const expiryDate = new Date(body.expiryDate);
+
+        if (Number.isNaN(expiryDate.getTime())) {
+            return "Expiry date must be a valid date";
+        }
+    }
+
+    // Validate usage limit
+    if (body.usageLimit !== undefined && body.usageLimit !== null) {
+        if (
+            typeof body.usageLimit !== "number" ||
+            body.usageLimit < 1
+        ) {
+            return "Usage limit must be at least 1";
+        }
+    }
+
+    // Validate active status
+    if (
+        body.isActive !== undefined &&
+        typeof body.isActive !== "boolean"
+    ) {
         return "isActive must be a boolean";
     }
 
