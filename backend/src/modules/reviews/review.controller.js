@@ -69,3 +69,39 @@ export const addReview = async (req, res, next) => {
         next(error);
     }
 };
+// Get all reviews for a specific product
+export const getProductReviews = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        // Validate the product ID
+        const productIdError = validateReviewProduct(productId);
+
+        if (productIdError) {
+            return next(new ApiError(400, productIdError));
+        }
+
+        // Make sure the product exists
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        // Find all reviews for this product
+        const reviews = await Review.find({
+            product: productId
+        })
+            .populate("user", "email")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            reviews,
+            "Product reviews fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
