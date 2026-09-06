@@ -72,3 +72,55 @@ export const createPayment = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get payment details for the logged-in user's order
+export const getMyPayment = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+
+        // Validate the order ID
+        const orderIdError = validatePaymentOrder(orderId);
+
+        if (orderIdError) {
+            return next(new ApiError(400, orderIdError));
+        }
+
+        // Find payment belonging to the logged-in user's order
+        const payment = await Payment.findOne({
+            order: orderId,
+            user: req.user._id
+        }).populate("order", "totalAmount status");
+
+        if (!payment) {
+            return next(new ApiError(404, "Payment not found"));
+        }
+
+        return sendSuccessResponse(
+            res,
+            200,
+            payment,
+            "Payment fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: get all payments
+export const getAllPayments = async (req, res, next) => {
+    try {
+        // Get all payments with basic order and user information
+        const payments = await Payment.find()
+            .populate("order", "totalAmount status")
+            .populate("user", "email phone")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            payments,
+            "All payments fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
