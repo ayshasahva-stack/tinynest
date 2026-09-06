@@ -158,3 +158,38 @@ export const updateMyReview = async (req, res, next) => {
         next(error);
     }
 };
+// Delete a review belonging to the logged-in user
+export const deleteMyReview = async (req, res, next) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Validate the review ID
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(
+                new ApiError(400, "Review ID must be a valid review ID")
+            );
+        }
+
+        // Find the review and make sure it belongs to the logged-in user
+        const review = await Review.findOne({
+            _id: reviewId,
+            user: req.user._id
+        });
+
+        if (!review) {
+            return next(new ApiError(404, "Review not found"));
+        }
+
+        // Delete the review
+        await Review.findByIdAndDelete(reviewId);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Review deleted successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

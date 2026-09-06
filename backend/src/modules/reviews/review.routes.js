@@ -4,6 +4,7 @@ import {
     addReview,
     getProductReviews,
     updateMyReview,
+    deleteMyReview,
 } from "./review.controller.js";
 
 const router = express.Router();
@@ -14,5 +15,7 @@ router.post("/:productId", protect, addReview);
 router.get("/product/:productId", getProductReviews);
 // Update the logged-in user's own review
 router.patch("/:reviewId", protect, updateMyReview);
+// Delete the logged-in user's own review
+router.delete("/:reviewId", protect, deleteMyReview);
 
 export default router;
