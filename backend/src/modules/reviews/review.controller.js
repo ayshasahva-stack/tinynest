@@ -199,3 +199,25 @@ export const deleteMyReview = async (req, res, next) => {
         next(error);
     }
 };
+
+
+
+// Get all reviews for admin management
+export const getAllReviews = async (req, res, next) => {
+    try {
+        // Get all reviews and include basic user and product information
+        const reviews = await Review.find()
+            .populate("user", "email")
+            .populate("product", "title")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            reviews,
+            "All reviews fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
