@@ -60,3 +60,30 @@ export const createCoupon = async (req, res, next) => {
         next(error);
     }
 };
+// Get currently active and usable coupons
+export const getActiveCoupons = async (req, res, next) => {
+    try {
+        const now = new Date();
+
+        // Find coupons that are active, currently valid,
+        // and have not reached their usage limit
+        const coupons = await Coupon.find({
+            isActive: true,
+            startDate: { $lte: now },
+            expiryDate: { $gte: now },
+            $or: [
+                { usageLimit: null },
+                { $expr: { $lt: ["$usedCount", "$usageLimit"] } }
+            ]
+        }).sort({ expiryDate: 1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            coupons,
+            "Active coupons fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
