@@ -184,3 +184,37 @@ export const updateCoupon = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: deactivate a coupon
+export const deactivateCoupon = async (req, res, next) => {
+    try {
+        const { couponId } = req.params;
+
+        // Validate MongoDB coupon ID
+        if (!mongoose.Types.ObjectId.isValid(couponId)) {
+            return next(
+                new ApiError(400, "Coupon ID must be a valid coupon ID")
+            );
+        }
+
+        // Find the coupon
+        const coupon = await Coupon.findById(couponId);
+
+        if (!coupon) {
+            return next(new ApiError(404, "Coupon not found"));
+        }
+
+        // Deactivate the coupon
+        coupon.isActive = false;
+
+        await coupon.save();
+
+        return sendSuccessResponse(
+            res,
+            200,
+            coupon,
+            "Coupon deactivated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

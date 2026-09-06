@@ -6,6 +6,7 @@ import {
     getActiveCoupons,
     getAllCoupons,
     updateCoupon,
+    deactivateCoupon,
 } from "./coupon.controller.js";
 
 const router = express.Router();
@@ -18,4 +19,7 @@ router.get("/", getActiveCoupons);
 router.get("/admin", protect, authorizeAdmin, getAllCoupons);
 // Admin: update coupon
 router.patch("/:couponId", protect, authorizeAdmin, updateCoupon);
+// Admin: deactivate coupon
+router.patch("/:couponId/deactivate", protect, authorizeAdmin, deactivateCoupon);
+
 export default router;
