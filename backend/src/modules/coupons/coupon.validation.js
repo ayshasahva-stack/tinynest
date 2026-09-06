@@ -211,3 +211,29 @@ export const validateCouponUpdate = (body) => {
 
     return null;
 };
+
+// Validate data required to apply a coupon
+export const validateApplyCoupon = (body) => {
+    const { code, subtotal } = body;
+
+    // Coupon code is required
+    if (!code || typeof code !== "string" || code.trim() === "") {
+        return "Coupon code is required";
+    }
+
+    // Subtotal is required
+    if (
+        subtotal === undefined ||
+        subtotal === null ||
+        typeof subtotal !== "number"
+    ) {
+        return "Subtotal must be a number";
+    }
+
+    // Subtotal cannot be negative
+    if (subtotal < 0) {
+        return "Subtotal cannot be negative";
+    }
+
+    return null;
+};

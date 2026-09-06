@@ -5,6 +5,7 @@ import sendSuccessResponse from "../../utils/ApiResponse.js";
 import {
     validateCoupon,
     validateCouponUpdate,
+    validateApplyCoupon,
 } from "./coupon.validation.js";
 
 // Admin: create a new coupon
@@ -213,6 +214,111 @@ export const deactivateCoupon = async (req, res, next) => {
             200,
             coupon,
             "Coupon deactivated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Apply and calculate a coupon discount
+export const applyCoupon = async (req, res, next) => {
+    try {
+        // Validate request data
+        const validationError = validateApplyCoupon(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        const { code, subtotal } = req.body;
+
+        // Normalize the coupon code
+        const normalizedCode = code.trim().toUpperCase();
+
+        // Find the coupon
+        const coupon = await Coupon.findOne({
+            code: normalizedCode
+        });
+
+        if (!coupon) {
+            return next(new ApiError(404, "Coupon not found"));
+        }
+
+        const now = new Date();
+
+        // Check whether the coupon is active
+        if (!coupon.isActive) {
+            return next(new ApiError(400, "Coupon is inactive"));
+        }
+
+        // Check start date
+        if (now < coupon.startDate) {
+            return next(new ApiError(400, "Coupon is not active yet"));
+        }
+
+        // Check expiry date
+        if (now > coupon.expiryDate) {
+            return next(new ApiError(400, "Coupon has expired"));
+        }
+
+        // Check usage limit
+        if (
+            coupon.usageLimit !== null &&
+            coupon.usedCount >= coupon.usageLimit
+        ) {
+            return next(new ApiError(400, "Coupon usage limit reached"));
+        }
+
+        // Check minimum order amount
+        if (subtotal < coupon.minOrderAmount) {
+            return next(
+                new ApiError(
+                    400,
+                    `Minimum order amount is ${coupon.minOrderAmount}`
+                )
+            );
+        }
+
+        // Calculate the discount
+        let discount = 0;
+
+        if (coupon.discountType === "percentage") {
+            discount = (subtotal * coupon.discountValue) / 100;
+
+            // Apply maximum discount if configured
+            if (
+                coupon.maxDiscount !== null &&
+                discount > coupon.maxDiscount
+            ) {
+                discount = coupon.maxDiscount;
+            }
+        } else {
+            // Fixed discount
+            discount = coupon.discountValue;
+
+            // Discount cannot be greater than the subtotal
+            if (discount > subtotal) {
+                discount = subtotal;
+            }
+        }
+
+        // Round discount to two decimal places
+        discount = Math.round(discount * 100) / 100;
+
+        // Calculate final subtotal
+        const finalSubtotal =
+            Math.round((subtotal - discount) * 100) / 100;
+
+        return sendSuccessResponse(
+            res,
+            200,
+            {
+                couponId: coupon._id,
+                code: coupon.code,
+                discountType: coupon.discountType,
+                discount,
+                finalSubtotal
+            },
+            "Coupon applied successfully"
         );
     } catch (error) {
         next(error);
