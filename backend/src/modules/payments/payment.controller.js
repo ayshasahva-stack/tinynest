@@ -126,7 +126,8 @@ export const getAllPayments = async (req, res, next) => {
         next(error);
     }
 };
-// Admin: update payment status
+
+// Admin: update payment status and synchronize the related order
 export const updatePaymentStatus = async (req, res, next) => {
     try {
         const { paymentId } = req.params;
@@ -138,7 +139,7 @@ export const updatePaymentStatus = async (req, res, next) => {
             );
         }
 
-        // Validate the status sent by the admin
+        // Validate the new payment status
         const validationError = validatePaymentStatus(req.body);
 
         if (validationError) {
@@ -152,25 +153,43 @@ export const updatePaymentStatus = async (req, res, next) => {
             return next(new ApiError(404, "Payment not found"));
         }
 
-        // Update the payment status
+        // Find the order connected to this payment
+        const order = await Order.findById(payment.order);
+
+        if (!order) {
+            return next(new ApiError(404, "Related order not found"));
+        }
+
+        // Update payment status
         payment.status = req.body.status;
 
-        // Set paidAt only when payment becomes paid
+        // Update paidAt only when payment is marked as paid
         if (req.body.status === "paid") {
             payment.paidAt = new Date();
         } else {
-            // Remove paidAt if payment is no longer marked as paid
             payment.paidAt = null;
         }
 
         await payment.save();
 
-        // Return the updated payment
+        // Keep the order status synchronized with the payment status
+        if (req.body.status === "paid") {
+            order.status = "confirmed";
+        } else if (req.body.status === "refunded") {
+            order.status = "cancelled";
+        }
+
+        await order.save();
+
+        // Return both updated records
         return sendSuccessResponse(
             res,
             200,
-            payment,
-            "Payment status updated successfully"
+            {
+                payment,
+                order
+            },
+            "Payment and order status updated successfully"
         );
     } catch (error) {
         next(error);
