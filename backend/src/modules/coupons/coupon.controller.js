@@ -87,3 +87,21 @@ export const getActiveCoupons = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: get all coupons
+export const getAllCoupons = async (req, res, next) => {
+    try {
+        // Get every coupon for admin management
+        const coupons = await Coupon.find()
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            coupons,
+            "All coupons fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
