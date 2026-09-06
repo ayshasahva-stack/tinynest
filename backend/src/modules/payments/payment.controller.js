@@ -1,0 +1,74 @@
+import Payment from "./payment.model.js";
+import Order from "../orders/order.model.js";
+import ApiError from "../../utils/Apierror.js";
+import sendSuccessResponse from "../../utils/ApiResponse.js";
+import {
+    validatePaymentOrder,
+    validatePayment
+} from "./payment.validation.js";
+
+// Create a payment record for the logged-in user's order
+export const createPayment = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+
+        // Validate the order ID
+        const orderIdError = validatePaymentOrder(orderId);
+
+        if (orderIdError) {
+            return next(new ApiError(400, orderIdError));
+        }
+
+        // Validate payment data
+        const validationError = validatePayment(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Find the order and make sure it belongs to the logged-in user
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        });
+
+        if (!order) {
+            return next(new ApiError(404, "Order not found"));
+        }
+
+        // Prevent duplicate payment records for the same order
+        const existingPayment = await Payment.findOne({
+            order: orderId
+        });
+
+        if (existingPayment) {
+            return next(
+                new ApiError(
+                    400,
+                    "Payment already exists for this order"
+                )
+            );
+        }
+
+        // Create payment using the trusted order amount
+        const payment = await Payment.create({
+            order: order._id,
+            user: req.user._id,
+            paymentMethod: req.body.paymentMethod,
+            transactionId: req.body.transactionId || null,
+            amount: order.totalAmount,
+            status: req.body.paymentMethod === "cod"
+                ? "pending"
+                : "pending"
+        });
+
+        return sendSuccessResponse(
+            res,
+            201,
+            payment,
+            "Payment created successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
