@@ -3,6 +3,7 @@ import Review from "./review.model.js";
 import Product from "../products/product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { updateProductRating } from "./review.helper.js";
 import {
     validateReviewProduct,
     validateReview,
@@ -57,7 +58,8 @@ export const addReview = async (req, res, next) => {
             rating: req.body.rating,
             comment: req.body.comment || ""
         });
-
+        // Recalculate the product's average rating
+        await updateProductRating(productId);
         // Populate user information for the response
         await review.populate("user", "email");
 
@@ -144,6 +146,8 @@ export const updateMyReview = async (req, res, next) => {
         }
 
         await review.save();
+        // Recalculate the product's average rating
+        await updateProductRating(review.product);
 
         // Include user information in the response
         await review.populate("user", "email");
@@ -182,6 +186,8 @@ export const deleteMyReview = async (req, res, next) => {
 
         // Delete the review
         await Review.findByIdAndDelete(reviewId);
+        // Recalculate the product's average rating
+        await updateProductRating(review.product);
 
         return sendSuccessResponse(
             res,
