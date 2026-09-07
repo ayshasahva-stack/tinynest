@@ -7,6 +7,7 @@ import {
     createOffer,
     getActiveOffers,
     getAllOffers,
+    updateOffer,
 
 } from "./offer.controller.js";
 
@@ -18,4 +19,7 @@ router.post("/", protect, authorizeAdmin, createOffer);
 router.get("/", getActiveOffers);
 // Admin: get all offers
 router.get( "/admin", protect, authorizeAdmin, getAllOffers);
+// Admin: update an existing offer
+router.patch( "/:offerId", protect, authorizeAdmin,updateOffer);
+
 export default router;

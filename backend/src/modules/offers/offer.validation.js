@@ -101,3 +101,93 @@ export const validateOffer = (body) => {
 
     return null;
 };
+export const validateOfferUpdate = (body) => {
+    const {
+        title,
+        discountType,
+        discountValue,
+        product,
+        category,
+        startDate,
+        expiryDate,
+        isActive
+    } = body;
+
+    // At least one field must be provided
+    if (Object.keys(body).length === 0) {
+        return "At least one field is required to update the offer";
+    }
+
+    // Validate title if provided
+    if (
+        title !== undefined &&
+        (typeof title !== "string" || title.trim() === "")
+    ) {
+        return "Offer title must be a non-empty string";
+    }
+
+    // Validate discount type if provided
+    if (
+        discountType !== undefined &&
+        !["percentage", "fixed"].includes(discountType)
+    ) {
+        return "Discount type must be percentage or fixed";
+    }
+
+    // Validate discount value if provided
+    if (
+        discountValue !== undefined &&
+        (
+            typeof discountValue !== "number" ||
+            discountValue <= 0
+        )
+    ) {
+        return "Discount value must be a number greater than 0";
+    }
+
+    // Validate product ID if provided
+    if (
+        product !== undefined &&
+        product !== null &&
+        !mongoose.Types.ObjectId.isValid(product)
+    ) {
+        return "Product ID must be a valid product ID";
+    }
+
+    // Validate category ID if provided
+    if (
+        category !== undefined &&
+        category !== null &&
+        !mongoose.Types.ObjectId.isValid(category)
+    ) {
+        return "Category ID must be a valid category ID";
+    }
+
+    // Validate start date if provided
+    if (startDate !== undefined) {
+        const date = new Date(startDate);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Start date must be a valid date";
+        }
+    }
+
+    // Validate expiry date if provided
+    if (expiryDate !== undefined) {
+        const date = new Date(expiryDate);
+
+        if (Number.isNaN(date.getTime())) {
+            return "Expiry date must be a valid date";
+        }
+    }
+
+    // Validate active status if provided
+    if (
+        isActive !== undefined &&
+        typeof isActive !== "boolean"
+    ) {
+        return "isActive must be a boolean";
+    }
+
+    return null;
+};
