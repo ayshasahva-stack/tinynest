@@ -8,7 +8,7 @@ import {
     getActiveOffers,
     getAllOffers,
     updateOffer,
-
+    deactivateOffer,
 } from "./offer.controller.js";
 
 const router = express.Router();
@@ -18,8 +18,10 @@ router.post("/", protect, authorizeAdmin, createOffer);
 // Public: get currently active offers
 router.get("/", getActiveOffers);
 // Admin: get all offers
-router.get( "/admin", protect, authorizeAdmin, getAllOffers);
+router.get("/admin", protect, authorizeAdmin, getAllOffers);
 // Admin: update an existing offer
-router.patch( "/:offerId", protect, authorizeAdmin,updateOffer);
+router.patch("/:offerId", protect, authorizeAdmin, updateOffer);
+// Admin: deactivate an offer
+router.patch("/:offerId/deactivate", protect, authorizeAdmin, deactivateOffer);
 
 export default router;

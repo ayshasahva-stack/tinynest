@@ -295,3 +295,57 @@ export const updateOffer = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: deactivate an offer
+export const deactivateOffer = async (req, res, next) => {
+    try {
+        const { offerId } = req.params;
+
+        // Validate the offer ID
+        if (!mongoose.Types.ObjectId.isValid(offerId)) {
+            return next(
+                new ApiError(400, "Offer ID must be a valid offer ID")
+            );
+        }
+
+        // Find the offer
+        const offer = await Offer.findById(offerId);
+
+        if (!offer) {
+            return next(new ApiError(404, "Offer not found"));
+        }
+
+        // Check whether the offer is already inactive
+        if (!offer.isActive) {
+            return next(
+                new ApiError(400, "Offer is already inactive")
+            );
+        }
+
+        // Deactivate the offer
+        offer.isActive = false;
+
+        // Save the change
+        await offer.save();
+
+        // Include product/category details in the response
+        await offer.populate([
+            {
+                path: "product",
+                select: "title price stock"
+            },
+            {
+                path: "category",
+                select: "name description"
+            }
+        ]);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            offer,
+            "Offer deactivated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
