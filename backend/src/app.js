@@ -13,6 +13,7 @@ import reviewRoutes from "./modules/reviews/review.routes.js";
 import couponRoutes from "./modules/coupons/coupon.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
 import orderTrackingRoutes from "./modules/orderTracking/orderTracking.routes.js";
+import offerRoutes from "./modules/offers/offer.routes.js";
 
 const app = express();
 
@@ -48,6 +49,9 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/payments", paymentRoutes);
 // orderTracking api routes
 app.use("/api/order-tracking", orderTrackingRoutes);
+// offers api routed=s
+app.use("/api/offers", offerRoutes);
+
 
 // 404 handler
 app.use((req, res) => {
