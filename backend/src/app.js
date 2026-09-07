@@ -12,6 +12,7 @@ import addressRoutes from "./modules/addresses/address.routes.js";
 import reviewRoutes from "./modules/reviews/review.routes.js";
 import couponRoutes from "./modules/coupons/coupon.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
+import orderTrackingRoutes from "./modules/orderTracking/orderTracking.routes.js";
 
 const app = express();
 
@@ -45,6 +46,8 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/coupons", couponRoutes);
 // payment api routes
 app.use("/api/payments", paymentRoutes);
+// orderTracking api routes
+app.use("/api/order-tracking", orderTrackingRoutes);
 
 // 404 handler
 app.use((req, res) => {
