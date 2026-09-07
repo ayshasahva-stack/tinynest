@@ -79,3 +79,34 @@ export const createOffer = async (req, res, next) => {
         next(error);
     }
 };
+// Public: get currently active offers
+export const getActiveOffers = async (req, res, next) => {
+    try {
+        // Get the current date and time
+        const now = new Date();
+
+        // Find offers that are active and within their valid date range
+        const offers = await Offer.find({
+            isActive: true,
+            startDate: { $lte: now },
+            expiryDate: { $gte: now }
+        })
+            // Include basic product information
+            .populate("product", "title price images")
+
+            // Include basic category information
+            .populate("category", "name image")
+
+            // Show offers that expire soonest first
+            .sort({ expiryDate: 1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            offers,
+            "Active offers fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
