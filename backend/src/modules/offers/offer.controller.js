@@ -110,3 +110,28 @@ export const getActiveOffers = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get all offers
+export const getAllOffers = async (req, res, next) => {
+    try {
+        // Get all offers from the database
+        const offers = await Offer.find()
+
+            // Include basic product information
+            .populate("product", "title price images")
+
+            // Include basic category information
+            .populate("category", "name image")
+
+            // Show newest offers first
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            offers,
+            "All offers fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

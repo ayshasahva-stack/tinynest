@@ -6,6 +6,7 @@ import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     createOffer,
     getActiveOffers,
+    getAllOffers,
 
 } from "./offer.controller.js";
 
@@ -15,5 +16,6 @@ const router = express.Router();
 router.post("/", protect, authorizeAdmin, createOffer);
 // Public: get currently active offers
 router.get("/", getActiveOffers);
-
+// Admin: get all offers
+router.get( "/admin", protect, authorizeAdmin, getAllOffers);
 export default router;
