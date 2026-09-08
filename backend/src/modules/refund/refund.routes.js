@@ -5,7 +5,8 @@ import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     requestRefund,
     getAllRefunds,
-    updateRefundStatus
+    updateRefundStatus,
+    processRefund,
 } from "./refund.controller.js";
 
 const router = express.Router();
@@ -16,4 +17,7 @@ router.post( "/:orderId", protect, requestRefund);
 router.get("/admin", protect, authorizeAdmin, getAllRefunds);
 // Admin: approve or reject a refund request
 router.patch("/:refundId/status",protect,authorizeAdmin,updateRefundStatus);
+// Admin: move an approved refund into processing
+router.patch("/:refundId/process",protect,authorizeAdmin,processRefund);
+
 export default router;

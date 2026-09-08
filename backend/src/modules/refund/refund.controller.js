@@ -229,3 +229,66 @@ export const updateRefundStatus = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: move an approved refund into processing
+export const processRefund = async (req, res, next) => {
+    try {
+        const { refundId } = req.params;
+
+        // Check whether the refund ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(refundId)) {
+            return next(
+                new ApiError(400, "Refund ID must be a valid refund ID")
+            );
+        }
+
+        // Find the refund request
+        const refund = await Refund.findById(refundId);
+
+        if (!refund) {
+            return next(
+                new ApiError(404, "Refund request not found")
+            );
+        }
+
+        // Only approved refunds can be processed
+        if (refund.status !== "approved") {
+            return next(
+                new ApiError(
+                    400,
+                    "Only approved refunds can be processed"
+                )
+            );
+        }
+
+        // Change the refund status to processing
+        refund.status = "processing";
+
+        await refund.save();
+
+        // Include related order and payment information
+        await refund.populate([
+            {
+                path: "order",
+                select: "totalAmount status"
+            },
+            {
+                path: "payment",
+                select: "paymentMethod transactionId amount status paidAt"
+            },
+            {
+                path: "user",
+                select: "email phone"
+            }
+        ]);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            refund,
+            "Refund moved to processing successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
