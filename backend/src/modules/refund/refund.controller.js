@@ -292,3 +292,68 @@ export const processRefund = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: complete a refund that is being processed
+export const completeRefund = async (req, res, next) => {
+    try {
+        const { refundId } = req.params;
+
+        // Check whether the refund ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(refundId)) {
+            return next(
+                new ApiError(400, "Refund ID must be a valid refund ID")
+            );
+        }
+
+        // Find the refund
+        const refund = await Refund.findById(refundId);
+
+        if (!refund) {
+            return next(
+                new ApiError(404, "Refund request not found")
+            );
+        }
+
+        // Only refunds that are currently processing can be completed
+        if (refund.status !== "processing") {
+            return next(
+                new ApiError(
+                    400,
+                    "Only processing refunds can be completed"
+                )
+            );
+        }
+
+        // Mark the refund as completed
+        refund.status = "completed";
+
+        // Record when the refund was completed
+        refund.processedAt = new Date();
+
+        await refund.save();
+
+        // Include related information in the response
+        await refund.populate([
+            {
+                path: "order",
+                select: "totalAmount status"
+            },
+            {
+                path: "payment",
+                select: "paymentMethod transactionId amount status paidAt"
+            },
+            {
+                path: "user",
+                select: "email phone"
+            }
+        ]);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            refund,
+            "Refund completed successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

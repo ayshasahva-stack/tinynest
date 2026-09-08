@@ -7,6 +7,7 @@ import {
     getAllRefunds,
     updateRefundStatus,
     processRefund,
+    completeRefund,
 } from "./refund.controller.js";
 
 const router = express.Router();
@@ -19,5 +20,7 @@ router.get("/admin", protect, authorizeAdmin, getAllRefunds);
 router.patch("/:refundId/status",protect,authorizeAdmin,updateRefundStatus);
 // Admin: move an approved refund into processing
 router.patch("/:refundId/process",protect,authorizeAdmin,processRefund);
+// Admin: complete a refund that is being processed
+router.patch("/:refundId/complete",protect,authorizeAdmin,completeRefund);
 
 export default router;
