@@ -118,3 +118,35 @@ export const requestRefund = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: get all refund requests
+export const getAllRefunds = async (req, res, next) => {
+    try {
+        // Get all refund requests from the database
+        const refunds = await Refund.find()
+
+            // Include customer information
+            .populate("user", "email phone")
+
+            // Include order information
+            .populate("order", "totalAmount status")
+
+            // Include payment information
+            .populate(
+                "payment",
+                "paymentMethod transactionId amount status paidAt"
+            )
+
+            // Show newest refund requests first
+            .sort({ requestedAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            refunds,
+            "All refund requests fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
