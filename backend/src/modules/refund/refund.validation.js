@@ -36,3 +36,29 @@ export const validateRefundRequest = (body) => {
 
     return null;
 };
+
+// Validate the admin's refund decision
+export const validateRefundDecision = (body) => {
+    const { status, adminNote } = body;
+
+    // Check whether status was provided
+    if (!status) {
+        return "Refund status is required";
+    }
+
+    // Only approved or rejected are allowed at this stage
+    if (!["approved", "rejected"].includes(status)) {
+        return "Refund status must be approved or rejected";
+    }
+
+    // Admin note is optional, but if provided it must be a string
+    if (
+        adminNote !== undefined &&
+        adminNote !== null &&
+        typeof adminNote !== "string"
+    ) {
+        return "Admin note must be a string";
+    }
+
+    return null;
+};

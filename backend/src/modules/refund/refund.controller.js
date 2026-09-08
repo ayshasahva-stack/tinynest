@@ -9,7 +9,8 @@ import sendSuccessResponse from "../../utils/ApiResponse.js";
 
 import {
     validateRefundOrder,
-    validateRefundRequest
+    validateRefundRequest,
+    validateRefundDecision,
 } from "./refund.validation.js";
 
 // Customer: request a refund for an eligible order
@@ -145,6 +146,84 @@ export const getAllRefunds = async (req, res, next) => {
             200,
             refunds,
             "All refund requests fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Admin: approve or reject a refund request
+export const updateRefundStatus = async (req, res, next) => {
+    try {
+        const { refundId } = req.params;
+
+        // Check whether the refund ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(refundId)) {
+            return next(
+                new ApiError(400, "Refund ID must be a valid refund ID")
+            );
+        }
+
+        // Validate the admin's decision
+        const validationError = validateRefundDecision(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        const { status, adminNote } = req.body;
+
+        // Find the refund request
+        const refund = await Refund.findById(refundId);
+
+        if (!refund) {
+            return next(new ApiError(404, "Refund request not found"));
+        }
+
+        // Only a requested refund can be approved or rejected
+        if (refund.status !== "requested") {
+            return next(
+                new ApiError(
+                    400,
+                    "Only requested refunds can be approved or rejected"
+                )
+            );
+        }
+
+        // Update the refund status
+        refund.status = status;
+
+        // Save the admin's note if provided
+        if (adminNote !== undefined) {
+            refund.adminNote = adminNote.trim();
+        }
+
+        // Record when the admin processed the request
+        refund.processedAt = new Date();
+
+        await refund.save();
+
+        // Include useful related information in the response
+        await refund.populate([
+            {
+                path: "order",
+                select: "totalAmount status"
+            },
+            {
+                path: "payment",
+                select: "paymentMethod transactionId amount status paidAt"
+            },
+            {
+                path: "user",
+                select: "email phone"
+            }
+        ]);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            refund,
+            `Refund request ${status} successfully`
         );
     } catch (error) {
         next(error);
