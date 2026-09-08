@@ -357,3 +357,130 @@ export const completeRefund = async (req, res, next) => {
         next(error);
     }
 };
+// Create a refund record for a cancelled paid online order
+export const createOrderCancellationRefund = async (order, payment) => {
+    // Check whether a refund already exists for this order
+    const existingRefund = await Refund.findOne({
+        order: order._id
+    });
+
+    // Return the existing refund instead of creating a duplicate
+    if (existingRefund) {
+        return existingRefund;
+    }
+
+    // Create the refund record
+    const refund = await Refund.create({
+        order: order._id,
+        user: order.user,
+        refundType: "order_cancelled",
+        payment: payment._id,
+        reason: "Order cancelled after online payment",
+        amount: order.totalAmount,
+        status: "requested"
+    });
+
+    return refund;
+};
+// Create a refund automatically for a cancelled paid online order
+export const createCancellationRefund = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+
+        // Validate the order ID
+        const orderValidationError = validateRefundOrder(orderId);
+
+        if (orderValidationError) {
+            return next(new ApiError(400, orderValidationError));
+        }
+
+        // Find the customer's order
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        });
+
+        if (!order) {
+            return next(new ApiError(404, "Order not found"));
+        }
+
+        // The order must already be cancelled
+        if (order.status !== "cancelled") {
+            return next(
+                new ApiError(
+                    400,
+                    "Refund can only be created for a cancelled order"
+                )
+            );
+        }
+
+        // Find the payment associated with the order
+        const payment = await Payment.findOne({
+            order: order._id,
+            user: req.user._id
+        });
+
+        if (!payment) {
+            return next(new ApiError(404, "Payment not found"));
+        }
+
+        // Only completed online payments can be refunded
+        if (
+            payment.paymentMethod !== "online" ||
+            payment.status !== "paid"
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Only paid online orders can receive an automatic cancellation refund"
+                )
+            );
+        }
+
+        // Prevent duplicate refund records
+        const existingRefund = await Refund.findOne({
+            order: order._id
+        });
+
+        if (existingRefund) {
+            return next(
+                new ApiError(
+                    400,
+                    "Refund already exists for this order"
+                )
+            );
+        }
+
+        // Create the cancellation refund
+        const refund = await Refund.create({
+            order: order._id,
+            user: req.user._id,
+            refundType: "order_cancelled",
+            payment: payment._id,
+            reason: "Order cancelled after online payment",
+            amount: order.totalAmount,
+            status: "requested"
+        });
+
+        // Include related order and payment information
+        await refund.populate([
+            {
+                path: "order",
+                select: "totalAmount status"
+            },
+            {
+                path: "payment",
+                select: "paymentMethod transactionId amount status paidAt"
+            }
+        ]);
+
+        return sendSuccessResponse(
+            res,
+            201,
+            refund,
+            "Cancellation refund created successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

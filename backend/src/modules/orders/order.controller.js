@@ -1,8 +1,10 @@
 import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
+import Payment from "../payments/payment.model.js";
 import Product from "../products/product.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
 
 // Create an order using the logged-in user's cart
@@ -177,6 +179,7 @@ export const getMyOrderById = async (req, res, next) => {
     }
 };
 // Cancel an order belonging to the logged-in user
+// Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
     try {
         // Get the order ID from the URL
@@ -218,11 +221,29 @@ export const cancelMyOrder = async (req, res, next) => {
             );
         }
 
-        // Change the order status
+        // Change the order status to cancelled
         order.status = "cancelled";
 
-        // Save the updated order
+        // Save the cancelled order
         await order.save();
+
+        // Find the payment associated with this order
+        const payment = await Payment.findOne({
+            order: order._id,
+            user: req.user._id
+        });
+
+        // Create an automatic refund only for paid online orders
+        if (
+            payment &&
+            payment.paymentMethod === "online" &&
+            payment.status === "paid"
+        ) {
+            await createOrderCancellationRefund(
+                order,
+                payment
+            );
+        }
 
         // Return the cancelled order
         sendSuccessResponse(
@@ -235,7 +256,6 @@ export const cancelMyOrder = async (req, res, next) => {
         next(error);
     }
 };
-
 // Get all orders for the admin
 export const getAllOrders = async (req, res, next) => {
     try {
