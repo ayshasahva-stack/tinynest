@@ -161,9 +161,31 @@ export const updatePaymentStatus = async (req, res, next) => {
         if (!payment) {
             return next(new ApiError(404, "Payment not found"));
         }
+
+        // Define which payment status changes are allowed
+        const allowedTransitions = {
+            pending: ["paid", "failed"],
+            paid: ["refunded"],
+            failed: [],
+            refunded: []
+        };
+
+        // Get the requested new status
+        const newStatus = req.body.status;
+
+        // Check whether the requested status change is allowed
+        if (!allowedTransitions[payment.status].includes(newStatus)) {
+            return next(
+                new ApiError(
+                    400,
+                    `Cannot change payment status from ${payment.status} to ${newStatus}`
+                )
+            );
+        }
+
         // A refund is allowed only for successfully paid online payments
         if (
-            req.body.status === "refunded" &&
+            newStatus === "refunded" &&
             (
                 payment.paymentMethod !== "online" ||
                 payment.status !== "paid"
@@ -184,24 +206,26 @@ export const updatePaymentStatus = async (req, res, next) => {
             return next(new ApiError(404, "Related order not found"));
         }
 
-        // Update payment status
-        payment.status = req.body.status;
+        // Update the payment status
+        payment.status = newStatus;
 
-        // Update paidAt only when payment is marked as paid
-        // Set paidAt when the payment is first marked as paid
-        // Keep the original payment time even after a refund or failure
-        if (req.body.status === "paid" && !payment.paidAt) {
+        // Set paidAt when payment is first marked as paid
+        // Keep the original payment time after later status changes
+        if (newStatus === "paid" && !payment.paidAt) {
             payment.paidAt = new Date();
         }
+
+        // Save the updated payment
         await payment.save();
 
-        // Keep the order status synchronized with the payment status
-        if (req.body.status === "paid") {
+        // Keep the order status synchronized with the payment
+        if (newStatus === "paid") {
             order.status = "confirmed";
-        } else if (req.body.status === "refunded") {
+        } else if (newStatus === "refunded") {
             order.status = "cancelled";
         }
 
+        // Save the updated order
         await order.save();
 
         // Return both updated records

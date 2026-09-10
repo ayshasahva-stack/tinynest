@@ -180,7 +180,6 @@ export const getMyOrderById = async (req, res, next) => {
     }
 };
 // Cancel an order belonging to the logged-in user
-// Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
     // Start a MongoDB session for the transaction
     const session = await mongoose.startSession();
@@ -216,15 +215,26 @@ export const cancelMyOrder = async (req, res, next) => {
 
         // Restore the ordered quantity back to product stock
         for (const item of order.items) {
-            await Product.findByIdAndUpdate(
+            const product = await Product.findByIdAndUpdate(
                 item.product,
                 {
                     $inc: {
                         stock: item.quantity
                     }
                 },
-                { session }
+                {
+                    session,
+                    new: true
+                }
             );
+
+            // Make sure the product still exists
+            if (!product) {
+                throw new ApiError(
+                    404,
+                    "Product not found while restoring stock"
+                );
+            }
         }
 
         // Change the order status to cancelled
