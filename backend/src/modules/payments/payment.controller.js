@@ -34,8 +34,19 @@ export const createPayment = async (req, res, next) => {
             user: req.user._id
         });
 
+        // If the order does not belong to this user or does not exist
         if (!order) {
             return next(new ApiError(404, "Order not found"));
+        }
+
+        // Prevent payment for a cancelled order
+        if (order.status === "cancelled") {
+            return next(
+                new ApiError(
+                    400,
+                    "Cannot create payment for a cancelled order"
+                )
+            );
         }
 
         // Prevent duplicate payment records for the same order
@@ -52,16 +63,15 @@ export const createPayment = async (req, res, next) => {
             );
         }
 
-        // Create payment using the trusted order amount
+        // Always use the trusted amount from the database order
+        // Never trust an amount sent by the client
         const payment = await Payment.create({
             order: order._id,
             user: req.user._id,
             paymentMethod: req.body.paymentMethod,
             transactionId: req.body.transactionId || null,
             amount: order.totalAmount,
-            status: req.body.paymentMethod === "cod"
-                ? "pending"
-                : "pending"
+            status: "pending"
         });
 
         return sendSuccessResponse(
@@ -74,7 +84,6 @@ export const createPayment = async (req, res, next) => {
         next(error);
     }
 };
-
 // Get payment details for the logged-in user's order
 export const getMyPayment = async (req, res, next) => {
     try {
