@@ -15,6 +15,7 @@ import paymentRoutes from "./modules/payments/payment.routes.js";
 import orderTrackingRoutes from "./modules/orderTracking/orderTracking.routes.js";
 import offerRoutes from "./modules/offers/offer.routes.js";
 import refundRoutes from "./modules/refund/refund.routes.js";
+import adminDashboardRoutes from "./modules/adminDashboard/adminDashboard.routes.js";
 
 const app = express();
 
@@ -54,7 +55,8 @@ app.use("/api/order-tracking", orderTrackingRoutes);
 app.use("/api/offers", offerRoutes);
 // refund api routes
 app.use("/api/refunds", refundRoutes);
-
+// adminDashboard routes
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 
 // 404 handler
 app.use((req, res) => {
