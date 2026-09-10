@@ -68,3 +68,43 @@ export const blockUser = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: unblock a customer
+export const unblockUser = async (req, res, next) => {
+    try {
+        // Get the customer ID from the URL
+        const { userId } = req.params;
+
+        // Find only a customer account
+        const user = await User.findOne({
+            _id: userId,
+            role: "user"
+        });
+
+        // Check whether the customer exists
+        if (!user) {
+            return next(new ApiError(404, "Customer not found"));
+        }
+
+        // Check whether the customer is already active
+        if (!user.isBlocked) {
+            return next(new ApiError(400, "Customer is not blocked"));
+        }
+
+        // Unblock the customer
+        user.isBlocked = false;
+
+        // Save the updated customer
+        await user.save();
+
+        // Send the updated customer
+        return sendSuccessResponse(
+            res,
+            200,
+            user,
+            "Customer unblocked successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};

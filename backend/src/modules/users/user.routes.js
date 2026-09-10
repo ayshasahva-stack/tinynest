@@ -4,6 +4,7 @@ import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     getAllUsers,
     blockUser,
+    unblockUser
 } from "./user.controller.js";
 
 const router = express.Router();
@@ -12,5 +13,7 @@ const router = express.Router();
 router.get("/", protect, authorizeAdmin, getAllUsers);
 // Admin: block a customer
 router.patch("/:userId/block",protect,authorizeAdmin,blockUser);
+// Admin: unblock a customer
+router.patch("/:userId/unblock",protect,authorizeAdmin,unblockUser);
 
 export default router;
