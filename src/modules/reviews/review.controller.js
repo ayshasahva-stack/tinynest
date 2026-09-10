@@ -1,0 +1,261 @@
+import mongoose from "mongoose";
+import Review from "./review.model.js";
+import Product from "../products/product.model.js";
+import ApiError from "../../utils/Apierror.js";
+import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { updateProductRating } from "./review.helper.js";
+import {
+    validateReviewProduct,
+    validateReview,
+    validateReviewUpdate
+} from "./review.validation.js";
+
+// Add a review for a product
+export const addReview = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        // Validate the product ID
+        const productIdError = validateReviewProduct(productId);
+
+        if (productIdError) {
+            return next(new ApiError(400, productIdError));
+        }
+
+        // Validate rating and comment
+        const validationError = validateReview(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Make sure the product exists
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        // Check whether this user has already reviewed this product
+        const existingReview = await Review.findOne({
+            user: req.user._id,
+            product: productId
+        });
+
+        if (existingReview) {
+            return next(
+                new ApiError(
+                    400,
+                    "You have already reviewed this product"
+                )
+            );
+        }
+
+        // Create the review
+        const review = await Review.create({
+            user: req.user._id,
+            product: productId,
+            rating: req.body.rating,
+            comment: req.body.comment || ""
+        });
+        // Recalculate the product's average rating
+        await updateProductRating(productId);
+        // Populate user information for the response
+        await review.populate("user", "email");
+
+        return sendSuccessResponse(
+            res,
+            201,
+            review,
+            "Review added successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Get all reviews for a specific product
+export const getProductReviews = async (req, res, next) => {
+    try {
+        const { productId } = req.params;
+
+        // Validate the product ID
+        const productIdError = validateReviewProduct(productId);
+
+        if (productIdError) {
+            return next(new ApiError(400, productIdError));
+        }
+
+        // Make sure the product exists
+        const product = await Product.findById(productId);
+
+        if (!product) {
+            return next(new ApiError(404, "Product not found"));
+        }
+
+        // Find all reviews for this product
+        const reviews = await Review.find({
+            product: productId
+        })
+            .populate("user", "email")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            reviews,
+            "Product reviews fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Update a review belonging to the logged-in user
+export const updateMyReview = async (req, res, next) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Validate the review ID
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(new ApiError(400, "Review ID must be a valid review ID"));
+        }
+
+        // Validate the update data
+        const validationError = validateReviewUpdate(req.body);
+
+        if (validationError) {
+            return next(new ApiError(400, validationError));
+        }
+
+        // Find the review and make sure it belongs to the logged-in user
+        const review = await Review.findOne({
+            _id: reviewId,
+            user: req.user._id
+        });
+
+        if (!review) {
+            return next(new ApiError(404, "Review not found"));
+        }
+
+        // Update only the fields provided by the user
+        if (req.body.rating !== undefined) {
+            review.rating = req.body.rating;
+        }
+
+        if (req.body.comment !== undefined) {
+            review.comment = req.body.comment;
+        }
+
+        await review.save();
+        // Recalculate the product's average rating
+        await updateProductRating(review.product);
+
+        // Include user information in the response
+        await review.populate("user", "email");
+
+        return sendSuccessResponse(
+            res,
+            200,
+            review,
+            "Review updated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Delete a review belonging to the logged-in user
+export const deleteMyReview = async (req, res, next) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Validate the review ID
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(
+                new ApiError(400, "Review ID must be a valid review ID")
+            );
+        }
+
+        // Find the review and make sure it belongs to the logged-in user
+        const review = await Review.findOne({
+            _id: reviewId,
+            user: req.user._id
+        });
+
+        if (!review) {
+            return next(new ApiError(404, "Review not found"));
+        }
+
+        // Delete the review
+        await Review.findByIdAndDelete(reviewId);
+        // Recalculate the product's average rating
+        await updateProductRating(review.product);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Review deleted successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+// Get all reviews for admin management
+export const getAllReviews = async (req, res, next) => {
+    try {
+        // Get all reviews and include basic user and product information
+        const reviews = await Review.find()
+            .populate("user", "email")
+            .populate("product", "title")
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            reviews,
+            "All reviews fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: delete any review
+export const adminDeleteReview = async (req, res, next) => {
+    try {
+        const { reviewId } = req.params;
+
+        // Validate the review ID
+        if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+            return next(
+                new ApiError(400, "Review ID must be a valid review ID")
+            );
+        }
+
+        // Find the review
+        const review = await Review.findById(reviewId);
+
+        if (!review) {
+            return next(new ApiError(404, "Review not found"));
+        }
+
+        // Store the product ID before deleting the review
+        const productId = review.product;
+
+        // Delete the review
+        await Review.findByIdAndDelete(reviewId);
+
+        // Recalculate the product's average rating
+        await updateProductRating(productId);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Review deleted successfully by admin"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
