@@ -108,3 +108,39 @@ export const unblockUser = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: delete a customer
+export const deleteUser = async (req, res, next) => {
+    try {
+        // Get the customer ID from the URL
+        const { userId } = req.params;
+
+        // Find only a customer account
+        // This prevents an admin account from being deleted
+        const user = await User.findOne({
+            _id: userId,
+            role: "user"
+        });
+
+        // Check whether the customer exists
+        if (!user) {
+            return next(new ApiError(404, "Customer not found"));
+        }
+
+        // Delete the customer account
+        await User.deleteOne({
+            _id: userId
+        });
+
+        // Send a success response
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Customer deleted successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};
