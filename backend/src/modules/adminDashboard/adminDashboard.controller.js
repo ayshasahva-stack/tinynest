@@ -108,3 +108,29 @@ export const getDashboardOverview = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: get the most recent orders
+export const getRecentOrders = async (req, res, next) => {
+    try {
+        // Get the latest 5 orders
+        const orders = await Order.find()
+            // Include basic customer information
+            .populate("user", "email phone")
+            // Include product information
+            .populate("items.product")
+            // Show newest orders first
+            .sort({ createdAt: -1 })
+            // Limit the result to 5 orders
+            .limit(5);
+
+        // Send the recent orders
+        return sendSuccessResponse(
+            res,
+            200,
+            orders,
+            "Recent orders fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
