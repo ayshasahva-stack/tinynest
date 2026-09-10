@@ -297,3 +297,38 @@ export const getOrderStatistics = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: get user statistics
+export const getUserStatistics = async (req, res, next) => {
+    try {
+        // Count all users
+        const totalUsers = await User.countDocuments();
+
+        // Count users with the customer role
+        const totalCustomers = await User.countDocuments({
+            role: "user"
+        });
+
+        // Count users with the admin role
+        const totalAdmins = await User.countDocuments({
+            role: "admin"
+        });
+
+        // Prepare the statistics
+        const userStatistics = {
+            totalUsers,
+            totalCustomers,
+            totalAdmins
+        };
+
+        // Send the user statistics
+        return sendSuccessResponse(
+            res,
+            200,
+            userStatistics,
+            "User statistics fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
