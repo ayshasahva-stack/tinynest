@@ -161,6 +161,21 @@ export const updatePaymentStatus = async (req, res, next) => {
         if (!payment) {
             return next(new ApiError(404, "Payment not found"));
         }
+        // A refund is allowed only for successfully paid online payments
+        if (
+            req.body.status === "refunded" &&
+            (
+                payment.paymentMethod !== "online" ||
+                payment.status !== "paid"
+            )
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Only paid online payments can be refunded"
+                )
+            );
+        }
 
         // Find the order connected to this payment
         const order = await Order.findById(payment.order);
@@ -173,12 +188,11 @@ export const updatePaymentStatus = async (req, res, next) => {
         payment.status = req.body.status;
 
         // Update paidAt only when payment is marked as paid
-        if (req.body.status === "paid") {
+        // Set paidAt when the payment is first marked as paid
+        // Keep the original payment time even after a refund or failure
+        if (req.body.status === "paid" && !payment.paidAt) {
             payment.paidAt = new Date();
-        } else {
-            payment.paidAt = null;
         }
-
         await payment.save();
 
         // Keep the order status synchronized with the payment status
