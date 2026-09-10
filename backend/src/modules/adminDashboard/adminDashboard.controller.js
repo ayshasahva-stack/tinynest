@@ -271,3 +271,29 @@ export const getTopSellingProducts = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get order statistics by status
+export const getOrderStatistics = async (req, res, next) => {
+    try {
+        // Count how many orders exist for each status
+        const orderStatistics = await Order.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    count: {
+                        $sum: 1
+                    }
+                }
+            }
+        ]);
+
+        // Send the order statistics
+        return sendSuccessResponse(
+            res,
+            200,
+            orderStatistics,
+            "Order statistics fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

@@ -8,6 +8,7 @@ import {
     getRecentOrders,
     getSalesStatistics,
     getTopSellingProducts,
+    getOrderStatistics,
 
 } from "./adminDashboard.controller.js";
 
@@ -21,5 +22,7 @@ router.get("/recent-orders", protect, authorizeAdmin, getRecentOrders);
 router.get("/sales", protect, authorizeAdmin, getSalesStatistics);
 // Admin: get top-selling products
 router.get("/top-products", protect, authorizeAdmin, getTopSellingProducts);
+// Admin: get order statistics by status
+router.get("/order-statistics", protect, authorizeAdmin, getOrderStatistics);
 
 export default router;
