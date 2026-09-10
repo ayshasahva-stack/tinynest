@@ -11,6 +11,15 @@ export const getDashboardOverview = async (req, res, next) => {
     try {
         // Count all registered users
         const totalUsers = await User.countDocuments();
+        // Count regular customers separately from admin accounts
+        const totalCustomers = await User.countDocuments({
+            role: "user"
+        });
+
+        // Count admin accounts
+        const totalAdmins = await User.countDocuments({
+            role: "admin"
+        });
 
         // Count all products
         const totalProducts = await Product.countDocuments();
@@ -76,6 +85,8 @@ export const getDashboardOverview = async (req, res, next) => {
         // Prepare the dashboard overview data
         const overview = {
             totalUsers,
+            totalCustomers,
+            totalAdmins,
             totalProducts,
             totalOrders,
             totalRevenue,
