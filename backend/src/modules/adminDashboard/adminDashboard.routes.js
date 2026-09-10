@@ -13,7 +13,8 @@ import {
     getRefundStatistics,
     getPaymentStatistics,
     getLowStockProducts,
-    getRecentCustomers
+    getRecentCustomers,
+    getMonthlySales,
 } from "./adminDashboard.controller.js";
 
 const router = express.Router();
@@ -38,5 +39,7 @@ router.get("/payment-statistics", protect, authorizeAdmin, getPaymentStatistics)
 router.get("/low-stock", protect, authorizeAdmin, getLowStockProducts);
 // Admin: get the most recently registered customers
 router.get("/recent-customers", protect, authorizeAdmin, getRecentCustomers);
+// Admin: get monthly sales for the current year
+router.get("/monthly-sales", protect, authorizeAdmin, getMonthlySales);
 
 export default router;

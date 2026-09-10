@@ -447,3 +447,66 @@ export const getRecentCustomers = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get monthly sales for the current year
+export const getMonthlySales = async (req, res, next) => {
+    try {
+        // Get the current year
+        const currentYear = new Date().getFullYear();
+
+        // Group non-cancelled orders by month
+        const monthlySales = await Order.aggregate([
+            {
+                // Ignore cancelled orders
+                $match: {
+                    status: {
+                        $ne: "cancelled"
+                    },
+
+                    // Only include orders from the current year
+                    createdAt: {
+                        $gte: new Date(`${currentYear}-01-01`),
+                        $lt: new Date(`${currentYear + 1}-01-01`)
+                    }
+                }
+            },
+
+            {
+                // Group orders by month
+                $group: {
+                    _id: {
+                        month: {
+                            $month: "$createdAt"
+                        }
+                    },
+
+                    // Add the total amount of all orders in each month
+                    totalSales: {
+                        $sum: "$totalAmount"
+                    },
+
+                    // Count the number of orders in each month
+                    orderCount: {
+                        $sum: 1
+                    }
+                }
+            },
+
+            {
+                // Show January → December
+                $sort: {
+                    "_id.month": 1
+                }
+            }
+        ]);
+
+        // Send the monthly sales data
+        return sendSuccessResponse(
+            res,
+            200,
+            monthlySales,
+            "Monthly sales fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
