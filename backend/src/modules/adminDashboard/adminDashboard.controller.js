@@ -332,3 +332,29 @@ export const getUserStatistics = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get refund statistics by status
+export const getRefundStatistics = async (req, res, next) => {
+    try {
+        // Count refunds grouped by their current status
+        const refundStatistics = await Refund.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    count: {
+                        $sum: 1
+                    }
+                }
+            }
+        ]);
+
+        // Send the refund statistics
+        return sendSuccessResponse(
+            res,
+            200,
+            refundStatistics,
+            "Refund statistics fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

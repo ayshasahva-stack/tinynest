@@ -10,6 +10,7 @@ import {
     getTopSellingProducts,
     getOrderStatistics,
     getUserStatistics,
+    getRefundStatistics,
 } from "./adminDashboard.controller.js";
 
 const router = express.Router();
@@ -26,5 +27,7 @@ router.get("/top-products", protect, authorizeAdmin, getTopSellingProducts);
 router.get("/order-statistics", protect, authorizeAdmin, getOrderStatistics);
 // Admin: get user statistics
 router.get("/user-statistics", protect, authorizeAdmin, getUserStatistics);
+// Admin: get refund statistics by status
+router.get("/refund-statistics", protect, authorizeAdmin, getRefundStatistics);
 
 export default router;
