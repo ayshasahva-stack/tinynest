@@ -358,29 +358,40 @@ export const completeRefund = async (req, res, next) => {
     }
 };
 // Create a refund record for a cancelled paid online order
-export const createOrderCancellationRefund = async (order, payment) => {
+// Create a refund record for a cancelled paid online order
+export const createOrderCancellationRefund = async (
+    order,
+    payment,
+    session
+) => {
     // Check whether a refund already exists for this order
     const existingRefund = await Refund.findOne({
         order: order._id
-    });
+    }).session(session);
 
     // Return the existing refund instead of creating a duplicate
     if (existingRefund) {
         return existingRefund;
     }
 
-    // Create the refund record
-    const refund = await Refund.create({
-        order: order._id,
-        user: order.user,
-        refundType: "order_cancelled",
-        payment: payment._id,
-        reason: "Order cancelled after online payment",
-        amount: order.totalAmount,
-        status: "requested"
-    });
+    // Create the refund record inside the transaction
+    const refund = await Refund.create(
+        [
+            {
+                order: order._id,
+                user: order.user,
+                refundType: "order_cancelled",
+                payment: payment._id,
+                reason: "Order cancelled after online payment",
+                amount: order.totalAmount,
+                status: "requested"
+            }
+        ],
+        { session }
+    );
 
-    return refund;
+    // Refund.create() with an array returns an array
+    return refund[0];
 };
 // Create a refund automatically for a cancelled paid online order
 export const createCancellationRefund = async (req, res, next) => {

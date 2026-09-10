@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
 import Payment from "../payments/payment.model.js";
@@ -181,19 +182,25 @@ export const getMyOrderById = async (req, res, next) => {
 // Cancel an order belonging to the logged-in user
 // Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
+    // Start a MongoDB session for the transaction
+    const session = await mongoose.startSession();
+
     try {
         // Get the order ID from the URL
         const { orderId } = req.params;
+
+        // Start the transaction
+        session.startTransaction();
 
         // Find only the order belonging to the logged-in user
         const order = await Order.findOne({
             _id: orderId,
             user: req.user._id
-        });
+        }).session(session);
 
         // Make sure the order exists
         if (!order) {
-            return next(new ApiError(404, "Order not found"));
+            throw new ApiError(404, "Order not found");
         }
 
         // Only pending and confirmed orders can be cancelled
@@ -201,11 +208,9 @@ export const cancelMyOrder = async (req, res, next) => {
             order.status !== "pending" &&
             order.status !== "confirmed"
         ) {
-            return next(
-                new ApiError(
-                    400,
-                    "This order cannot be cancelled"
-                )
+            throw new ApiError(
+                400,
+                "This order cannot be cancelled"
             );
         }
 
@@ -217,21 +222,22 @@ export const cancelMyOrder = async (req, res, next) => {
                     $inc: {
                         stock: item.quantity
                     }
-                }
+                },
+                { session }
             );
         }
 
         // Change the order status to cancelled
         order.status = "cancelled";
 
-        // Save the cancelled order
-        await order.save();
+        // Save the cancelled order inside the transaction
+        await order.save({ session });
 
         // Find the payment associated with this order
         const payment = await Payment.findOne({
             order: order._id,
             user: req.user._id
-        });
+        }).session(session);
 
         // Create an automatic refund only for paid online orders
         if (
@@ -241,19 +247,29 @@ export const cancelMyOrder = async (req, res, next) => {
         ) {
             await createOrderCancellationRefund(
                 order,
-                payment
+                payment,
+                session
             );
         }
 
+        // Commit all database changes together
+        await session.commitTransaction();
+
         // Return the cancelled order
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             order,
             "Order cancelled successfully"
         );
     } catch (error) {
+        // Undo all database changes if anything failed
+        await session.abortTransaction();
+
         next(error);
+    } finally {
+        // Always close the MongoDB session
+        session.endSession();
     }
 };
 // Get all orders for the admin
