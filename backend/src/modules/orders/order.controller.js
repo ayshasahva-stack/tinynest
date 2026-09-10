@@ -313,6 +313,15 @@ export const updateOrderStatus = async (req, res, next) => {
             "delivered",
             "cancelled"
         ];
+        // Define which status changes are allowed
+        const allowedTransitions = {
+            pending: ["confirmed", "cancelled"],
+            confirmed: ["processing", "cancelled"],
+            processing: ["shipped"],
+            shipped: ["delivered"],
+            delivered: [],
+            cancelled: []
+        };
 
         // Make sure a status was provided
         if (!status) {
@@ -343,6 +352,15 @@ export const updateOrderStatus = async (req, res, next) => {
                 new ApiError(
                     400,
                     "Cancelled orders cannot be updated"
+                )
+            );
+        }
+        // Check whether the requested status change is allowed
+        if (!allowedTransitions[order.status].includes(status)) {
+            return next(
+                new ApiError(
+                    400,
+                    `Cannot change order status from ${order.status} to ${status}`
                 )
             );
         }
