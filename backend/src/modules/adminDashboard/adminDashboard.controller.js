@@ -399,3 +399,26 @@ export const getPaymentStatistics = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get products with low stock
+export const getLowStockProducts = async (req, res, next) => {
+    try {
+        // Find products with stock of 5 or less
+        const lowStockProducts = await Product.find({
+            stock: { $lte: 5 }
+        })
+            // Show products with the lowest stock first
+            .sort({ stock: 1 })
+            // Return only the fields needed by the dashboard
+            .select("title stock price images");
+
+        // Send the low-stock products
+        return sendSuccessResponse(
+            res,
+            200,
+            lowStockProducts,
+            "Low stock products fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

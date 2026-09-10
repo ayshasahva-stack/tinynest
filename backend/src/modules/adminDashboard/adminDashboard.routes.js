@@ -12,6 +12,7 @@ import {
     getUserStatistics,
     getRefundStatistics,
     getPaymentStatistics,
+    getLowStockProducts,
 } from "./adminDashboard.controller.js";
 
 const router = express.Router();
@@ -32,5 +33,7 @@ router.get("/user-statistics", protect, authorizeAdmin, getUserStatistics);
 router.get("/refund-statistics", protect, authorizeAdmin, getRefundStatistics);
 // Admin: get payment statistics by payment method
 router.get("/payment-statistics", protect, authorizeAdmin, getPaymentStatistics);
+// Admin: get products with low stock
+router.get("/low-stock",protect,authorizeAdmin,getLowStockProducts);
 
 export default router;
