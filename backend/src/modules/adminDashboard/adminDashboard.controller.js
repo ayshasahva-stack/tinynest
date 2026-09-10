@@ -134,3 +134,76 @@ export const getRecentOrders = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: get daily sales for the current month
+export const getSalesStatistics = async (req, res, next) => {
+    try {
+        // Get the current date
+        const now = new Date();
+
+        // Start of the current month
+        const startOfMonth = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            1
+        );
+
+        // Start of the next month
+        const startOfNextMonth = new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            1
+        );
+
+        // Find completed/active orders and group their revenue by day
+        const sales = await Order.aggregate([
+            {
+                $match: {
+                    createdAt: {
+                        $gte: startOfMonth,
+                        $lt: startOfNextMonth
+                    },
+                    status: {
+                        $in: [
+                            "confirmed",
+                            "processing",
+                            "shipped",
+                            "delivered"
+                        ]
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: "$createdAt"
+                        }
+                    },
+                    totalSales: {
+                        $sum: "$totalAmount"
+                    },
+                    orderCount: {
+                        $sum: 1
+                    }
+                }
+            },
+            {
+                $sort: {
+                    _id: 1
+                }
+            }
+        ]);
+
+        // Send the daily sales statistics
+        return sendSuccessResponse(
+            res,
+            200,
+            sales,
+            "Sales statistics fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};

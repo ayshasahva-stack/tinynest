@@ -6,6 +6,7 @@ import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     getDashboardOverview,
     getRecentOrders,
+    getSalesStatistics,
 
 } from "./adminDashboard.controller.js";
 
@@ -15,5 +16,7 @@ const router = express.Router();
 router.get("/overview", protect, authorizeAdmin, getDashboardOverview);
 // Admin: get the most recent orders
 router.get("/recent-orders", protect, authorizeAdmin, getRecentOrders);
+// Admin: get daily sales for the current month
+router.get("/sales",protect,authorizeAdmin,getSalesStatistics);
 
 export default router;
