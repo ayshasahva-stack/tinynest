@@ -2,6 +2,7 @@ import User from "../auth/auth.model.js";
 import Product from "../products/product.model.js";
 import Order from "../orders/order.model.js";
 import Refund from "../refund/refund.model.js";
+import Payment from "../payments/payment.model.js"
 
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
@@ -353,6 +354,46 @@ export const getRefundStatistics = async (req, res, next) => {
             200,
             refundStatistics,
             "Refund statistics fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: get payment statistics by payment method
+export const getPaymentStatistics = async (req, res, next) => {
+    try {
+        // Group only successfully paid payments
+        const paymentStatistics = await Payment.aggregate([
+            {
+                $match: {
+                    status: "paid"
+                }
+            },
+
+            // Group payments by their payment method
+            {
+                $group: {
+                    _id: "$paymentMethod",
+
+                    // Count how many successful payments used each method
+                    paymentCount: {
+                        $sum: 1
+                    },
+
+                    // Calculate the total amount collected
+                    totalAmount: {
+                        $sum: "$amount"
+                    }
+                }
+            }
+        ]);
+
+        // Send the payment statistics
+        return sendSuccessResponse(
+            res,
+            200,
+            paymentStatistics,
+            "Payment statistics fetched successfully"
         );
     } catch (error) {
         next(error);

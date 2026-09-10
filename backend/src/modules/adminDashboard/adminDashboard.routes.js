@@ -11,6 +11,7 @@ import {
     getOrderStatistics,
     getUserStatistics,
     getRefundStatistics,
+    getPaymentStatistics,
 } from "./adminDashboard.controller.js";
 
 const router = express.Router();
@@ -29,5 +30,7 @@ router.get("/order-statistics", protect, authorizeAdmin, getOrderStatistics);
 router.get("/user-statistics", protect, authorizeAdmin, getUserStatistics);
 // Admin: get refund statistics by status
 router.get("/refund-statistics", protect, authorizeAdmin, getRefundStatistics);
+// Admin: get payment statistics by payment method
+router.get("/payment-statistics", protect, authorizeAdmin, getPaymentStatistics);
 
 export default router;
