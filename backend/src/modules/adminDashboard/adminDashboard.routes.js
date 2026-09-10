@@ -13,6 +13,7 @@ import {
     getRefundStatistics,
     getPaymentStatistics,
     getLowStockProducts,
+    getRecentCustomers
 } from "./adminDashboard.controller.js";
 
 const router = express.Router();
@@ -34,6 +35,8 @@ router.get("/refund-statistics", protect, authorizeAdmin, getRefundStatistics);
 // Admin: get payment statistics by payment method
 router.get("/payment-statistics", protect, authorizeAdmin, getPaymentStatistics);
 // Admin: get products with low stock
-router.get("/low-stock",protect,authorizeAdmin,getLowStockProducts);
+router.get("/low-stock", protect, authorizeAdmin, getLowStockProducts);
+// Admin: get the most recently registered customers
+router.get("/recent-customers", protect, authorizeAdmin, getRecentCustomers);
 
 export default router;

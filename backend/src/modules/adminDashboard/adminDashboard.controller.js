@@ -422,3 +422,28 @@ export const getLowStockProducts = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get the most recently registered customers
+export const getRecentCustomers = async (req, res, next) => {
+    try {
+        // Find only customers, not admin accounts
+        const recentCustomers = await User.find({
+            role: "user"
+        })
+            // Newest customers first
+            .sort({ createdAt: -1 })
+            // Return only the required customer information
+            .select("email phone isVerified createdAt")
+            // Return the latest 5 customers
+            .limit(5);
+
+        // Send the recent customers
+        return sendSuccessResponse(
+            res,
+            200,
+            recentCustomers,
+            "Recent customers fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
