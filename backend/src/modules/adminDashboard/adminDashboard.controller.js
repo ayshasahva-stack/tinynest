@@ -207,3 +207,67 @@ export const getSalesStatistics = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: get the top-selling products
+export const getTopSellingProducts = async (req, res, next) => {
+    try {
+        // Find orders that are not cancelled
+        const topProducts = await Order.aggregate([
+            {
+                $match: {
+                    status: {
+                        $ne: "cancelled"
+                    }
+                }
+            },
+
+            // Convert each order item into a separate document
+            {
+                $unwind: "$items"
+            },
+
+            // Group items by product
+            {
+                $group: {
+                    _id: "$items.product",
+
+                    // Add all quantities sold for each product
+                    totalSold: {
+                        $sum: "$items.quantity"
+                    },
+
+                    // Keep the product title
+                    title: {
+                        $first: "$items.title"
+                    },
+
+                    // Keep the product image
+                    image: {
+                        $first: "$items.image"
+                    }
+                }
+            },
+
+            // Highest-selling products first
+            {
+                $sort: {
+                    totalSold: -1
+                }
+            },
+
+            // Return only the top 5
+            {
+                $limit: 5
+            }
+        ]);
+
+        // Send the result
+        return sendSuccessResponse(
+            res,
+            200,
+            topProducts,
+            "Top selling products fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
