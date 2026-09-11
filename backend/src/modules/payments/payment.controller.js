@@ -137,7 +137,11 @@ export const getAllPayments = async (req, res, next) => {
 };
 
 // Admin: update payment status and synchronize the related order
+// Admin: update payment status and synchronize the related order
 export const updatePaymentStatus = async (req, res, next) => {
+    // Start a MongoDB session for the transaction
+    const session = await mongoose.startSession();
+
     try {
         const { paymentId } = req.params;
 
@@ -155,11 +159,17 @@ export const updatePaymentStatus = async (req, res, next) => {
             return next(new ApiError(400, validationError));
         }
 
-        // Find the payment
-        const payment = await Payment.findById(paymentId);
+        // Get the requested new status
+        const newStatus = req.body.status;
+
+        // Start the transaction
+        session.startTransaction();
+
+        // Find the payment inside the transaction
+        const payment = await Payment.findById(paymentId).session(session);
 
         if (!payment) {
-            return next(new ApiError(404, "Payment not found"));
+            throw new ApiError(404, "Payment not found");
         }
 
         // Define which payment status changes are allowed
@@ -170,16 +180,11 @@ export const updatePaymentStatus = async (req, res, next) => {
             refunded: []
         };
 
-        // Get the requested new status
-        const newStatus = req.body.status;
-
         // Check whether the requested status change is allowed
         if (!allowedTransitions[payment.status].includes(newStatus)) {
-            return next(
-                new ApiError(
-                    400,
-                    `Cannot change payment status from ${payment.status} to ${newStatus}`
-                )
+            throw new ApiError(
+                400,
+                `Cannot change payment status from ${payment.status} to ${newStatus}`
             );
         }
 
@@ -191,19 +196,17 @@ export const updatePaymentStatus = async (req, res, next) => {
                 payment.status !== "paid"
             )
         ) {
-            return next(
-                new ApiError(
-                    400,
-                    "Only paid online payments can be refunded"
-                )
+            throw new ApiError(
+                400,
+                "Only paid online payments can be refunded"
             );
         }
 
-        // Find the order connected to this payment
-        const order = await Order.findById(payment.order);
+        // Find the related order inside the same transaction
+        const order = await Order.findById(payment.order).session(session);
 
         if (!order) {
-            return next(new ApiError(404, "Related order not found"));
+            throw new ApiError(404, "Related order not found");
         }
 
         // Update the payment status
@@ -215,8 +218,8 @@ export const updatePaymentStatus = async (req, res, next) => {
             payment.paidAt = new Date();
         }
 
-        // Save the updated payment
-        await payment.save();
+        // Save the payment inside the transaction
+        await payment.save({ session });
 
         // Keep the order status synchronized with the payment
         if (newStatus === "paid") {
@@ -225,8 +228,11 @@ export const updatePaymentStatus = async (req, res, next) => {
             order.status = "cancelled";
         }
 
-        // Save the updated order
-        await order.save();
+        // Save the order inside the same transaction
+        await order.save({ session });
+
+        // Commit both changes together
+        await session.commitTransaction();
 
         // Return both updated records
         return sendSuccessResponse(
@@ -239,6 +245,12 @@ export const updatePaymentStatus = async (req, res, next) => {
             "Payment and order status updated successfully"
         );
     } catch (error) {
+        // Undo all changes if anything failed
+        await session.abortTransaction();
+
         next(error);
+    } finally {
+        // Always close the MongoDB session
+        session.endSession();
     }
 };
