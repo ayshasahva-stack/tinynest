@@ -19,7 +19,7 @@ router.get("/", getActiveCoupons);
 // Admin: get all coupons
 router.get("/admin", protect, authorizeAdmin, getAllCoupons);
 // Apply and calculate a coupon
-router.post("/apply", applyCoupon);
+router.post("/apply",protect, applyCoupon);
 // Admin: update coupon
 router.patch("/:couponId", protect, authorizeAdmin, updateCoupon);
 // Admin: deactivate coupon

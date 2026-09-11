@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Coupon from "./coupon.model.js";
+import Cart from "../cart/cart.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import {
@@ -222,17 +223,40 @@ export const deactivateCoupon = async (req, res, next) => {
 // Apply and calculate a coupon discount
 export const applyCoupon = async (req, res, next) => {
     try {
-        // Validate request data
+        // Validate the coupon code sent by the user
         const validationError = validateApplyCoupon(req.body);
 
         if (validationError) {
             return next(new ApiError(400, validationError));
         }
 
-        const { code, subtotal } = req.body;
+        // Get only the coupon code from the request
+        const { code } = req.body;
 
         // Normalize the coupon code
         const normalizedCode = code.trim().toUpperCase();
+
+        // Find the logged-in user's cart
+        const cart = await Cart.findOne({
+            user: req.user._id
+        }).populate("items.product items.kit");
+
+        if (!cart || cart.items.length === 0) {
+            return next(new ApiError(400, "Cart is empty"));
+        }
+
+        // Calculate the real subtotal from the cart
+        let subtotal = 0;
+
+        for (const item of cart.items) {
+            if (item.itemType === "product") {
+                subtotal += item.product.price * item.quantity;
+            }
+
+            if (item.itemType === "kit") {
+                subtotal += item.kit.price * item.quantity;
+            }
+        }
 
         // Find the coupon
         const coupon = await Coupon.findOne({
@@ -315,6 +339,7 @@ export const applyCoupon = async (req, res, next) => {
                 couponId: coupon._id,
                 code: coupon.code,
                 discountType: coupon.discountType,
+                subtotal,
                 discount,
                 finalSubtotal
             },

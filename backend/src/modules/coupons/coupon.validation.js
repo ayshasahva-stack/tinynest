@@ -213,27 +213,23 @@ export const validateCouponUpdate = (body) => {
 };
 
 // Validate data required to apply a coupon
-export const validateApplyCoupon = (body) => {
-    const { code, subtotal } = body;
+export const validateApplyCoupon = (data) => {
+    // Get the coupon code from the request
+    const { code } = data;
 
-    // Coupon code is required
-    if (!code || typeof code !== "string" || code.trim() === "") {
+    // Make sure a coupon code was provided
+    if (!code) {
         return "Coupon code is required";
     }
 
-    // Subtotal is required
-    if (
-        subtotal === undefined ||
-        subtotal === null ||
-        typeof subtotal !== "number"
-    ) {
-        return "Subtotal must be a number";
+    // Make sure the coupon code is a string
+    if (typeof code !== "string") {
+        return "Coupon code must be a string";
     }
 
-    // Subtotal cannot be negative
-    if (subtotal < 0) {
-        return "Subtotal cannot be negative";
-    }
+    // No subtotal is accepted from the client.
+    // The backend will calculate the real subtotal
+    // from the user's cart.
 
     return null;
 };
