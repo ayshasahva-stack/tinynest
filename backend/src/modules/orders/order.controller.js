@@ -629,19 +629,29 @@ export const cancelMyOrder = async (req, res, next) => {
     }
 };
 // Get all orders for the admin
+// Get all orders - Admin only
 export const getAllOrders = async (req, res, next) => {
     try {
         // Get all orders from the database
         const orders = await Order.find()
             // Include basic user information
             .populate("user", "email phone")
-            // Include product information for each order item
-            .populate("items.product")
+
+            // Populate both product and kit details
+            .populate([
+                {
+                    path: "items.product"
+                },
+                {
+                    path: "items.kit"
+                }
+            ])
+
             // Show newest orders first
             .sort({ createdAt: -1 });
 
         // Send all orders to the admin
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             orders,
