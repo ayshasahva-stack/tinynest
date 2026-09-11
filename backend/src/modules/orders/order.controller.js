@@ -380,32 +380,31 @@ export const getMyOrders = async (req, res, next) => {
 // Get one order belonging to the logged-in user
 export const getMyOrderById = async (req, res, next) => {
     try {
-        // Get the order ID from the URL
         const { orderId } = req.params;
 
-        // Find the order and make sure it belongs to
-        // the authenticated user.
+        // Check whether the order ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return next(
+                new ApiError(
+                    400,
+                    "Order ID must be a valid order ID"
+                )
+            );
+        }
+
+        // Find the order belonging to the logged-in user
         const order = await Order.findOne({
             _id: orderId,
             user: req.user._id
-        }).populate([
-            // Populate product details for product items
-            {
-                path: "items.product"
-            },
+        })
+            .populate("items.product")
+            .populate("items.kit");
 
-            // Populate kit details for kit items
-            {
-                path: "items.kit"
-            }
-        ]);
-
-        // If the order doesn't exist or belongs to another user
+        // Make sure the order exists
         if (!order) {
             return next(new ApiError(404, "Order not found"));
         }
 
-        // Send the order details
         return sendSuccessResponse(
             res,
             200,
@@ -416,7 +415,6 @@ export const getMyOrderById = async (req, res, next) => {
         next(error);
     }
 };
-// Cancel an order belonging to the logged-in user
 // Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
     // Start a MongoDB session for the transaction
@@ -481,7 +479,7 @@ export const cancelMyOrder = async (req, res, next) => {
                 stockRestorations.set(
                     productId,
                     (stockRestorations.get(productId) || 0) +
-                        item.quantity
+                    item.quantity
                 );
 
                 continue;
@@ -538,7 +536,7 @@ export const cancelMyOrder = async (req, res, next) => {
                     stockRestorations.set(
                         productId,
                         (stockRestorations.get(productId) || 0) +
-                            restoreQuantity
+                        restoreQuantity
                     );
                 }
 
