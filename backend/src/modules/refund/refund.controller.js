@@ -466,6 +466,17 @@ export const createOrderCancellationRefund = async (
     payment,
     session
 ) => {
+    // Make sure the payment is valid for an automatic cancellation refund
+    if (
+        !payment ||
+        payment.paymentMethod !== "online" ||
+        payment.status !== "paid"
+    ) {
+        throw new ApiError(
+            400,
+            "Only paid online payments can receive an automatic cancellation refund"
+        );
+    }
     // Check whether a refund already exists for this order
     const existingRefund = await Refund.findOne({
         order: order._id
