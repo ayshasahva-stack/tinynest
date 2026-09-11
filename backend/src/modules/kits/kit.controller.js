@@ -19,7 +19,7 @@ export const createKit = async (req, res, next) => {
             isActive
         } = req.body;
 
-        // Validate the request data
+        // Validate the request data first
         const validationError = validateKit(req.body);
 
         if (validationError) {
@@ -40,6 +40,24 @@ export const createKit = async (req, res, next) => {
                 new ApiError(
                     400,
                     "Name, description, image, items and price are required"
+                )
+            );
+        }
+
+        // Normalize the kit name
+        // This makes duplicate checking case-insensitive
+        const normalizedName = name.trim().toLowerCase();
+
+        // Check whether a kit with the same name already exists
+        const existingKit = await Kit.findOne({
+            name: normalizedName
+        });
+
+        if (existingKit) {
+            return next(
+                new ApiError(
+                    400,
+                    "Kit with this name already exists"
                 )
             );
         }
@@ -90,19 +108,24 @@ export const createKit = async (req, res, next) => {
             );
         }
 
-        // Make sure all products are active
         // Product model currently does not have an isActive field,
-        // so this check will be added when product availability
-        // is implemented separately.
+        // so we do not check product active status here.
 
         // Create the kit
         const kit = await Kit.create({
-            name: name.trim(),
+            // Save the normalized name
+            name: normalizedName,
+
+            // Save the remaining kit information
             description: description.trim(),
             image: image.trim(),
             items,
             price,
+
+            // Use 0 when discount is not provided
             discount: discount ?? 0,
+
+            // Make the kit active by default
             isActive: isActive ?? true
         });
 
