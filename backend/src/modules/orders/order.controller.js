@@ -98,7 +98,7 @@ export const createOrder = async (req, res, next) => {
                 stockRequirements.set(
                     productId,
                     (stockRequirements.get(productId) || 0) +
-                        cartItem.quantity
+                    cartItem.quantity
                 );
 
                 // Calculate this item's total
@@ -196,7 +196,7 @@ export const createOrder = async (req, res, next) => {
                     stockRequirements.set(
                         productId,
                         (stockRequirements.get(productId) || 0) +
-                            requiredQuantity
+                        requiredQuantity
                     );
                 }
 
@@ -377,16 +377,28 @@ export const getMyOrders = async (req, res, next) => {
 };
 
 // Get one order belonging to the logged-in user
+// Get one order belonging to the logged-in user
 export const getMyOrderById = async (req, res, next) => {
     try {
         // Get the order ID from the URL
         const { orderId } = req.params;
 
-        // Find the order and make sure it belongs to the logged-in user
+        // Find the order and make sure it belongs to
+        // the authenticated user.
         const order = await Order.findOne({
             _id: orderId,
             user: req.user._id
-        }).populate("items.product");
+        }).populate([
+            // Populate product details for product items
+            {
+                path: "items.product"
+            },
+
+            // Populate kit details for kit items
+            {
+                path: "items.kit"
+            }
+        ]);
 
         // If the order doesn't exist or belongs to another user
         if (!order) {
@@ -394,7 +406,7 @@ export const getMyOrderById = async (req, res, next) => {
         }
 
         // Send the order details
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             order,
