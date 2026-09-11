@@ -617,6 +617,7 @@ export const removeFromCart = async (req, res, next) => {
     }
 };
 // Remove all products from the user's cart
+// Clear all products and kits from the cart
 export const clearCart = async (req, res, next) => {
     try {
         // Find the logged-in user's cart
@@ -637,19 +638,21 @@ export const clearCart = async (req, res, next) => {
         }
 
         // Remove all items from the cart
+        // This removes both products and kits
         cart.items = [];
 
         // Save the updated cart
         await cart.save();
 
         // Return the empty cart
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             cart,
             "Cart cleared successfully"
         );
     } catch (error) {
+        // Pass unexpected errors to the global error handler
         next(error);
     }
 };
