@@ -141,3 +141,31 @@ export const createKit = async (req, res, next) => {
         next(error);
     }
 };
+// Get all active kits for customers
+export const getKits = async (req, res, next) => {
+    try {
+        // Find only kits that are currently active
+        const kits = await Kit.find({
+            isActive: true
+        })
+            // Get the actual product information
+            // instead of returning only product IDs
+            .populate(
+                "items.product",
+                "title price images brand description"
+            )
+            // Show newest kits first
+            .sort({ createdAt: -1 });
+
+        // Send the active kits
+        return sendSuccessResponse(
+            res,
+            200,
+            kits,
+            "Kits fetched successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};
