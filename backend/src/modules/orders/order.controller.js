@@ -343,19 +343,29 @@ export const createOrder = async (req, res, next) => {
     }
 };
 // Get all orders belonging to the logged-in user
+// Get all orders belonging to the logged-in user
 export const getMyOrders = async (req, res, next) => {
     try {
         // Find only the orders created by the authenticated user
         const orders = await Order.find({
             user: req.user._id
         })
-            // Include product details in each order item
-            .populate("items.product")
+            // Populate both product and kit details
+            // Product items use items.product
+            // Kit items use items.kit
+            .populate([
+                {
+                    path: "items.product"
+                },
+                {
+                    path: "items.kit"
+                }
+            ])
             // Show newest orders first
             .sort({ createdAt: -1 });
 
         // Send the user's orders
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             orders,
