@@ -14,8 +14,8 @@ const router = express.Router();
 router.post("/", protect, addToCart);
 // Get the logged-in user's cart
 router.get("/", protect, getMyCart);
-// Update the quantity of a product in the cart
-router.put("/:productId", protect, updateCartQuantity);
+// Update the quantity of a product or kit
+router.patch("/:itemType/:itemId", protect, updateCartQuantity);
 // Remove a product from the cart
 router.delete("/:productId", protect, removeFromCart);
 // Remove all products from the cart
