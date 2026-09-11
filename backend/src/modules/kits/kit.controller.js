@@ -210,3 +210,151 @@ export const getKitById = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: update an existing kit
+export const updateKit = async (req, res, next) => {
+    try {
+        // Get the kit ID from the URL
+        const { kitId } = req.params;
+
+        // Check whether the kit ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(kitId)) {
+            return next(
+                new ApiError(400, "Invalid kit ID")
+            );
+        }
+
+        // Validate the fields provided in the request
+        const validationError = validateKit(req.body);
+
+        if (validationError) {
+            return next(
+                new ApiError(400, validationError)
+            );
+        }
+
+        // Find the existing kit
+        const kit = await Kit.findById(kitId);
+
+        // If the kit does not exist
+        if (!kit) {
+            return next(
+                new ApiError(404, "Kit not found")
+            );
+        }
+
+        // If the name is being updated
+        if (req.body.name !== undefined) {
+            // Normalize the new name
+            const normalizedName = req.body.name.trim().toLowerCase();
+
+            // Check whether another kit already has this name
+            const existingKit = await Kit.findOne({
+                name: normalizedName,
+                _id: { $ne: kitId }
+            });
+
+            if (existingKit) {
+                return next(
+                    new ApiError(
+                        400,
+                        "Kit with this name already exists"
+                    )
+                );
+            }
+
+            // Update the kit name
+            kit.name = normalizedName;
+        }
+
+        // Update description if provided
+        if (req.body.description !== undefined) {
+            kit.description = req.body.description.trim();
+        }
+
+        // Update image if provided
+        if (req.body.image !== undefined) {
+            kit.image = req.body.image.trim();
+        }
+
+        // Update price if provided
+        if (req.body.price !== undefined) {
+            kit.price = req.body.price;
+        }
+
+        // Update discount if provided
+        if (req.body.discount !== undefined) {
+            kit.discount = req.body.discount;
+        }
+
+        // Update active status if provided
+        if (req.body.isActive !== undefined) {
+            kit.isActive = req.body.isActive;
+        }
+
+        // If items are being updated
+        if (req.body.items !== undefined) {
+            // Store product IDs in a Set
+            const productIds = new Set();
+
+            // Validate every product ID
+            for (const item of req.body.items) {
+                // Check whether the product ID is valid
+                if (!mongoose.Types.ObjectId.isValid(item.product)) {
+                    return next(
+                        new ApiError(
+                            400,
+                            "Invalid product ID in kit items"
+                        )
+                    );
+                }
+
+                // Prevent the same product from being added twice
+                if (productIds.has(item.product.toString())) {
+                    return next(
+                        new ApiError(
+                            400,
+                            "A product cannot be added to the kit more than once"
+                        )
+                    );
+                }
+
+                // Store the product ID
+                productIds.add(item.product.toString());
+            }
+
+            // Find all products
+            const products = await Product.find({
+                _id: {
+                    $in: [...productIds]
+                }
+            });
+
+            // Make sure every product exists
+            if (products.length !== productIds.size) {
+                return next(
+                    new ApiError(
+                        404,
+                        "One or more products in the kit were not found"
+                    )
+                );
+            }
+
+            // Update the kit items
+            kit.items = req.body.items;
+        }
+
+        // Save all changes to MongoDB
+        const updatedKit = await kit.save();
+
+        // Return the updated kit
+        return sendSuccessResponse(
+            res,
+            200,
+            updatedKit,
+            "Kit updated successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};

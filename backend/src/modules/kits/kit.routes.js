@@ -5,6 +5,7 @@ import {
     createKit,
     getKits,
     getKitById,
+    updateKit,
 } from "./kit.controller.js";
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.post("/", protect, authorizeAdmin, createKit);
 router.get("/", getKits);
 // Public: get one active kit by ID
 router.get("/:kitId", getKitById);
+// Admin: update an existing kit
+router.patch("/:kitId", protect, authorizeAdmin, updateKit);
 
 export default router;
