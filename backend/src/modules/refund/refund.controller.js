@@ -153,6 +153,7 @@ export const getAllRefunds = async (req, res, next) => {
 };
 
 // Admin: approve or reject a refund request
+// Admin: approve or reject a refund request
 export const updateRefundStatus = async (req, res, next) => {
     try {
         const { refundId } = req.params;
@@ -177,7 +178,9 @@ export const updateRefundStatus = async (req, res, next) => {
         const refund = await Refund.findById(refundId);
 
         if (!refund) {
-            return next(new ApiError(404, "Refund request not found"));
+            return next(
+                new ApiError(404, "Refund request not found")
+            );
         }
 
         // Only a requested refund can be approved or rejected
@@ -186,6 +189,29 @@ export const updateRefundStatus = async (req, res, next) => {
                 new ApiError(
                     400,
                     "Only requested refunds can be approved or rejected"
+                )
+            );
+        }
+
+        // Find the payment connected to this refund
+        const payment = await Payment.findById(refund.payment);
+
+        // Make sure the related payment exists
+        if (!payment) {
+            return next(
+                new ApiError(404, "Related payment not found")
+            );
+        }
+
+        // Refunds are allowed only for paid online payments
+        if (
+            payment.paymentMethod !== "online" ||
+            payment.status !== "paid"
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Only paid online payments can be refunded"
                 )
             );
         }
@@ -229,8 +255,7 @@ export const updateRefundStatus = async (req, res, next) => {
         next(error);
     }
 };
-
-// Admin: move an approved refund into processing
+// admin move an approved refund into processing
 export const processRefund = async (req, res, next) => {
     try {
         const { refundId } = req.params;
