@@ -10,26 +10,37 @@ import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
 
 // Create an order using the logged-in user's cart
+// Create an order using the logged-in user's cart
 export const createOrder = async (req, res, next) => {
+    // Start a MongoDB session for the order transaction
+    const session = await mongoose.startSession();
+
     try {
         // Get the shipping address sent by the client
         const { shippingAddress } = req.body;
 
-        // Validate the shipping address
-        const validationError = validateShippingAddress(shippingAddress);
+        // Validate the shipping address before starting database work
+        const validationError =
+            validateShippingAddress(shippingAddress);
 
         if (validationError) {
-            return next(new ApiError(400, validationError));
+            return next(
+                new ApiError(400, validationError)
+            );
         }
 
+        // Start the MongoDB transaction
+        session.startTransaction();
+
         // Find the cart belonging to the logged-in user
+        // inside the transaction.
         const cart = await Cart.findOne({
             user: req.user._id
-        });
+        }).session(session);
 
         // Make sure the cart exists and contains items
         if (!cart || cart.items.length === 0) {
-            return next(new ApiError(400, "Cart is empty"));
+            throw new ApiError(400, "Cart is empty");
         }
 
         // Store the final order items
@@ -39,19 +50,20 @@ export const createOrder = async (req, res, next) => {
         let subtotal = 0;
 
         // Store the total stock required for each product.
-        // This is important when the same product is present
-        // directly and also inside a kit.
+        // This handles products that appear directly
+        // and also inside kits.
         const stockRequirements = new Map();
 
         // Store product documents so we don't repeatedly
-        // query the same product from MongoDB.
+        // query the same product.
         const productMap = new Map();
 
         // Process every item in the cart
         for (const cartItem of cart.items) {
             // Support old cart items that don't have itemType.
             // Old cart items are treated as products.
-            const itemType = cartItem.itemType || "product";
+            const itemType =
+                cartItem.itemType || "product";
 
             // ------------------------------------------------
             // PRODUCT CART ITEM
@@ -59,41 +71,43 @@ export const createOrder = async (req, res, next) => {
             if (itemType === "product") {
                 // Make sure the product reference exists
                 if (!cartItem.product) {
-                    return next(
-                        new ApiError(
-                            400,
-                            "Product reference is missing from cart"
-                        )
+                    throw new ApiError(
+                        400,
+                        "Product reference is missing from cart"
                     );
                 }
 
-                // Get the product from the database
+                // Get the product from our local map first
                 let product = productMap.get(
                     cartItem.product.toString()
                 );
 
-                // If we haven't loaded this product yet, get it
-                // from MongoDB.
+                // If the product hasn't been loaded yet,
+                // get it from MongoDB inside the transaction.
                 if (!product) {
-                    product = await Product.findById(cartItem.product);
+                    product = await Product.findById(
+                        cartItem.product
+                    ).session(session);
 
                     // Make sure the product still exists
                     if (!product) {
-                        return next(
-                            new ApiError(
-                                404,
-                                "One of the products no longer exists"
-                            )
+                        throw new ApiError(
+                            404,
+                            "One of the products no longer exists"
                         );
                     }
 
-                    // Store the product so it can be reused
-                    productMap.set(product._id.toString(), product);
+                    // Store the product for reuse
+                    productMap.set(
+                        product._id.toString(),
+                        product
+                    );
                 }
 
-                // Add this product's quantity to the total
-                // stock requirement.
-                const productId = product._id.toString();
+                // Calculate the total stock required
+                // for this product.
+                const productId =
+                    product._id.toString();
 
                 stockRequirements.set(
                     productId,
@@ -108,7 +122,8 @@ export const createOrder = async (req, res, next) => {
                 // Add it to the subtotal
                 subtotal += itemTotal;
 
-                // Store a snapshot of the product information
+                // Store a snapshot of product information
+                // inside the order.
                 orderItems.push({
                     itemType: "product",
                     product: product._id,
@@ -128,36 +143,33 @@ export const createOrder = async (req, res, next) => {
             if (itemType === "kit") {
                 // Make sure the kit reference exists
                 if (!cartItem.kit) {
-                    return next(
-                        new ApiError(
-                            400,
-                            "Kit reference is missing from cart"
-                        )
+                    throw new ApiError(
+                        400,
+                        "Kit reference is missing from cart"
                     );
                 }
 
-                // Get the kit and populate the products inside it
+                // Get the kit and populate its products
+                // inside the transaction.
                 const kit = await Kit.findById(
                     cartItem.kit
-                ).populate("items.product");
+                )
+                    .populate("items.product")
+                    .session(session);
 
                 // Make sure the kit still exists
                 if (!kit) {
-                    return next(
-                        new ApiError(
-                            404,
-                            "One of the kits no longer exists"
-                        )
+                    throw new ApiError(
+                        404,
+                        "One of the kits no longer exists"
                     );
                 }
 
                 // Don't allow inactive kits to be ordered
                 if (!kit.isActive) {
-                    return next(
-                        new ApiError(
-                            400,
-                            `${kit.name} is no longer available`
-                        )
+                    throw new ApiError(
+                        400,
+                        `${kit.name} is no longer available`
                     );
                 }
 
@@ -165,17 +177,15 @@ export const createOrder = async (req, res, next) => {
                 // still exists.
                 for (const kitItem of kit.items) {
                     if (!kitItem.product) {
-                        return next(
-                            new ApiError(
-                                404,
-                                `A product inside ${kit.name} no longer exists`
-                            )
+                        throw new ApiError(
+                            404,
+                            `A product inside ${kit.name} no longer exists`
                         );
                     }
 
                     const product = kitItem.product;
 
-                    // Store the product for later stock validation
+                    // Store the product for later stock handling
                     productMap.set(
                         product._id.toString(),
                         product
@@ -186,7 +196,8 @@ export const createOrder = async (req, res, next) => {
                     // Customer buys 3 Kits
                     // Required stock = 2 × 3 = 6
                     const requiredQuantity =
-                        kitItem.quantity * cartItem.quantity;
+                        kitItem.quantity *
+                        cartItem.quantity;
 
                     const productId =
                         product._id.toString();
@@ -208,6 +219,7 @@ export const createOrder = async (req, res, next) => {
                 subtotal += itemTotal;
 
                 // Store a snapshot of the kit information
+                // inside the order.
                 orderItems.push({
                     itemType: "kit",
                     product: null,
@@ -222,11 +234,9 @@ export const createOrder = async (req, res, next) => {
             }
 
             // Reject an unexpected cart item type
-            return next(
-                new ApiError(
-                    400,
-                    "Cart contains an invalid item type"
-                )
+            throw new ApiError(
+                400,
+                "Cart contains an invalid item type"
             );
         }
 
@@ -234,37 +244,33 @@ export const createOrder = async (req, res, next) => {
         // CHECK ALL REQUIRED STOCK
         // ------------------------------------------------
 
-        // Check stock after processing the entire cart.
-        // This allows us to correctly handle a product that
-        // appears both directly and inside a kit.
+        // Check the stock that was available when
+        // the products were read.
         for (const [
             productId,
             requiredQuantity
         ] of stockRequirements) {
-            const product = productMap.get(productId);
+            const product =
+                productMap.get(productId);
 
             // Make sure the product still exists
             if (!product) {
-                return next(
-                    new ApiError(
-                        404,
-                        "One of the required products no longer exists"
-                    )
+                throw new ApiError(
+                    404,
+                    "One of the required products no longer exists"
                 );
             }
 
-            // Make sure enough stock is available
+            // Make sure enough stock was available
             if (product.stock < requiredQuantity) {
-                return next(
-                    new ApiError(
-                        400,
-                        `Not enough stock for ${product.title}`
-                    )
+                throw new ApiError(
+                    400,
+                    `Not enough stock for ${product.title}`
                 );
             }
         }
 
-        // Coupon functionality will be added later
+        // Coupon functionality will be integrated separately.
         const discount = 0;
 
         // Orders of ₹1000 or more get free shipping
@@ -279,17 +285,27 @@ export const createOrder = async (req, res, next) => {
         // CREATE ORDER
         // ------------------------------------------------
 
-        const order = await Order.create({
-            user: req.user._id,
-            items: orderItems,
-            shippingAddress,
-            subtotal,
-            discount,
-            shippingFee,
-            totalAmount,
-            coupon: null,
-            status: "pending"
-        });
+        // Create the order inside the transaction.
+        // Order.create expects an array when options such
+        // as the MongoDB session are provided.
+        const createdOrders = await Order.create(
+            [
+                {
+                    user: req.user._id,
+                    items: orderItems,
+                    shippingAddress,
+                    subtotal,
+                    discount,
+                    shippingFee,
+                    totalAmount,
+                    coupon: null,
+                    status: "pending"
+                }
+            ],
+            { session }
+        );
+
+        const order = createdOrders[0];
 
         // ------------------------------------------------
         // REDUCE PRODUCT STOCK
@@ -301,27 +317,56 @@ export const createOrder = async (req, res, next) => {
             productId,
             requiredQuantity
         ] of stockRequirements) {
-            await Product.findByIdAndUpdate(
-                productId,
-                {
-                    $inc: {
-                        stock: -requiredQuantity
-                    }
-                }
-            );
+            // Atomically reduce stock only when enough
+            // stock is still available.
+            const stockUpdate =
+                await Product.updateOne(
+                    {
+                        _id: productId,
+                        stock: {
+                            $gte: requiredQuantity
+                        }
+                    },
+                    {
+                        $inc: {
+                            stock: -requiredQuantity
+                        }
+                    },
+                    { session }
+                );
+
+            // If no document was modified, stock changed
+            // after our earlier check.
+            if (stockUpdate.modifiedCount !== 1) {
+                const product =
+                    productMap.get(productId);
+
+                throw new ApiError(
+                    400,
+                    `Not enough stock for ${product.title}`
+                );
+            }
         }
 
         // ------------------------------------------------
         // CLEAR CART
         // ------------------------------------------------
 
-        // The order was successfully created,
-        // so remove all cart items.
+        // Clear the cart inside the same transaction.
         cart.items = [];
-        await cart.save();
 
-        // Populate both product and kit references
-        // in the order response.
+        await cart.save({ session });
+
+        // ------------------------------------------------
+        // COMMIT TRANSACTION
+        // ------------------------------------------------
+
+        // All order, stock and cart changes are now
+        // permanently committed together.
+        await session.commitTransaction();
+
+        // Populate product and kit references after
+        // the transaction has successfully committed.
         await order.populate([
             {
                 path: "items.product"
@@ -339,7 +384,14 @@ export const createOrder = async (req, res, next) => {
             "Order created successfully"
         );
     } catch (error) {
+        // Roll back every database change made
+        // during this transaction.
+        await session.abortTransaction();
+
         next(error);
+    } finally {
+        // Close the MongoDB session.
+        session.endSession();
     }
 };
 // Get all orders belonging to the logged-in user
