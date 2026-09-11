@@ -358,3 +358,69 @@ export const updateKit = async (req, res, next) => {
         next(error);
     }
 };
+// Admin: activate or deactivate a kit
+export const updateKitStatus = async (req, res, next) => {
+    try {
+        // Get the kit ID from the URL
+        const { kitId } = req.params;
+
+        // Check whether the kit ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(kitId)) {
+            return next(
+                new ApiError(400, "Invalid kit ID")
+            );
+        }
+
+        // Get the new active status from the request body
+        const { isActive } = req.body;
+
+        // Make sure isActive was provided
+        if (isActive === undefined) {
+            return next(
+                new ApiError(
+                    400,
+                    "isActive is required"
+                )
+            );
+        }
+
+        // Make sure isActive is actually a boolean
+        if (typeof isActive !== "boolean") {
+            return next(
+                new ApiError(
+                    400,
+                    "isActive must be a boolean"
+                )
+            );
+        }
+
+        // Find the kit
+        const kit = await Kit.findById(kitId);
+
+        // If the kit does not exist
+        if (!kit) {
+            return next(
+                new ApiError(404, "Kit not found")
+            );
+        }
+
+        // Update the active status
+        kit.isActive = isActive;
+
+        // Save the change
+        const updatedKit = await kit.save();
+
+        // Return the updated kit
+        return sendSuccessResponse(
+            res,
+            200,
+            updatedKit,
+            isActive
+                ? "Kit activated successfully"
+                : "Kit deactivated successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};
