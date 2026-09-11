@@ -256,6 +256,7 @@ export const updateRefundStatus = async (req, res, next) => {
     }
 };
 // admin move an approved refund into processing
+// Admin: move an approved refund into processing
 export const processRefund = async (req, res, next) => {
     try {
         const { refundId } = req.params;
@@ -263,7 +264,10 @@ export const processRefund = async (req, res, next) => {
         // Check whether the refund ID is a valid MongoDB ObjectId
         if (!mongoose.Types.ObjectId.isValid(refundId)) {
             return next(
-                new ApiError(400, "Refund ID must be a valid refund ID")
+                new ApiError(
+                    400,
+                    "Refund ID must be a valid refund ID"
+                )
             );
         }
 
@@ -272,7 +276,10 @@ export const processRefund = async (req, res, next) => {
 
         if (!refund) {
             return next(
-                new ApiError(404, "Refund request not found")
+                new ApiError(
+                    404,
+                    "Refund request not found"
+                )
             );
         }
 
@@ -282,6 +289,32 @@ export const processRefund = async (req, res, next) => {
                 new ApiError(
                     400,
                     "Only approved refunds can be processed"
+                )
+            );
+        }
+
+        // Find the payment connected to this refund
+        const payment = await Payment.findById(refund.payment);
+
+        // Make sure the related payment exists
+        if (!payment) {
+            return next(
+                new ApiError(
+                    404,
+                    "Related payment not found"
+                )
+            );
+        }
+
+        // Only paid online payments can be processed for a refund
+        if (
+            payment.paymentMethod !== "online" ||
+            payment.status !== "paid"
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Only paid online payments can be processed for a refund"
                 )
             );
         }
@@ -318,8 +351,7 @@ export const processRefund = async (req, res, next) => {
     }
 };
 // Admin: complete a refund that is being processed
-// Admin: complete a refund that is currently being processed
-export const completeRefund = async (req, res, next) => {
+    export const completeRefund = async (req, res, next) => {
     // Start a MongoDB session for the transaction
     const session = await mongoose.startSession();
 
