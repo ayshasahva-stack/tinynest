@@ -4,6 +4,7 @@ import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     createKit,
     getKits,
+    getKitById,
 } from "./kit.controller.js";
 
 const router = express.Router();
@@ -12,4 +13,7 @@ const router = express.Router();
 router.post("/", protect, authorizeAdmin, createKit);
 // Public: get all active kits
 router.get("/", getKits);
+// Public: get one active kit by ID
+router.get("/:kitId", getKitById);
+
 export default router;

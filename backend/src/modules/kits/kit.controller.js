@@ -169,3 +169,44 @@ export const getKits = async (req, res, next) => {
         next(error);
     }
 };
+// Get one active kit by ID
+export const getKitById = async (req, res, next) => {
+    try {
+        // Get the kit ID from the URL
+        const { kitId } = req.params;
+
+        // Check whether the ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(kitId)) {
+            return next(
+                new ApiError(400, "Invalid kit ID")
+            );
+        }
+
+        // Find the kit only if it exists and is active
+        const kit = await Kit.findOne({
+            _id: kitId,
+            isActive: true
+        }).populate(
+            "items.product",
+            "title price images brand description"
+        );
+
+        // If no active kit was found
+        if (!kit) {
+            return next(
+                new ApiError(404, "Kit not found")
+            );
+        }
+
+        // Return the kit
+        return sendSuccessResponse(
+            res,
+            200,
+            kit,
+            "Kit fetched successfully"
+        );
+    } catch (error) {
+        // Pass unexpected errors to the global error handler
+        next(error);
+    }
+};
