@@ -417,6 +417,7 @@ export const getMyOrderById = async (req, res, next) => {
     }
 };
 // Cancel an order belonging to the logged-in user
+// Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
     // Start a MongoDB session for the transaction
     const session = await mongoose.startSession();
@@ -450,13 +451,121 @@ export const cancelMyOrder = async (req, res, next) => {
             );
         }
 
-        // Restore the ordered quantity back to product stock
+        // Store the total quantity that needs to be
+        // restored for each product.
+        //
+        // Example:
+        // Direct product = 1
+        // Kit contains product × 2
+        // Total restoration = 3
+        const stockRestorations = new Map();
+
+        // Process every item in the order
         for (const item of order.items) {
+            // ------------------------------------------------
+            // PRODUCT ORDER ITEM
+            // ------------------------------------------------
+            if (item.itemType === "product") {
+                // Make sure the product reference exists
+                if (!item.product) {
+                    throw new ApiError(
+                        400,
+                        "Product reference is missing from order"
+                    );
+                }
+
+                const productId = item.product.toString();
+
+                // Add the ordered quantity to the restoration
+                // requirement.
+                stockRestorations.set(
+                    productId,
+                    (stockRestorations.get(productId) || 0) +
+                        item.quantity
+                );
+
+                continue;
+            }
+
+            // ------------------------------------------------
+            // KIT ORDER ITEM
+            // ------------------------------------------------
+            if (item.itemType === "kit") {
+                // Make sure the kit reference exists
+                if (!item.kit) {
+                    throw new ApiError(
+                        400,
+                        "Kit reference is missing from order"
+                    );
+                }
+
+                // Get the original kit and its products
+                const kit = await Kit.findById(
+                    item.kit
+                ).session(session);
+
+                // The kit must still exist because we need
+                // to know which products were inside it.
+                if (!kit) {
+                    throw new ApiError(
+                        404,
+                        "Kit not found while restoring stock"
+                    );
+                }
+
+                // Calculate the product quantities that were
+                // consumed by this kit order.
+                for (const kitItem of kit.items) {
+                    if (!kitItem.product) {
+                        throw new ApiError(
+                            404,
+                            "Product not found inside kit while restoring stock"
+                        );
+                    }
+
+                    // Example:
+                    // Kit contains 2 Rompers
+                    // Customer ordered 3 Kits
+                    // Restore = 2 × 3 = 6 Rompers
+                    const restoreQuantity =
+                        kitItem.quantity * item.quantity;
+
+                    const productId =
+                        kitItem.product.toString();
+
+                    // Add this quantity to any existing
+                    // restoration requirement.
+                    stockRestorations.set(
+                        productId,
+                        (stockRestorations.get(productId) || 0) +
+                            restoreQuantity
+                    );
+                }
+
+                continue;
+            }
+
+            // Reject unexpected order item types
+            throw new ApiError(
+                400,
+                "Order contains an invalid item type"
+            );
+        }
+
+        // ------------------------------------------------
+        // RESTORE PRODUCT STOCK
+        // ------------------------------------------------
+
+        // Restore each product only once.
+        for (const [
+            productId,
+            restoreQuantity
+        ] of stockRestorations) {
             const product = await Product.findByIdAndUpdate(
-                item.product,
+                productId,
                 {
                     $inc: {
-                        stock: item.quantity
+                        stock: restoreQuantity
                     }
                 },
                 {
