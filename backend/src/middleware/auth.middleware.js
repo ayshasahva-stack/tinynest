@@ -32,6 +32,11 @@ const protect = async (req, res, next) => {
             return next(new ApiError(401, "User not found"));
         }
 
+        // Check whether the user's account has been blocked
+        if (user.isBlocked) {
+            return next(new ApiError(403, "User account is blocked"));
+        }
+
         /* Attach the logged-in user to the request,
         Controllers can access it using req.user*/
         req.user = user;
