@@ -423,6 +423,15 @@ export const cancelMyOrder = async (req, res, next) => {
     try {
         // Get the order ID from the URL
         const { orderId } = req.params;
+        // Check whether the order ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return next(
+                new ApiError(
+                    400,
+                    "Order ID must be a valid order ID"
+                )
+            );
+        }
 
         // Start the transaction
         session.startTransaction();
