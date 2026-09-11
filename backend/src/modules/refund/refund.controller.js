@@ -351,7 +351,7 @@ export const processRefund = async (req, res, next) => {
     }
 };
 // Admin: complete a refund that is being processed
-    export const completeRefund = async (req, res, next) => {
+export const completeRefund = async (req, res, next) => {
     // Start a MongoDB session for the transaction
     const session = await mongoose.startSession();
 
@@ -402,10 +402,14 @@ export const processRefund = async (req, res, next) => {
         }
 
         // The payment must still be paid before it can be refunded
-        if (payment.status !== "paid") {
+        // Refunds are only allowed for paid online payments
+        if (
+            payment.paymentMethod !== "online" ||
+            payment.status !== "paid"
+        ) {
             throw new ApiError(
                 400,
-                "Only paid payments can be refunded"
+                "Only paid online payments can be refunded"
             );
         }
 
