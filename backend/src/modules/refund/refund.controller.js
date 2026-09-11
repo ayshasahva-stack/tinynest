@@ -293,45 +293,80 @@ export const processRefund = async (req, res, next) => {
     }
 };
 // Admin: complete a refund that is being processed
+// Admin: complete a refund that is currently being processed
 export const completeRefund = async (req, res, next) => {
+    // Start a MongoDB session for the transaction
+    const session = await mongoose.startSession();
+
     try {
         const { refundId } = req.params;
 
         // Check whether the refund ID is a valid MongoDB ObjectId
         if (!mongoose.Types.ObjectId.isValid(refundId)) {
             return next(
-                new ApiError(400, "Refund ID must be a valid refund ID")
-            );
-        }
-
-        // Find the refund
-        const refund = await Refund.findById(refundId);
-
-        if (!refund) {
-            return next(
-                new ApiError(404, "Refund request not found")
-            );
-        }
-
-        // Only refunds that are currently processing can be completed
-        if (refund.status !== "processing") {
-            return next(
                 new ApiError(
                     400,
-                    "Only processing refunds can be completed"
+                    "Refund ID must be a valid refund ID"
                 )
+            );
+        }
+
+        // Start the transaction
+        session.startTransaction();
+
+        // Find the refund inside the transaction
+        const refund = await Refund.findById(refundId).session(session);
+
+        // Check whether the refund exists
+        if (!refund) {
+            throw new ApiError(
+                404,
+                "Refund request not found"
+            );
+        }
+
+        // Only processing refunds can be completed
+        if (refund.status !== "processing") {
+            throw new ApiError(
+                400,
+                "Only processing refunds can be completed"
+            );
+        }
+
+        // Find the payment connected to this refund
+        const payment = await Payment.findById(refund.payment).session(session);
+
+        // Make sure the related payment exists
+        if (!payment) {
+            throw new ApiError(
+                404,
+                "Related payment not found"
+            );
+        }
+
+        // The payment must still be paid before it can be refunded
+        if (payment.status !== "paid") {
+            throw new ApiError(
+                400,
+                "Only paid payments can be refunded"
             );
         }
 
         // Mark the refund as completed
         refund.status = "completed";
-
-        // Record when the refund was completed
         refund.processedAt = new Date();
 
-        await refund.save();
+        // Mark the payment as refunded
+        payment.status = "refunded";
 
-        // Include related information in the response
+        // Save both documents inside the same transaction
+        await refund.save({ session });
+        await payment.save({ session });
+
+        // Commit both changes together
+        await session.commitTransaction();
+
+        // Populate related information after the transaction succeeds
         await refund.populate([
             {
                 path: "order",
@@ -354,7 +389,13 @@ export const completeRefund = async (req, res, next) => {
             "Refund completed successfully"
         );
     } catch (error) {
+        // Roll back all changes if anything fails
+        await session.abortTransaction();
+
         next(error);
+    } finally {
+        // Always close the MongoDB session
+        session.endSession();
     }
 };
 // Create a refund record for a cancelled paid online order
