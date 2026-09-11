@@ -16,8 +16,8 @@ router.post("/", protect, addToCart);
 router.get("/", protect, getMyCart);
 // Update the quantity of a product or kit
 router.patch("/:itemType/:itemId", protect, updateCartQuantity);
-// Remove a product from the cart
-router.delete("/:productId", protect, removeFromCart);
+// Remove a product or kit from the cart
+router.delete("/:itemType/:itemId", protect, removeFromCart);
 // Remove all products from the cart
 router.delete("/", protect, clearCart);
 

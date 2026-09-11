@@ -511,13 +511,27 @@ export const updateCartQuantity = async (req, res, next) => {
     }
 };
 // Remove a product from the user's cart
+// Remove a product or kit from the cart
 export const removeFromCart = async (req, res, next) => {
     try {
-        const { productId } = req.params;
+        // Get the item type and ID from the URL
+        const { itemType, itemId } = req.params;
 
-        // Validate the product ID from the URL
-        if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return next(new ApiError(400, "Invalid product ID"));
+        // Make sure the item type is valid
+        if (!["product", "kit"].includes(itemType)) {
+            return next(
+                new ApiError(
+                    400,
+                    "Item type must be either product or kit"
+                )
+            );
+        }
+
+        // Validate the item ID
+        if (!mongoose.Types.ObjectId.isValid(itemId)) {
+            return next(
+                new ApiError(400, "Invalid item ID")
+            );
         }
 
         // Find the logged-in user's cart
@@ -526,40 +540,79 @@ export const removeFromCart = async (req, res, next) => {
         });
 
         if (!cart) {
-            return next(new ApiError(404, "Cart not found"));
-        }
-
-        // Check whether the product exists in the cart
-        const itemExists = cart.items.some(
-            (item) =>
-                item.product.toString() === productId
-        );
-
-        if (!itemExists) {
             return next(
-                new ApiError(404, "Product not found in cart")
+                new ApiError(404, "Cart not found")
             );
         }
 
-        // Remove the product from the cart
-        cart.items = cart.items.filter(
-            (item) =>
-                item.product.toString() !== productId
-        );
+        // Check whether the requested item exists in the cart
+        const itemExists = cart.items.some((item) => {
+            if (itemType === "product") {
+                return (
+                    item.itemType === "product" &&
+                    item.product &&
+                    item.product.toString() === itemId
+                );
+            }
+
+            return (
+                item.itemType === "kit" &&
+                item.kit &&
+                item.kit.toString() === itemId
+            );
+        });
+
+        // If the item is not in the cart
+        if (!itemExists) {
+            return next(
+                new ApiError(
+                    404,
+                    `${itemType === "kit" ? "Kit" : "Product"} not found in cart`
+                )
+            );
+        }
+
+        // Remove the requested item
+        cart.items = cart.items.filter((item) => {
+            if (itemType === "product") {
+                return !(
+                    item.itemType === "product" &&
+                    item.product &&
+                    item.product.toString() === itemId
+                );
+            }
+
+            return !(
+                item.itemType === "kit" &&
+                item.kit &&
+                item.kit.toString() === itemId
+            );
+        });
 
         // Save the updated cart
         await cart.save();
 
-        // Populate product information for the response
-        await cart.populate("items.product");
+        // Populate both product and kit information
+        await cart.populate([
+            {
+                path: "items.product"
+            },
+            {
+                path: "items.kit"
+            }
+        ]);
 
-        sendSuccessResponse(
+        // Return the updated cart
+        return sendSuccessResponse(
             res,
             200,
             cart,
-            "Product removed from cart successfully"
+            itemType === "kit"
+                ? "Kit removed from cart successfully"
+                : "Product removed from cart successfully"
         );
     } catch (error) {
+        // Pass unexpected errors to the global error handler
         next(error);
     }
 };
