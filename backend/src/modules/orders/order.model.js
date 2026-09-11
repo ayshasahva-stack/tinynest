@@ -1,39 +1,56 @@
 import mongoose from "mongoose";
 
-// Schema for each product inside an order.
-// We store a snapshot of important product information
-// so the order remains accurate even if the product changes later.
+// Schema for each product or kit inside an order.
+// We store a snapshot of important information
+// so the order remains accurate even if the item changes later.
 const orderItemSchema = new mongoose.Schema(
     {
+        // Tells us whether this order item is a product or a kit
+        itemType: {
+            type: String,
+            enum: ["product", "kit"],
+            required: true,
+            default: "product"
+        },
+
         // Reference to the original product
+        // This is null when the order item is a kit
         product: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Product",
-            required: true
+            default: null
         },
 
-        // Product name at the time the order was placed
+        // Reference to the original kit
+        // This is null when the order item is a product
+        kit: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Kit",
+            default: null
+        },
+
+        // Product or kit name at the time the order was placed
         title: {
             type: String,
             required: true,
             trim: true
         },
 
-        // Product price at the time the order was placed
+        // Product or kit price at the time the order was placed
         price: {
             type: Number,
             required: true,
             min: 0
         },
 
-        // Number of units purchased
+        // Number of products or kits purchased
         quantity: {
             type: Number,
             required: true,
             min: 1
         },
 
-        // Product image at the time the order was placed
+        // Product or kit image at the time the order was placed
         image: {
             type: String,
             required: true,
@@ -45,7 +62,6 @@ const orderItemSchema = new mongoose.Schema(
         _id: false
     }
 );
-
 // Shipping address snapshot.
 // We copy the address into the order instead of referencing
 // the user's Address document.

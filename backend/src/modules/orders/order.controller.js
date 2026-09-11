@@ -3,6 +3,7 @@ import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
 import Payment from "../payments/payment.model.js";
 import Product from "../products/product.model.js";
+import Kit from "../kits/kit.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { createOrderCancellationRefund } from "../refund/refund.controller.js";
@@ -26,7 +27,7 @@ export const createOrder = async (req, res, next) => {
             user: req.user._id
         });
 
-        // Make sure the cart exists and contains products
+        // Make sure the cart exists and contains items
         if (!cart || cart.items.length === 0) {
             return next(new ApiError(400, "Cart is empty"));
         }
@@ -37,20 +38,223 @@ export const createOrder = async (req, res, next) => {
         // Start calculating the subtotal
         let subtotal = 0;
 
-        // Process every item in the user's cart
+        // Store the total stock required for each product.
+        // This is important when the same product is present
+        // directly and also inside a kit.
+        const stockRequirements = new Map();
+
+        // Store product documents so we don't repeatedly
+        // query the same product from MongoDB.
+        const productMap = new Map();
+
+        // Process every item in the cart
         for (const cartItem of cart.items) {
-            // Get the current product from the database
-            const product = await Product.findById(cartItem.product);
+            // Support old cart items that don't have itemType.
+            // Old cart items are treated as products.
+            const itemType = cartItem.itemType || "product";
+
+            // ------------------------------------------------
+            // PRODUCT CART ITEM
+            // ------------------------------------------------
+            if (itemType === "product") {
+                // Make sure the product reference exists
+                if (!cartItem.product) {
+                    return next(
+                        new ApiError(
+                            400,
+                            "Product reference is missing from cart"
+                        )
+                    );
+                }
+
+                // Get the product from the database
+                let product = productMap.get(
+                    cartItem.product.toString()
+                );
+
+                // If we haven't loaded this product yet, get it
+                // from MongoDB.
+                if (!product) {
+                    product = await Product.findById(cartItem.product);
+
+                    // Make sure the product still exists
+                    if (!product) {
+                        return next(
+                            new ApiError(
+                                404,
+                                "One of the products no longer exists"
+                            )
+                        );
+                    }
+
+                    // Store the product so it can be reused
+                    productMap.set(product._id.toString(), product);
+                }
+
+                // Add this product's quantity to the total
+                // stock requirement.
+                const productId = product._id.toString();
+
+                stockRequirements.set(
+                    productId,
+                    (stockRequirements.get(productId) || 0) +
+                        cartItem.quantity
+                );
+
+                // Calculate this item's total
+                const itemTotal =
+                    product.price * cartItem.quantity;
+
+                // Add it to the subtotal
+                subtotal += itemTotal;
+
+                // Store a snapshot of the product information
+                orderItems.push({
+                    itemType: "product",
+                    product: product._id,
+                    kit: null,
+                    title: product.title,
+                    price: product.price,
+                    quantity: cartItem.quantity,
+                    image: product.images[0]
+                });
+
+                continue;
+            }
+
+            // ------------------------------------------------
+            // KIT CART ITEM
+            // ------------------------------------------------
+            if (itemType === "kit") {
+                // Make sure the kit reference exists
+                if (!cartItem.kit) {
+                    return next(
+                        new ApiError(
+                            400,
+                            "Kit reference is missing from cart"
+                        )
+                    );
+                }
+
+                // Get the kit and populate the products inside it
+                const kit = await Kit.findById(
+                    cartItem.kit
+                ).populate("items.product");
+
+                // Make sure the kit still exists
+                if (!kit) {
+                    return next(
+                        new ApiError(
+                            404,
+                            "One of the kits no longer exists"
+                        )
+                    );
+                }
+
+                // Don't allow inactive kits to be ordered
+                if (!kit.isActive) {
+                    return next(
+                        new ApiError(
+                            400,
+                            `${kit.name} is no longer available`
+                        )
+                    );
+                }
+
+                // Make sure every product inside the kit
+                // still exists.
+                for (const kitItem of kit.items) {
+                    if (!kitItem.product) {
+                        return next(
+                            new ApiError(
+                                404,
+                                `A product inside ${kit.name} no longer exists`
+                            )
+                        );
+                    }
+
+                    const product = kitItem.product;
+
+                    // Store the product for later stock validation
+                    productMap.set(
+                        product._id.toString(),
+                        product
+                    );
+
+                    // Example:
+                    // Kit contains 2 Rompers
+                    // Customer buys 3 Kits
+                    // Required stock = 2 × 3 = 6
+                    const requiredQuantity =
+                        kitItem.quantity * cartItem.quantity;
+
+                    const productId =
+                        product._id.toString();
+
+                    // Add this requirement to any existing
+                    // requirement for the same product.
+                    stockRequirements.set(
+                        productId,
+                        (stockRequirements.get(productId) || 0) +
+                            requiredQuantity
+                    );
+                }
+
+                // Calculate the kit total
+                const itemTotal =
+                    kit.price * cartItem.quantity;
+
+                // Add it to the subtotal
+                subtotal += itemTotal;
+
+                // Store a snapshot of the kit information
+                orderItems.push({
+                    itemType: "kit",
+                    product: null,
+                    kit: kit._id,
+                    title: kit.name,
+                    price: kit.price,
+                    quantity: cartItem.quantity,
+                    image: kit.image
+                });
+
+                continue;
+            }
+
+            // Reject an unexpected cart item type
+            return next(
+                new ApiError(
+                    400,
+                    "Cart contains an invalid item type"
+                )
+            );
+        }
+
+        // ------------------------------------------------
+        // CHECK ALL REQUIRED STOCK
+        // ------------------------------------------------
+
+        // Check stock after processing the entire cart.
+        // This allows us to correctly handle a product that
+        // appears both directly and inside a kit.
+        for (const [
+            productId,
+            requiredQuantity
+        ] of stockRequirements) {
+            const product = productMap.get(productId);
 
             // Make sure the product still exists
             if (!product) {
                 return next(
-                    new ApiError(404, "One of the products no longer exists")
+                    new ApiError(
+                        404,
+                        "One of the required products no longer exists"
+                    )
                 );
             }
 
             // Make sure enough stock is available
-            if (product.stock < cartItem.quantity) {
+            if (product.stock < requiredQuantity) {
                 return next(
                     new ApiError(
                         400,
@@ -58,33 +262,23 @@ export const createOrder = async (req, res, next) => {
                     )
                 );
             }
-
-            // Calculate this item's total
-            const itemTotal = product.price * cartItem.quantity;
-
-            // Add it to the subtotal
-            subtotal += itemTotal;
-
-            // Store a snapshot of the product information
-            orderItems.push({
-                product: product._id,
-                title: product.title,
-                price: product.price,
-                quantity: cartItem.quantity,
-                image: product.images[0]
-            });
         }
 
         // Coupon functionality will be added later
         const discount = 0;
 
         // Orders of ₹1000 or more get free shipping
-        const shippingFee = subtotal >= 1000 ? 0 : 50;
+        const shippingFee =
+            subtotal >= 1000 ? 0 : 50;
 
         // Calculate the final amount
-        const totalAmount = subtotal - discount + shippingFee;
+        const totalAmount =
+            subtotal - discount + shippingFee;
 
-        // Create the order
+        // ------------------------------------------------
+        // CREATE ORDER
+        // ------------------------------------------------
+
         const order = await Order.create({
             user: req.user._id,
             items: orderItems,
@@ -97,27 +291,48 @@ export const createOrder = async (req, res, next) => {
             status: "pending"
         });
 
-        // Reduce stock after creating the order
-        for (const cartItem of cart.items) {
+        // ------------------------------------------------
+        // REDUCE PRODUCT STOCK
+        // ------------------------------------------------
+
+        // Reduce each product only once using the
+        // aggregated stock requirement.
+        for (const [
+            productId,
+            requiredQuantity
+        ] of stockRequirements) {
             await Product.findByIdAndUpdate(
-                cartItem.product,
+                productId,
                 {
                     $inc: {
-                        stock: -cartItem.quantity
+                        stock: -requiredQuantity
                     }
                 }
             );
         }
 
-        // Clear the cart after successful order creation
+        // ------------------------------------------------
+        // CLEAR CART
+        // ------------------------------------------------
+
+        // The order was successfully created,
+        // so remove all cart items.
         cart.items = [];
         await cart.save();
 
-        // Populate product details in the response
-        await order.populate("items.product");
+        // Populate both product and kit references
+        // in the order response.
+        await order.populate([
+            {
+                path: "items.product"
+            },
+            {
+                path: "items.kit"
+            }
+        ]);
 
         // Send the created order
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             201,
             order,
