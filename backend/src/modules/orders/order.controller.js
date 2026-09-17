@@ -231,6 +231,16 @@ export const createOrder = async (req, res, next) => {
                 // Add it to the subtotal
                 subtotal += itemTotal;
 
+                // Store a snapshot of every product inside the kit
+                // at the time the order is created.
+                const kitItems = kit.items.map((kitItem) => ({
+                    product: kitItem.product._id,
+                    title: kitItem.product.title,
+                    price: kitItem.product.price,
+                    quantity: kitItem.quantity,
+                    image: kitItem.product.images[0]
+                }));
+
                 // Store a snapshot of the kit information
                 // inside the order.
                 orderItems.push({
@@ -240,7 +250,11 @@ export const createOrder = async (req, res, next) => {
                     title: kit.name,
                     price: kit.price,
                     quantity: cartItem.quantity,
-                    image: kit.image
+                    image: kit.image,
+
+                    // Save the kit's products as they existed
+                    // when the customer placed the order.
+                    kitItems
                 });
 
                 continue;
@@ -737,40 +751,35 @@ export const cancelMyOrder = async (req, res, next) => {
             // KIT ORDER ITEM
             // ------------------------------------------------
             if (item.itemType === "kit") {
-                // Make sure the kit reference exists
-                if (!item.kit) {
+                // Make sure the kit snapshot exists.
+                // New orders should always have kitItems because
+                // createOrder saves the kit contents at checkout.
+                if (!item.kitItems || item.kitItems.length === 0) {
                     throw new ApiError(
                         400,
-                        "Kit reference is missing from order"
+                        "Kit snapshot is missing from order"
                     );
                 }
 
-                // Get the original kit and its products
-                const kit = await Kit.findById(
-                    item.kit
-                ).session(session);
-
-                // The kit must still exist because we need
-                // to know which products were inside it.
-                if (!kit) {
-                    throw new ApiError(
-                        404,
-                        "Kit not found while restoring stock"
-                    );
-                }
-
-                // Calculate the product quantities that were
-                // consumed by this kit order.
-                for (const kitItem of kit.items) {
+                // Use the products stored in the order snapshot
+                // instead of reading the current Kit document.
+                //
+                // This is important because the kit may have been
+                // edited after the customer placed the order.
+                for (const kitItem of item.kitItems) {
+                    // Make sure the snapshot contains a product
                     if (!kitItem.product) {
                         throw new ApiError(
                             404,
-                            "Product not found inside kit while restoring stock"
+                            "Product reference is missing from kit snapshot"
                         );
                     }
 
+                    // Calculate how many units of this product
+                    // need to be restored.
+                    //
                     // Example:
-                    // Kit contains 2 Rompers
+                    // Kit snapshot contains 2 Rompers
                     // Customer ordered 3 Kits
                     // Restore = 2 × 3 = 6 Rompers
                     const restoreQuantity =
@@ -779,8 +788,8 @@ export const cancelMyOrder = async (req, res, next) => {
                     const productId =
                         kitItem.product.toString();
 
-                    // Add this quantity to any existing
-                    // restoration requirement.
+                    // Add this quantity to any existing restoration
+                    // requirement for the same product.
                     stockRestorations.set(
                         productId,
                         (stockRestorations.get(productId) || 0) +
@@ -790,7 +799,6 @@ export const cancelMyOrder = async (req, res, next) => {
 
                 continue;
             }
-
             // Reject unexpected order item types
             throw new ApiError(
                 400,

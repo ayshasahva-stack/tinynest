@@ -55,7 +55,41 @@ const orderItemSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true
+        },
+        // Store the products that were inside a kit
+// at the time the order was created.
+kitItems: {
+    type: [
+        {
+            product: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Product",
+                required: true
+            },
+            title: {
+                type: String,
+                required: true,
+                trim: true
+            },
+            price: {
+                type: Number,
+                required: true,
+                min: 0
+            },
+            quantity: {
+                type: Number,
+                required: true,
+                min: 1
+            },
+            image: {
+                type: String,
+                required: true,
+                trim: true
+            }
         }
+    ],
+    default: []
+}
     },
     {
         // Order items don't need their own MongoDB _id
