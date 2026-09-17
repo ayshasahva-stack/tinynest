@@ -3,6 +3,7 @@ import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
 import Payment from "../payments/payment.model.js";
 import Product from "../products/product.model.js";
+import Coupon from "../coupons/coupon.model.js";
 import Kit from "../kits/kit.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
@@ -16,8 +17,8 @@ export const createOrder = async (req, res, next) => {
     const session = await mongoose.startSession();
 
     try {
-        // Get the shipping address sent by the client
-        const { shippingAddress } = req.body;
+        // Get the shipping address and optional coupon code
+        const { shippingAddress, couponCode } = req.body;
 
         // Validate the shipping address before starting database work
         const validationError =
@@ -49,6 +50,12 @@ export const createOrder = async (req, res, next) => {
         // Start calculating the subtotal
         let subtotal = 0;
 
+        // Store the calculated coupon discount
+        let discount = 0;
+
+        // Store the coupon document when a coupon is used
+        let appliedCoupon = null;
+
         // Store the total stock required for each product.
         // This handles products that appear directly
         // and also inside kits.
@@ -57,6 +64,10 @@ export const createOrder = async (req, res, next) => {
         // Store product documents so we don't repeatedly
         // query the same product.
         const productMap = new Map();
+
+        // ------------------------------------------------
+        // PROCESS CART ITEMS
+        // ------------------------------------------------
 
         // Process every item in the cart
         for (const cartItem of cart.items) {
@@ -68,6 +79,7 @@ export const createOrder = async (req, res, next) => {
             // ------------------------------------------------
             // PRODUCT CART ITEM
             // ------------------------------------------------
+
             if (itemType === "product") {
                 // Make sure the product reference exists
                 if (!cartItem.product) {
@@ -140,6 +152,7 @@ export const createOrder = async (req, res, next) => {
             // ------------------------------------------------
             // KIT CART ITEM
             // ------------------------------------------------
+
             if (itemType === "kit") {
                 // Make sure the kit reference exists
                 if (!cartItem.kit) {
@@ -241,6 +254,123 @@ export const createOrder = async (req, res, next) => {
         }
 
         // ------------------------------------------------
+        // APPLY COUPON
+        // ------------------------------------------------
+
+        // Apply a coupon only when the customer provided one
+        if (couponCode) {
+            // Make sure the coupon code is a string
+            if (typeof couponCode !== "string") {
+                throw new ApiError(
+                    400,
+                    "Coupon code must be a string"
+                );
+            }
+
+            // Normalize the coupon code
+            const normalizedCode =
+                couponCode.trim().toUpperCase();
+
+            // Make sure the coupon code isn't empty
+            if (!normalizedCode) {
+                throw new ApiError(
+                    400,
+                    "Coupon code is required"
+                );
+            }
+
+            // Find the coupon inside the transaction
+            const coupon = await Coupon.findOne({
+                code: normalizedCode
+            }).session(session);
+
+            // Make sure the coupon exists
+            if (!coupon) {
+                throw new ApiError(
+                    404,
+                    "Coupon not found"
+                );
+            }
+
+            const now = new Date();
+
+            // Check whether the coupon is active
+            if (!coupon.isActive) {
+                throw new ApiError(
+                    400,
+                    "Coupon is inactive"
+                );
+            }
+
+            // Check coupon start date
+            if (now < coupon.startDate) {
+                throw new ApiError(
+                    400,
+                    "Coupon is not active yet"
+                );
+            }
+
+            // Check coupon expiry date
+            if (now > coupon.expiryDate) {
+                throw new ApiError(
+                    400,
+                    "Coupon has expired"
+                );
+            }
+
+            // Check coupon usage limit
+            if (
+                coupon.usageLimit !== null &&
+                coupon.usedCount >= coupon.usageLimit
+            ) {
+                throw new ApiError(
+                    400,
+                    "Coupon usage limit reached"
+                );
+            }
+
+            // Check the real subtotal calculated
+            // from the user's cart.
+            if (subtotal < coupon.minOrderAmount) {
+                throw new ApiError(
+                    400,
+                    `Minimum order amount is ${coupon.minOrderAmount}`
+                );
+            }
+
+            // Calculate percentage discount
+            if (coupon.discountType === "percentage") {
+                discount =
+                    (subtotal * coupon.discountValue) / 100;
+
+                // Apply maximum discount when configured
+                if (
+                    coupon.maxDiscount !== null &&
+                    discount > coupon.maxDiscount
+                ) {
+                    discount = coupon.maxDiscount;
+                }
+            } else {
+                // Calculate fixed discount
+                discount = coupon.discountValue;
+
+                // Discount cannot exceed subtotal
+                if (discount > subtotal) {
+                    discount = subtotal;
+                }
+            }
+
+            // Round discount to two decimal places
+            discount =
+                Math.round(discount * 100) / 100;
+
+            // Keep the coupon document so we can:
+            // 1. Store its ID in the order
+            // 2. Increase its usedCount
+            appliedCoupon = coupon;
+        }
+
+        // ------------------------------------------------
         // CHECK ALL REQUIRED STOCK
         // ------------------------------------------------
 
@@ -270,8 +400,9 @@ export const createOrder = async (req, res, next) => {
             }
         }
 
-        // Coupon functionality will be integrated separately.
-        const discount = 0;
+        // ------------------------------------------------
+        // CALCULATE SHIPPING AND TOTAL
+        // ------------------------------------------------
 
         // Orders of ₹1000 or more get free shipping
         const shippingFee =
@@ -298,7 +429,13 @@ export const createOrder = async (req, res, next) => {
                     discount,
                     shippingFee,
                     totalAmount,
-                    coupon: null,
+
+                    // Store the coupon used for this order,
+                    // or null when no coupon was used.
+                    coupon: appliedCoupon
+                        ? appliedCoupon._id
+                        : null,
+
                     status: "pending"
                 }
             ],
@@ -349,6 +486,53 @@ export const createOrder = async (req, res, next) => {
         }
 
         // ------------------------------------------------
+        // UPDATE COUPON USAGE
+        // ------------------------------------------------
+
+        // Increase coupon usage only when a coupon
+        // was actually used for this order.
+        if (appliedCoupon) {
+            const couponUpdate =
+                await Coupon.updateOne(
+                    {
+                        _id: appliedCoupon._id,
+
+                        // Make sure the usage limit has not
+                        // been reached while the transaction
+                        // was running.
+                        $or: [
+                            {
+                                usageLimit: null
+                            },
+                            {
+                                $expr: {
+                                    $lt: [
+                                        "$usedCount",
+                                        "$usageLimit"
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        $inc: {
+                            usedCount: 1
+                        }
+                    },
+                    { session }
+                );
+
+            // If the coupon could not be updated,
+            // stop the transaction.
+            if (couponUpdate.modifiedCount !== 1) {
+                throw new ApiError(
+                    400,
+                    "Coupon usage limit reached"
+                );
+            }
+        }
+
+        // ------------------------------------------------
         // CLEAR CART
         // ------------------------------------------------
 
@@ -361,8 +545,8 @@ export const createOrder = async (req, res, next) => {
         // COMMIT TRANSACTION
         // ------------------------------------------------
 
-        // All order, stock and cart changes are now
-        // permanently committed together.
+        // All order, stock, coupon and cart changes
+        // are permanently committed together.
         await session.commitTransaction();
 
         // Populate product and kit references after
@@ -373,6 +557,9 @@ export const createOrder = async (req, res, next) => {
             },
             {
                 path: "items.kit"
+            },
+            {
+                path: "coupon"
             }
         ]);
 
