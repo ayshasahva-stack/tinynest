@@ -54,22 +54,57 @@ export const createRazorpayOrder = async (req, res, next) => {
             );
         }
 
+        // Check whether this order already has a pending Razorpay payment
+        const existingPayment = await Payment.findOne({
+            order: order._id,
+            user: req.user._id,
+            paymentMethod: "online",
+            status: "pending",
+            razorpayOrderId: { $ne: null }
+        });
+
+        // Reuse the existing Razorpay order if one already exists
+        if (existingPayment) {
+            return sendSuccessResponse(
+                res,
+                200,
+                {
+                    razorpayOrderId: existingPayment.razorpayOrderId,
+                    amount: Math.round(existingPayment.amount * 100),
+                    currency: "INR",
+                    tinyNestOrderId: order._id
+                },
+                "Existing Razorpay order reused successfully"
+            );
+        }
+
         // Convert the TinyNest amount from rupees
         // to paise because Razorpay expects the
         // amount in the smallest currency unit.
         const amountInPaise =
             Math.round(order.totalAmount * 100);
 
-        // Create the Razorpay order
+        // Create a new Razorpay order
         const razorpayOrder =
             await razorpay.orders.create({
                 amount: amountInPaise,
                 currency: "INR",
 
-                // receipt helps us identify the
+                // Receipt helps us identify the
                 // TinyNest order in Razorpay.
                 receipt: order._id.toString()
             });
+
+        // Create a pending payment record in TinyNest
+        await Payment.create({
+            order: order._id,
+            user: req.user._id,
+            paymentMethod: "online",
+            transactionId: null,
+            razorpayOrderId: razorpayOrder.id,
+            amount: order.totalAmount,
+            status: "pending"
+        });
 
         // Return the Razorpay order information
         return sendSuccessResponse(
