@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import connectDb from "./src/config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import handleSocketConnection from "./src/realtime/socket.js";
 
 dotenv.config();
 
@@ -18,15 +19,8 @@ const io = new Server(httpServer, {
     },
 });
 
-// Runs whenever a client connects to Socket.IO
-io.on("connection", (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-
-    // Runs when the client disconnects
-    socket.on("disconnect", () => {
-        console.log(`Socket disconnected: ${socket.id}`);
-    });
-});
+// Handle every new Socket.IO connection
+io.on("connection", handleSocketConnection);
 
 const startServer = async () => {
     // Connect to MongoDB first
