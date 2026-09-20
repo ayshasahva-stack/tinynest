@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import connectDb from "./src/config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import handleSocketConnection from "./src/realtime/socket.js";
+import handleSocketConnection, {
+    authenticateSocket
+} from "./src/realtime/socket.js";
 
 dotenv.config();
 
@@ -13,13 +15,17 @@ const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 
 // Attach Socket.IO to the HTTP server
+// Attach Socket.IO to the HTTP server
 const io = new Server(httpServer, {
     cors: {
         origin: "*",
     },
 });
 
-// Handle every new Socket.IO connection
+// Authenticate every Socket.IO connection
+io.use(authenticateSocket);
+
+// Handle authenticated Socket.IO connections
 io.on("connection", handleSocketConnection);
 
 const startServer = async () => {
