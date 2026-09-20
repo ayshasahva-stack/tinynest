@@ -7,10 +7,13 @@ import {
     getAllPayments,
     updatePaymentStatus,
     createRazorpayOrder,
+    verifyRazorpayPayment,
 } from "./payment.controller.js";
 
 const router = express.Router();
 
+// Verify the Razorpay payment signature
+router.post("/razorpay/verify",protect,verifyRazorpayPayment);
 // Create a Razorpay order for the logged-in user's order
 router.post("/razorpay/:orderId", protect, createRazorpayOrder);
 // Create payment for the logged-in user's order

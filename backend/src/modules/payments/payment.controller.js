@@ -3,10 +3,12 @@ import Payment from "./payment.model.js";
 import Order from "../orders/order.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import crypto from "crypto";
 import {
     validatePaymentOrder,
     validatePayment,
-    validatePaymentStatus
+    validatePaymentStatus,
+    validateRazorpayPayment,
 } from "./payment.validation.js";
 import razorpay from "../../config/razorpay.js";
 
@@ -80,6 +82,64 @@ export const createRazorpayOrder = async (req, res, next) => {
                 tinyNestOrderId: order._id
             },
             "Razorpay order created successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+// Verify the Razorpay payment signature
+export const verifyRazorpayPayment = async (req, res, next) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature
+        } = req.body;
+
+        // Validate the Razorpay payment data
+        const validationError = validateRazorpayPayment(req.body);
+
+        if (validationError) {
+            return next(
+                new ApiError(400, validationError)
+            );
+        }
+
+        // Create the data that Razorpay expects us to sign
+        const body =
+            razorpay_order_id +
+            "|" +
+            razorpay_payment_id;
+
+        // Generate the expected signature using our Razorpay secret
+        const expectedSignature =
+            crypto
+                .createHmac(
+                    "sha256",
+                    process.env.RAZORPAY_KEY_SECRET
+                )
+                .update(body)
+                .digest("hex");
+
+        // Compare the generated signature with Razorpay's signature
+        if (expectedSignature !== razorpay_signature) {
+            return next(
+                new ApiError(
+                    400,
+                    "Invalid Razorpay payment signature"
+                )
+            );
+        }
+
+        return sendSuccessResponse(
+            res,
+            200,
+            {
+                verified: true,
+                razorpayOrderId: razorpay_order_id,
+                razorpayPaymentId: razorpay_payment_id
+            },
+            "Razorpay payment signature verified successfully"
         );
     } catch (error) {
         next(error);

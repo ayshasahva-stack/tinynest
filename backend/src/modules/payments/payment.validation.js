@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
+// Validate Razorpay payment verification data
+export const validateRazorpayPayment = (body) => {
+    const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature
+    } = body;
 
+    // Check Razorpay order ID
+    if (!razorpay_order_id) {
+        return "Razorpay order ID is required";
+    }
+
+    // Check Razorpay payment ID
+    if (!razorpay_payment_id) {
+        return "Razorpay payment ID is required";
+    }
+
+    // Check Razorpay signature
+    if (!razorpay_signature) {
+        return "Razorpay signature is required";
+    }
+
+    return null;
+};
 // Validate the order ID
 export const validatePaymentOrder = (orderId) => {
     if (!orderId) {
