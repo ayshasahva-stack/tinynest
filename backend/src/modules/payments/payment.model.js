@@ -30,6 +30,11 @@ const paymentSchema = new mongoose.Schema(
             trim: true,
             default: null
         },
+        // Razorpay's unique order ID for online payments
+        razorpayOrderId: {
+            type: String,
+            default: null
+        },
 
         // Amount associated with the payment
         amount: {
