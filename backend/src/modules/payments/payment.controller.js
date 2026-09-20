@@ -8,7 +8,83 @@ import {
     validatePayment,
     validatePaymentStatus
 } from "./payment.validation.js";
+import razorpay from "../../config/razorpay.js";
 
+// Create a Razorpay order for a TinyNest order
+export const createRazorpayOrder = async (req, res, next) => {
+    try {
+        // Get the TinyNest order ID from the URL
+        const { orderId } = req.params;
+
+        // Make sure the order ID is valid
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return next(
+                new ApiError(
+                    400,
+                    "Order ID must be a valid order ID"
+                )
+            );
+        }
+
+        // Find the order belonging to the logged-in user
+        const order = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        });
+
+        // Make sure the order exists
+        if (!order) {
+            return next(
+                new ApiError(
+                    404,
+                    "Order not found"
+                )
+            );
+        }
+
+        // A cancelled order cannot be paid
+        if (order.status === "cancelled") {
+            return next(
+                new ApiError(
+                    400,
+                    "Cancelled orders cannot be paid"
+                )
+            );
+        }
+
+        // Convert the TinyNest amount from rupees
+        // to paise because Razorpay expects the
+        // amount in the smallest currency unit.
+        const amountInPaise =
+            Math.round(order.totalAmount * 100);
+
+        // Create the Razorpay order
+        const razorpayOrder =
+            await razorpay.orders.create({
+                amount: amountInPaise,
+                currency: "INR",
+
+                // receipt helps us identify the
+                // TinyNest order in Razorpay.
+                receipt: order._id.toString()
+            });
+
+        // Return the Razorpay order information
+        return sendSuccessResponse(
+            res,
+            201,
+            {
+                razorpayOrderId: razorpayOrder.id,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                tinyNestOrderId: order._id
+            },
+            "Razorpay order created successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
 // Create a payment record for the logged-in user's order
 export const createPayment = async (req, res, next) => {
     try {
