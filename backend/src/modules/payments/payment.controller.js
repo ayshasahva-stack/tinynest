@@ -123,7 +123,10 @@ export const createRazorpayOrder = async (req, res, next) => {
     }
 };
 // Verify the Razorpay payment signature
+// Verify Razorpay payment and complete the TinyNest order
 export const verifyRazorpayPayment = async (req, res, next) => {
+    let session;
+
     try {
         const {
             razorpay_order_id,
@@ -131,10 +134,19 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             razorpay_signature
         } = req.body;
 
+        // Start a MongoDB session
+        session = await mongoose.startSession();
+
+        session.startTransaction();
+
         // Validate the Razorpay payment data
-        const validationError = validateRazorpayPayment(req.body);
+        const validationError =
+            validateRazorpayPayment(req.body);
 
         if (validationError) {
+            await session.abortTransaction();
+            session.endSession();
+
             return next(
                 new ApiError(400, validationError)
             );
@@ -146,7 +158,8 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             "|" +
             razorpay_payment_id;
 
-        // Generate the expected signature using our Razorpay secret
+        // Generate the expected signature using
+        // our Razorpay secret key
         const expectedSignature =
             crypto
                 .createHmac(
@@ -156,8 +169,15 @@ export const verifyRazorpayPayment = async (req, res, next) => {
                 .update(body)
                 .digest("hex");
 
-        // Compare the generated signature with Razorpay's signature
-        if (expectedSignature !== razorpay_signature) {
+        // Compare our generated signature
+        // with Razorpay's signature
+        if (
+            expectedSignature !==
+            razorpay_signature
+        ) {
+            await session.abortTransaction();
+            session.endSession();
+
             return next(
                 new ApiError(
                     400,
@@ -166,17 +186,170 @@ export const verifyRazorpayPayment = async (req, res, next) => {
             );
         }
 
+        // Find the pending TinyNest payment
+        // linked to this Razorpay order
+        const payment =
+            await Payment.findOne({
+                razorpayOrderId:
+                    razorpay_order_id,
+                user: req.user._id,
+                status: "pending"
+            }).session(session);
+
+        if (!payment) {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    404,
+                    "Pending Razorpay payment not found"
+                )
+            );
+        }
+
+        // Fetch the actual payment details
+        // directly from Razorpay
+        const razorpayPayment =
+            await razorpay.payments.fetch(
+                razorpay_payment_id
+            );
+
+        // Convert TinyNest amount from rupees
+        // to paise for comparison with Razorpay
+        const expectedAmount =
+            Math.round(payment.amount * 100);
+
+        // Make sure Razorpay charged
+        // the amount expected by TinyNest
+        if (
+            razorpayPayment.amount !==
+            expectedAmount
+        ) {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    400,
+                    "Payment amount mismatch"
+                )
+            );
+        }
+
+        // Make sure Razorpay reports the
+        // payment as successfully captured
+        if (
+            razorpayPayment.status !==
+            "captured"
+        ) {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    400,
+                    "Razorpay payment has not been captured"
+                )
+            );
+        }
+
+        // Find the TinyNest order linked
+        // to this payment
+        const order =
+            await Order.findOne({
+                _id: payment.order,
+                user: req.user._id
+            }).session(session);
+
+        if (!order) {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    404,
+                    "Order linked to payment not found"
+                )
+            );
+        }
+
+        // A cancelled order cannot be marked as paid
+        if (order.status === "cancelled") {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    400,
+                    "Cancelled orders cannot be marked as paid"
+                )
+            );
+        }
+
+        // Prevent a second payment from being
+        // applied to an already confirmed order
+        if (order.status === "confirmed") {
+            await session.abortTransaction();
+            session.endSession();
+
+            return next(
+                new ApiError(
+                    400,
+                    "Order has already been paid"
+                )
+            );
+        }
+
+        // Mark the TinyNest order as confirmed
+        order.status = "confirmed";
+
+        // Mark the TinyNest payment as paid
+        payment.status = "paid";
+
+        // Store Razorpay's payment ID
+        // as our transaction ID
+        payment.transactionId =
+            razorpay_payment_id;
+
+        // Store the payment confirmation time
+        payment.paidAt = new Date();
+
+        // Save the confirmed order
+        // inside the transaction
+        await order.save({ session });
+
+        // Save the paid payment
+        // inside the same transaction
+        await payment.save({ session });
+
+        // Commit both database changes together
+        await session.commitTransaction();
+
+        // End the MongoDB session
+        session.endSession();
+
         return sendSuccessResponse(
             res,
             200,
             {
                 verified: true,
-                razorpayOrderId: razorpay_order_id,
-                razorpayPaymentId: razorpay_payment_id
+                razorpayOrderId:
+                    razorpay_order_id,
+                razorpayPaymentId:
+                    razorpay_payment_id
             },
-            "Razorpay payment signature verified successfully"
+            "Razorpay payment verified and order confirmed successfully"
         );
+
     } catch (error) {
+        // Roll back any database changes
+        // if an unexpected error occurs
+        if (session) {
+            await session.abortTransaction();
+            session.endSession();
+        }
+
         next(error);
     }
 };
