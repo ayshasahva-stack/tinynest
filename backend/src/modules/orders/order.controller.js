@@ -7,6 +7,7 @@ import Coupon from "../coupons/coupon.model.js";
 import Kit from "../kits/kit.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { getProductOfferPrice } from "../offers/offer.service.js";
 import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
 
@@ -127,21 +128,27 @@ export const createOrder = async (req, res, next) => {
                     cartItem.quantity
                 );
 
-                // Calculate this item's total
-                const itemTotal =
-                    product.price * cartItem.quantity;
+                // Get the product price after applying
+                // any currently active offer.
+                const offerPricing =
+                    await getProductOfferPrice(product);
 
-                // Add it to the subtotal
+                // Use the offer price when calculating
+                // the order item's total.
+                const itemTotal =
+                    offerPricing.offerPrice * cartItem.quantity;
+
+                // Add the discounted item total to the subtotal.
                 subtotal += itemTotal;
 
-                // Store a snapshot of product information
-                // inside the order.
+                // Store the actual selling price used
+                // for this order.
                 orderItems.push({
                     itemType: "product",
                     product: product._id,
                     kit: null,
                     title: product.title,
-                    price: product.price,
+                    price: offerPricing.offerPrice,
                     quantity: cartItem.quantity,
                     image: product.images[0]
                 });
