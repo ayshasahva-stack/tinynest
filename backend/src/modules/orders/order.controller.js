@@ -10,6 +10,7 @@ import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { getProductOfferPrice } from "../offers/offer.service.js";
 import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
+import { getIo } from "../../realtime/io.js";
 
 // Create an order using the logged-in user's cart
 // Create an order using the logged-in user's cart
@@ -997,6 +998,14 @@ export const updateOrderStatus = async (req, res, next) => {
 
         // Save the updated order
         await order.save();
+        // Get the Socket.IO server instance
+        const io = getIo();
+
+        // Notify the customer that their order status changed
+        io.to(`user:${order.user}`).emit("order:statusUpdated", {
+            orderId: order._id,
+            status: order.status
+        });
 
         // Return the updated order
         sendSuccessResponse(

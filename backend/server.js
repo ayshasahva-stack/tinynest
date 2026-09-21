@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import connectDb from "./src/config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { setIo } from "./src/realtime/io.js";
 import handleSocketConnection, {
     authenticateSocket
 } from "./src/realtime/socket.js";
@@ -21,7 +22,8 @@ const io = new Server(httpServer, {
         origin: "*",
     },
 });
-
+// Store the Socket.IO instance so other modules can access it
+setIo(io);
 // Authenticate every Socket.IO connection
 io.use(authenticateSocket);
 
