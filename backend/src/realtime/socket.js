@@ -50,7 +50,12 @@ const handleSocketConnection = (socket) => {
 
     // Show the connected client's unique socket ID
     console.log(`Socket connected: ${socket.id}`);
+    // Add the authenticated user to their private room
+    const userRoom = `user:${socket.user._id}`;
 
+    socket.join(userRoom);
+
+    console.log(`User joined room: ${userRoom}`);
     // Listen for when this client disconnects
     socket.on("disconnect", () => {
         console.log(`Socket disconnected: ${socket.id}`);
