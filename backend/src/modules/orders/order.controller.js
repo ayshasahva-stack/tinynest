@@ -12,8 +12,10 @@ import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
 import { getIo } from "../../realtime/io.js";
 
+
 // Create an order using the logged-in user's cart
 // Create an order using the logged-in user's cart
+// Create a new order from the user's cart
 export const createOrder = async (req, res, next) => {
     // Start a MongoDB session for the order transaction
     const session = await mongoose.startSession();
@@ -584,7 +586,17 @@ export const createOrder = async (req, res, next) => {
                 path: "coupon"
             }
         ]);
+        // Get the Socket.IO server instance
+        const io = getIo();
 
+        // Notify all connected admins about the new order
+        io.to("admin").emit("order:new", {
+            orderId: order._id,
+            userId: order.user,
+            totalAmount: order.totalAmount,
+            status: order.status,
+            itemCount: order.items.length
+        });
         // Send the created order
         return sendSuccessResponse(
             res,
