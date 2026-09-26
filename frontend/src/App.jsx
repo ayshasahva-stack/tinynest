@@ -1,9 +1,10 @@
 import React from 'react'
+import AppRouter from './app/AppRouter'
 
 const App = () => {
   return (
     <div>
-      <h1>tinynest</h1>
+      <AppRouter/>
     </div>
   )
 }
