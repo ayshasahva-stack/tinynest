@@ -1,8 +1,20 @@
+// Import useState to manage the mobile menu state
+import { useState } from "react";
+
 // Import React Router's Link for navigation
 import { Link } from "react-router-dom";
 
 // Navbar component for customer-facing pages
 function Navbar() {
+
+    // Store whether the mobile menu is open
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+    // Toggle the mobile menu
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
     return (
         <nav className="border-b bg-white">
 
@@ -49,13 +61,48 @@ function Navbar() {
                 {/* Mobile menu button */}
                 <button
                     type="button"
+                    onClick={toggleMenu}
                     className="text-2xl md:hidden"
-                    aria-label="Open menu"
+                    aria-label="Toggle menu"
                 >
-                    ☰
+                    {isMenuOpen ? "✕" : "☰"}
                 </button>
 
             </div>
+
+            {/* Mobile navigation menu */}
+            {isMenuOpen && (
+                <div className="border-t px-4 py-4 md:hidden">
+
+                    {/* Mobile Home link */}
+                    <Link
+                        to="/"
+                        className="block py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Home
+                    </Link>
+
+                    {/* Mobile Products link */}
+                    <Link
+                        to="/products"
+                        className="block py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Products
+                    </Link>
+
+                    {/* Mobile Cart link */}
+                    <Link
+                        to="/cart"
+                        className="block py-2"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Cart
+                    </Link>
+
+                </div>
+            )}
 
         </nav>
     );
