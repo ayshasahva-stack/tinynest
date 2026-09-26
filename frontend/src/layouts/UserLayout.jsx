@@ -1,5 +1,6 @@
 // Import Outlet to display the current nested page
 import { Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 // UserLayout provides the common structure for customer pages
 function UserLayout() {
@@ -7,9 +8,7 @@ function UserLayout() {
         <div>
 
             {/* Navbar will be added here later */}
-            <header>
-                <h2>TinyNest Navbar</h2>
-            </header>
+           <Navbar/>
 
             {/* The current route's page will appear here */}
             <main>
