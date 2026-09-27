@@ -6,3 +6,6 @@ export const selectProductsLoading = (state) => state.products.loading;
 
 // Select the product error message from the Redux store
 export const selectProductsError = (state) => state.products.error;
+
+// Select the product pagination information from the Redux store
+export const selectProductsPagination = (state) => state.products.pagination;
