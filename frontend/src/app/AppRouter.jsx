@@ -4,10 +4,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Import the pages
 import Home from "../pages/Home";
 import Products from "../pages/Product";
+import Admin from "../layouts/Admin";
 
 // Import the user layout
 import UserLayout from "../layouts/UserLayout";
-
+import AdminLayout from "../layouts/AdminLayout";
 // Main router component
 function AppRouter() {
     return (
@@ -23,6 +24,10 @@ function AppRouter() {
                     {/* Products page */}
                     <Route path="/products" element={<Products />} />
 
+                </Route>
+                {/* Admin routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                    <Route index element={<Admin />} />
                 </Route>
 
             </Routes>
