@@ -1,5 +1,5 @@
 // Import the reusable ProductCard component
-import ProductCard from "../../features/products/components/ProductCard";
+import ProductCard from "../../../features/products/components/ProductCard";
 
 // Temporary product data for UI development
 const featuredProducts = [
