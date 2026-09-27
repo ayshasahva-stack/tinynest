@@ -3,13 +3,15 @@ import { useState } from "react";
 
 // Import React Router's Link for navigation
 import { Link } from "react-router-dom";
+import { useTheme } from "../app/ThemeContext";
 
 // Navbar component for customer-facing pages
 function Navbar() {
 
     // Store whether the mobile menu is open
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+// Get the current theme and theme toggle function
+const { theme, toggleTheme } = useTheme();
     // Toggle the mobile menu
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -56,6 +58,15 @@ function Navbar() {
                         Cart
                     </Link>
 
+{/* Theme toggle button */}
+<button
+    type="button"
+    onClick={toggleTheme}
+    className="rounded-md border px-3 py-1"
+    aria-label="Toggle theme"
+>
+    {theme === "light" ? "🌙" : "☀️"}
+</button>
                 </div>
 
                 {/* Mobile menu button */}
@@ -100,6 +111,15 @@ function Navbar() {
                     >
                         Cart
                     </Link>
+                    {/* Mobile theme toggle */}
+<button
+    type="button"
+    onClick={toggleTheme}
+    className="mt-2 rounded-md border px-3 py-1"
+    aria-label="Toggle theme"
+>
+    {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+</button>
 
                 </div>
             )}
