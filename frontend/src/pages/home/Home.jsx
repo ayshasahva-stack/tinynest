@@ -1,6 +1,7 @@
 // Import the Hero section
 import HeroSection from "./HeroSection";
 import CategoriesSection from "./CategoriesSection";
+import FeaturedProducts from "./FeaturedProduct";
 
 // Home page component
 function Home() {
@@ -9,6 +10,7 @@ function Home() {
             {/* Hero section */}
             <HeroSection />
             <CategoriesSection/>
+            <FeaturedProducts/>
         </main>
     );
 }
