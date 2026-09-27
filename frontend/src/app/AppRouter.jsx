@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Import the pages
-import Home from "../pages/Home";
+import Home from "../pages/home/Home";
 import Products from "../pages/Product";
 import Admin from "../layouts/Admin";
 
