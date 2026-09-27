@@ -1,5 +1,5 @@
 // Import Axios for making HTTP requests
-import axios from "axios";
+import axios from 'axios'
 
 // Create a reusable Axios instance for TinyNest API requests
 const api = axios.create({

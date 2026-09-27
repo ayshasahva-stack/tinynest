@@ -1,10 +1,16 @@
-// Import the function used to create the Redux store
+// Import Redux Toolkit's store creator
 import { configureStore } from "@reduxjs/toolkit";
 
-// Create the central Redux store
+// Import the products reducer
+import productReducer from "../features/products/productSlice";
+
+// Create the application's Redux store
 const store = configureStore({
-    reducer: {},
+    reducer: {
+        // Store all product-related state under "products"
+        products: productReducer,
+    },
 });
 
-// Export the store so React can use it
+// Export the configured Redux store
 export default store;
