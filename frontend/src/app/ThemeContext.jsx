@@ -1,5 +1,5 @@
 // Import React tools needed to create and use Context
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // Create the Theme Context
 const ThemeContext = createContext();
@@ -9,6 +9,11 @@ export function ThemeProvider({ children }) {
 
     // Store the current theme
     const [theme, setTheme] = useState("light");
+
+    // Apply the current theme to the HTML element
+    useEffect(() => {
+        document.documentElement.setAttribute("data-theme", theme);
+    }, [theme]);
 
     // Toggle between light and dark themes
     const toggleTheme = () => {

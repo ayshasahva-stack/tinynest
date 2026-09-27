@@ -10,15 +10,15 @@ function Navbar() {
 
     // Store whether the mobile menu is open
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-// Get the current theme and theme toggle function
-const { theme, toggleTheme } = useTheme();
+    // Get the current theme and theme toggle function
+    const { theme, toggleTheme } = useTheme();
     // Toggle the mobile menu
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
     return (
-        <nav className="border-b bg-white">
+        <nav className="border-b bg-white dark:bg-gray-900">
 
             {/* Main navbar container */}
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
@@ -32,42 +32,42 @@ const { theme, toggleTheme } = useTheme();
                 </Link>
 
                 {/* Desktop navigation */}
-                <div className="hidden items-center gap-6 md:flex">
+                {/* Home link */}
+                <Link
+                    to="/"
+                    className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                >
+                    Home
+                </Link>
 
-                    {/* Home link */}
-                    <Link
-                        to="/"
-                        className="hover:text-gray-600"
-                    >
-                        Home
-                    </Link>
+                {/* Products link */}
+                <Link
+                    to="/products"
+                    className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                >
+                    Products
+                </Link>
 
-                    {/* Products link */}
-                    <Link
-                        to="/products"
-                        className="hover:text-gray-600"
-                    >
-                        Products
-                    </Link>
+                {/* Cart link */}
+                <Link
+                    to="/cart"
+                    className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                >
+                    Cart
+                </Link>
 
-                    {/* Cart link */}
-                    <Link
-                        to="/cart"
-                        className="hover:text-gray-600"
-                    >
-                        Cart
-                    </Link>
-
-{/* Theme toggle button */}
-<button
-    type="button"
-    onClick={toggleTheme}
-    className="rounded-md border px-3 py-1"
-    aria-label="Toggle theme"
->
-    {theme === "light" ? "🌙" : "☀️"}
-</button>
-                </div>
+                {/* Theme toggle button */}
+                {/* Theme toggle button */}
+                <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="rounded-md border border-gray-300 px-3 py-1 text-gray-800 dark:border-gray-600 dark:text-white"
+                    aria-label="Toggle theme"
+                >
+                    {theme === "light" ? "🌙" : "☀️"}
+                </button>
+            </div>
+            <div>
 
                 {/* Mobile menu button */}
                 <button
@@ -112,14 +112,14 @@ const { theme, toggleTheme } = useTheme();
                         Cart
                     </Link>
                     {/* Mobile theme toggle */}
-<button
-    type="button"
-    onClick={toggleTheme}
-    className="mt-2 rounded-md border px-3 py-1"
-    aria-label="Toggle theme"
->
-    {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-</button>
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className="mt-2 rounded-md border px-3 py-1"
+                        aria-label="Toggle theme"
+                    >
+                        {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+                    </button>
 
                 </div>
             )}

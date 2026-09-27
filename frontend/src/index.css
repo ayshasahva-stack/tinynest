@@ -1,2 +1,5 @@
 /* Import Tailwind CSS */
 @import "tailwindcss";
+
+/* Make Tailwind's dark: utilities respond to our theme attribute */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
