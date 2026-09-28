@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { selectProducts, selectProductsLoading } from '../../../features/products/productSelectors'
 // Import the loading selector
 import Loading from "../../../components/Loading";
+import EmptyState from "../../../components/EmptyState";
 
 // Import the reusable ProductCard component
 import ProductCard from "../../../features/products/components/ProductCard";
@@ -39,10 +40,16 @@ function FeaturedProducts() {
                 <div className="mt-10">
 
                     {loading ? (
-                        // Show the reusable loading component
+                        // Show loading while the API request is running
                         <Loading />
+                    ) : products.length === 0 ? (
+                        // Show empty state when no products are available
+                        <EmptyState
+                            title="No products found"
+                            message="There are no products available right now."
+                        />
                     ) : (
-                        // Show the products after the API request finishes
+                        // Show products when data is available
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
                             {products.map((product) => (
@@ -56,9 +63,7 @@ function FeaturedProducts() {
                     )}
 
                 </div>
-
             </div>
-
         </section>
     );
 }
