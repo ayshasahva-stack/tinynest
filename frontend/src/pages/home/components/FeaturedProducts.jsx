@@ -35,17 +35,31 @@ const loading = useSelector(selectProductsLoading);
 
                 </div>
 
-                {/* Product grid */}
-                <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+               {/* Product content */}
+<div className="mt-10">
 
-                    {products.map((product) => (
-                        <ProductCard
-                            key={product._id}
-                            product={product}
-                        />
-                    ))}
+    {loading ? (
+        // Show this while products are being fetched
+        <div className="flex min-h-40 items-center justify-center">
+            <p className="text-gray-600 dark:text-gray-400">
+                Loading products...
+            </p>
+        </div>
+    ) : (
+        // Show the products after the API request finishes
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
-                </div>
+            {products.map((product) => (
+                <ProductCard
+                    key={product._id}
+                    product={product}
+                />
+            ))}
+
+        </div>
+    )}
+
+</div>
 
             </div>
 
