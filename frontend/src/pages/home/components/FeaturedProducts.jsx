@@ -3,6 +3,8 @@ import { useSelector } from "react-redux";
 
 // Import the product selector
 import {selectProducts} from '../../../features/products/productSelector'
+// Import the loading selector
+import { selectProductsLoading } from "../../../features/products/productSelector";
 
 // Import the reusable ProductCard component
 import ProductCard from "../../../features/products/components/ProductCard";
@@ -11,6 +13,8 @@ import ProductCard from "../../../features/products/components/ProductCard";
 function FeaturedProducts() {
     // Get the products stored in Redux
     const products = useSelector(selectProducts);
+    // Get the product loading state from Redux
+const loading = useSelector(selectProductsLoading);
 
     return (
         <section className="bg-gray-50 py-16 dark:bg-gray-900">
