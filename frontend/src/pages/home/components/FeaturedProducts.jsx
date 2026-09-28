@@ -49,8 +49,14 @@ function FeaturedProducts() {
                     {loading ? (
                         // Show loading while the API request is running
                         <Loading />
+                    ) : error ? (
+                        // Show an error when the API request fails
+                        <ErrorMessage
+                            title="Unable to load products"
+                            message={error}
+                        />
                     ) : products.length === 0 ? (
-                        // Show empty state when no products are available
+                        // Show an empty state when no products are available
                         <EmptyState
                             title="No products found"
                             message="There are no products available right now."
