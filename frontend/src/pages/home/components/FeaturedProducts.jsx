@@ -2,9 +2,9 @@
 import { useSelector } from "react-redux";
 
 // Import the product selector
-import {selectProducts} from '../../../features/products/productSelector'
+import { selectProducts, selectProductsLoading } from '../../../features/products/productSelector'
 // Import the loading selector
-import { selectProductsLoading } from "../../../features/products/productSelector";
+import Loading from "../../../components/Loading";
 
 // Import the reusable ProductCard component
 import ProductCard from "../../../features/products/components/ProductCard";
@@ -14,7 +14,7 @@ function FeaturedProducts() {
     // Get the products stored in Redux
     const products = useSelector(selectProducts);
     // Get the product loading state from Redux
-const loading = useSelector(selectProductsLoading);
+    const loading = useSelector(selectProductsLoading);
 
     return (
         <section className="bg-gray-50 py-16 dark:bg-gray-900">
@@ -35,31 +35,27 @@ const loading = useSelector(selectProductsLoading);
 
                 </div>
 
-               {/* Product content */}
-<div className="mt-10">
+                {/* Product content */}
+                <div className="mt-10">
 
-    {loading ? (
-        // Show this while products are being fetched
-        <div className="flex min-h-40 items-center justify-center">
-            <p className="text-gray-600 dark:text-gray-400">
-                Loading products...
-            </p>
-        </div>
-    ) : (
-        // Show the products after the API request finishes
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {loading ? (
+                        // Show the reusable loading component
+                        <Loading />
+                    ) : (
+                        // Show the products after the API request finishes
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
-            {products.map((product) => (
-                <ProductCard
-                    key={product._id}
-                    product={product}
-                />
-            ))}
+                            {products.map((product) => (
+                                <ProductCard
+                                    key={product._id}
+                                    product={product}
+                                />
+                            ))}
 
-        </div>
-    )}
+                        </div>
+                    )}
 
-</div>
+                </div>
 
             </div>
 
