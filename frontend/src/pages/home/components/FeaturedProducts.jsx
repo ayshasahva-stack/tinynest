@@ -2,7 +2,11 @@
 import { useSelector } from "react-redux";
 
 // Import the product selector
-import { selectProducts, selectProductsLoading } from '../../../features/products/productSelectors'
+import {
+    selectProducts,
+    selectProductsLoading,
+    selectProductsError,
+} from '../../../features/products/productSelectors'
 // Import the loading selector
 import Loading from "../../../components/Loading";
 import EmptyState from "../../../components/EmptyState";
@@ -17,6 +21,8 @@ function FeaturedProducts() {
     const products = useSelector(selectProducts);
     // Get the product loading state from Redux
     const loading = useSelector(selectProductsLoading);
+    // Get the product error message from Redux
+    const error = useSelector(selectProductsError);
 
     return (
         <section className="bg-gray-50 py-16 dark:bg-gray-900">
