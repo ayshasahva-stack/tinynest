@@ -1,40 +1,17 @@
+// Import useSelector to read data from Redux
+import { useSelector } from "react-redux";
+
+// Import the product selector
+import {selectProducts} from '../../../features/products/productSelector'
+
 // Import the reusable ProductCard component
 import ProductCard from "../../../features/products/components/ProductCard";
 
-// Temporary product data for UI development
-const featuredProducts = [
-    {
-        id: 1,
-        name: "Soft Baby Blanket",
-        description: "Soft and comfortable blanket for your little one.",
-        price: 799,
-        image: "",
-    },
-    {
-        id: 2,
-        name: "Baby Feeding Bottle",
-        description: "Comfortable feeding bottle for everyday use.",
-        price: 499,
-        image: "",
-    },
-    {
-        id: 3,
-        name: "Baby Cotton Romper",
-        description: "Soft cotton romper designed for everyday comfort.",
-        price: 599,
-        image: "",
-    },
-    {
-        id: 4,
-        name: "Educational Baby Toy",
-        description: "Fun and engaging toy for early learning.",
-        price: 899,
-        image: "",
-    },
-];
-
 // Featured products section
 function FeaturedProducts() {
+    // Get the products stored in Redux
+    const products = useSelector(selectProducts);
+
     return (
         <section className="bg-gray-50 py-16 dark:bg-gray-900">
 
@@ -57,9 +34,9 @@ function FeaturedProducts() {
                 {/* Product grid */}
                 <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
-                    {featuredProducts.map((product) => (
+                    {products.map((product) => (
                         <ProductCard
-                            key={product.id}
+                            key={product._id}
                             product={product}
                         />
                     ))}

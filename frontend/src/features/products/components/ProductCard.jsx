@@ -6,10 +6,10 @@ function ProductCard({ product }) {
             {/* Product image area */}
             <div className="aspect-square bg-gray-100 dark:bg-gray-800">
 
-                {product.image ? (
+                {product.images?.length > 0 ? (
                     <img
-                        src={product.image}
-                        alt={product.name}
+                        src={product.images[0]}
+                        alt={product.title}
                         className="h-full w-full object-cover"
                     />
                 ) : (
