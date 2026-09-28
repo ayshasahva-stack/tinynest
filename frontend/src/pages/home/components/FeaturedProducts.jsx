@@ -2,7 +2,7 @@
 import { useSelector } from "react-redux";
 
 // Import the product selector
-import { selectProducts, selectProductsLoading } from '../../../features/products/productSelector'
+import { selectProducts, selectProductsLoading } from '../../../features/products/productSelectors'
 // Import the loading selector
 import Loading from "../../../components/Loading";
 
