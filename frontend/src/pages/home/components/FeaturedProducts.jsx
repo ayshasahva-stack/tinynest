@@ -6,6 +6,7 @@ import { selectProducts, selectProductsLoading } from '../../../features/product
 // Import the loading selector
 import Loading from "../../../components/Loading";
 import EmptyState from "../../../components/EmptyState";
+import ErrorMessage from "../../../components/ErrorMessage";
 
 // Import the reusable ProductCard component
 import ProductCard from "../../../features/products/components/ProductCard";
