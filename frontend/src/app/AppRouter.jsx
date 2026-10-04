@@ -6,6 +6,7 @@ import Home from "../pages/home/Home";
 import Products from "../pages/Product";
 import Register from "../pages/auth/Register";
 import VerifyOtp from "../pages/auth/VerifyOtp";
+import Login from "../pages/auth/Login";
 import Admin from "../layouts/Admin";
 
 // Import the user layout
@@ -30,6 +31,8 @@ function AppRouter() {
                     <Route path="/register" element={<Register />} />
                     {/* OTP verification page */}
                     <Route path="/verify-otp" element={<VerifyOtp />} />
+                    {/* Login page */}
+<Route path="/login" element={<Login />} />
                 </Route>
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>

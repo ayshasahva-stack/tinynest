@@ -1,8 +1,14 @@
-// Import createSlice from Redux Toolkit
+// Import Redux Toolkit's createSlice function
 import { createSlice } from "@reduxjs/toolkit";
 
-// Import the registration thunk
-import { registerUserThunk } from "./authThunk";
+// Import the authentication thunks
+import {
+    registerUserThunk,
+    verifyOtpThunk,
+    loginUserThunk,
+    getProfileThunk
+} from "./authThunk";
+
 // Initial authentication state
 const initialState = {
     user: null,
@@ -14,40 +20,107 @@ const initialState = {
 
 // Create the authentication Redux slice
 const authSlice = createSlice({
-    // Name used by Redux for this slice
     name: "auth",
 
-    // Use our authentication initial state
     initialState,
 
-    // Handle asynchronous authentication actions
-    extraReducers: (builder) => {
-        // Handle registration request started
-        builder.addCase(registerUserThunk.pending, (state) => {
-            // Show that registration is currently in progress
-            state.loading = true;
+    reducers: {},
 
-            // Clear any previous authentication error
+    extraReducers: (builder) => {
+        // Registration started
+        builder.addCase(registerUserThunk.pending, (state) => {
+            state.loading = true;
             state.error = null;
         });
-        // Handle successful registration
-builder.addCase(registerUserThunk.fulfilled, (state) => {
-    // Registration is no longer in progress
-    state.loading = false;
 
-    // Clear any previous error
+        // Registration completed
+        builder.addCase(registerUserThunk.fulfilled, (state) => {
+            state.loading = false;
+        });
+
+        // Registration failed
+        builder.addCase(registerUserThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || "Registration failed";
+        });
+
+        // OTP verification started
+        builder.addCase(verifyOtpThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        // OTP verification completed
+        builder.addCase(verifyOtpThunk.fulfilled, (state) => {
+            state.loading = false;
+        });
+
+        // OTP verification failed
+        builder.addCase(verifyOtpThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || "OTP verification failed";
+        });
+
+        // Login started
+        builder.addCase(loginUserThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        // Login completed successfully
+        builder.addCase(loginUserThunk.fulfilled, (state, action) => {
+            state.loading = false;
+
+            // Store the JWT token returned by the backend
+            // Get the JWT token returned by the backend
+            const token = action.payload.data.token;
+
+            // Store the token in Redux
+            state.token = token;
+
+            // Persist the token so login survives page refresh
+            localStorage.setItem("token", token);
+
+            // Mark the user as authenticated
+            state.isAuthenticated = true;
+        });
+
+        // Login failed
+        builder.addCase(loginUserThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || "Login failed";
+        });
+        // Profile request started
+builder.addCase(getProfileThunk.pending, (state) => {
+    state.loading = true;
     state.error = null;
 });
-// Handle failed registration
-builder.addCase(registerUserThunk.rejected, (state, action) => {
-    // Registration is no longer in progress
+
+// Profile request completed successfully
+builder.addCase(getProfileThunk.fulfilled, (state, action) => {
     state.loading = false;
 
-    // Store the error message returned by the thunk
-    state.error = action.payload || "Registration failed";
+    // Store the authenticated user's profile
+    state.user = action.payload.data;
+
+    // Mark the user as authenticated
+    state.isAuthenticated = true;
+});
+
+// Profile request failed
+builder.addCase(getProfileThunk.rejected, (state, action) => {
+    state.loading = false;
+    state.error = action.payload || "Failed to fetch profile";
+
+    // The token is no longer considered valid
+    state.token = null;
+    state.user = null;
+    state.isAuthenticated = false;
+
+    // Remove the invalid token from browser storage
+    localStorage.removeItem("token");
 });
     },
 });
 
-// Export the authentication reducer
 export default authSlice.reducer;
