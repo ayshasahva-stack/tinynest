@@ -9,3 +9,11 @@ export const registerUser = async (userData) => {
     // Return the backend response
     return response.data;
 };
+// Verify the OTP sent to the user's email
+export const verifyOtp = async (otpData) => {
+    // Send the email and OTP to the backend
+    const response = await api.post("/auth/verify-otp", otpData);
+
+    // Return the backend response
+    return response.data;
+};

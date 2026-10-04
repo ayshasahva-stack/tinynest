@@ -4,6 +4,7 @@ import Input from "../../components/Input";
 import Button from "../../components/Button"
 // Import Redux's dispatch hook
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 // Import the registration thunk
 import { registerUserThunk } from "../../features/auth/authThunk";
@@ -19,24 +20,31 @@ function Register() {
 const [confirmPassword, setConfirmPassword] = useState("");
     // Get the Redux dispatch function
 const dispatch = useDispatch();
+const navigate=useNavigate()
     // Handle registration form submission
-    const handleSubmit = (event) => {
-        // Prevent the browser from refreshing the page
-        event.preventDefault();
+    // Handle registration form submission
+const handleSubmit = async (event) => {
+    // Prevent the browser from refreshing the page
+    event.preventDefault();
 
-        // Check the values entered by the user
-       // Send the registration data through Redux
-// Send the registration data through Redux
-dispatch(
-    registerUserThunk({
-        email,
-        phone,
-        password,
-        confirmPassword,
-    })
+    try {
+        // Send the registration data and wait for the backend response
+        await dispatch(
+            registerUserThunk({
+                email,
+                phone,
+                password,
+                confirmPassword,
+            })
+        ).unwrap();
 
-);  
-    };
+        // Navigate to OTP verification after successful registration
+        navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+        // Log the registration error for now
+        console.error(error);
+    }
+};
     return (
         <main>
             <h1>Register</h1>
