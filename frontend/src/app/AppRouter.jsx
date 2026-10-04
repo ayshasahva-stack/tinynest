@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Import the pages
 import Home from "../pages/home/Home";
 import Products from "../pages/Product";
+import Register from "../pages/auth/Register";
 import Admin from "../layouts/Admin";
 
 // Import the user layout
@@ -18,11 +19,14 @@ function AppRouter() {
                 {/* All customer pages use the UserLayout */}
                 <Route element={<UserLayout />}>
 
+
                     {/* Home page */}
                     <Route path="/" element={<Home />} />
 
                     {/* Products page */}
                     <Route path="/products" element={<Products />} />
+                    {/* Registration page */}
+                    <Route path="/register" element={<Register />} />
 
                 </Route>
                 {/* Admin routes */}
