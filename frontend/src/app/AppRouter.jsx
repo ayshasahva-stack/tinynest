@@ -7,6 +7,11 @@ import Products from "../pages/Product";
 import Register from "../pages/auth/Register";
 import VerifyOtp from "../pages/auth/VerifyOtp";
 import Login from "../pages/auth/Login";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+// Import the password reset OTP page
+import VerifyResetOtp from "../pages/auth/verifyResetOtp";
+// Import the Reset Password page
+import ResetPassword from "../pages/auth/ResetPassword";
 import Admin from "../layouts/Admin";
 
 // Import the user layout
@@ -32,7 +37,22 @@ function AppRouter() {
                     {/* OTP verification page */}
                     <Route path="/verify-otp" element={<VerifyOtp />} />
                     {/* Login page */}
-<Route path="/login" element={<Login />} />
+                    <Route path="/login" element={<Login />} />
+                    {/* Forgot Password page */}
+                    <Route
+                        path="/forgot-password"
+                        element={<ForgotPassword />}
+                    />
+                    {/* Password reset OTP page */}
+                    <Route
+                        path="/verify-reset-otp"
+                        element={<VerifyResetOtp />}
+                    />
+                    {/* Reset Password page */}
+                    <Route
+                        path="/reset-password"
+                        element={<ResetPassword />}
+                    />
                 </Route>
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>

@@ -6,13 +6,20 @@ import {
     registerUserThunk,
     verifyOtpThunk,
     loginUserThunk,
-    getProfileThunk
+    getProfileThunk,
+    forgotPasswordThunk,
+    verifyResetOtpThunk,
+    resetPasswordThunk
 } from "./authThunk";
 
 // Initial authentication state
 const initialState = {
     user: null,
     token: null,
+
+    // Temporary token used only for password reset
+    resetToken: null,
+
     loading: false,
     error: null,
     isAuthenticated: false,
@@ -24,25 +31,25 @@ const authSlice = createSlice({
 
     initialState,
 
-   reducers: {
-    // Clear all authentication data when the user logs out
-    logout: (state) => {
-        // Remove the user information from Redux
-        state.user = null;
+    reducers: {
+        // Clear all authentication data when the user logs out
+        logout: (state) => {
+            // Remove the user information from Redux
+            state.user = null;
 
-        // Remove the JWT token from Redux
-        state.token = null;
+            // Remove the JWT token from Redux
+            state.token = null;
 
-        // Mark the user as logged out
-        state.isAuthenticated = false;
+            // Mark the user as logged out
+            state.isAuthenticated = false;
 
-        // Clear any previous authentication error
-        state.error = null;
+            // Clear any previous authentication error
+            state.error = null;
 
-        // Remove the JWT token from browser storage
-        localStorage.removeItem("token");
+            // Remove the JWT token from browser storage
+            localStorage.removeItem("token");
+        },
     },
-},
 
     extraReducers: (builder) => {
         // Registration started
@@ -109,36 +116,84 @@ const authSlice = createSlice({
             state.error = action.payload || "Login failed";
         });
         // Profile request started
-builder.addCase(getProfileThunk.pending, (state) => {
+        builder.addCase(getProfileThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        // Profile request completed successfully
+        builder.addCase(getProfileThunk.fulfilled, (state, action) => {
+            state.loading = false;
+
+            // Store the authenticated user's profile
+            state.user = action.payload.data;
+
+            // Mark the user as authenticated
+            state.isAuthenticated = true;
+        });
+
+        // Profile request failed
+        builder.addCase(getProfileThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload || "Failed to fetch profile";
+
+            // The token is no longer considered valid
+            state.token = null;
+            state.user = null;
+            state.isAuthenticated = false;
+
+            // Remove the invalid token from browser storage
+            localStorage.removeItem("token");
+        });
+        // Forgot password request started
+        builder.addCase(forgotPasswordThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
+
+        // Forgot password request completed successfully
+        builder.addCase(forgotPasswordThunk.fulfilled, (state) => {
+            state.loading = false;
+            state.error = null;
+        });
+
+        // Forgot password request failed
+        builder.addCase(forgotPasswordThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error =
+                action.payload || "Failed to request password reset";
+        });
+        // Reset OTP verification completed successfully
+builder.addCase(verifyResetOtpThunk.fulfilled, (state, action) => {
+    state.loading = false;
+    state.error = null;
+
+    // Store the temporary password reset token
+    state.resetToken = action.payload.data.resetToken;
+});
+// Password reset request started
+builder.addCase(resetPasswordThunk.pending, (state) => {
     state.loading = true;
     state.error = null;
 });
 
-// Profile request completed successfully
-builder.addCase(getProfileThunk.fulfilled, (state, action) => {
+// Password reset completed successfully
+builder.addCase(resetPasswordThunk.fulfilled, (state) => {
     state.loading = false;
+    state.error = null;
 
-    // Store the authenticated user's profile
-    state.user = action.payload.data;
-
-    // Mark the user as authenticated
-    state.isAuthenticated = true;
+    // The temporary reset token is no longer needed
+    state.resetToken = null;
 });
 
-// Profile request failed
-builder.addCase(getProfileThunk.rejected, (state, action) => {
+// Password reset failed
+builder.addCase(resetPasswordThunk.rejected, (state, action) => {
     state.loading = false;
-    state.error = action.payload || "Failed to fetch profile";
-
-    // The token is no longer considered valid
-    state.token = null;
-    state.user = null;
-    state.isAuthenticated = false;
-
-    // Remove the invalid token from browser storage
-    localStorage.removeItem("token");
+    state.error =
+        action.payload || "Failed to reset password";
 });
     },
+
 });
 
 // Export the logout action

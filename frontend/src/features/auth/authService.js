@@ -33,3 +33,35 @@ export const getProfile = async () => {
     // Return the backend response
     return response.data;
 };
+// Request a password reset OTP
+export const forgotPassword = async (email) => {
+    // Send the email to the backend
+    const response = await api.post("/auth/forgot-password", {
+        email,
+    });
+
+    // Return the backend response
+    return response.data;
+};
+// Verify the OTP used for password reset
+export const verifyResetOtp = async (otpData) => {
+    // Send the email and OTP to the backend
+    const response = await api.post(
+        "/auth/verify-reset-otp",
+        otpData
+    );
+
+    // Return the backend response
+    return response.data;
+};
+// Reset the user's password
+export const resetPassword = async (resetData) => {
+    // Send the reset token and new password to the backend
+    const response = await api.post(
+        "/auth/reset-password",
+        resetData
+    );
+
+    // Return the backend response
+    return response.data;
+};

@@ -6,6 +6,9 @@ import {
     verifyOtp,
     loginUser,
     getProfile,
+    forgotPassword,
+    verifyResetOtp,
+    resetPassword
 } from "./authService";
 // Register a new user
 export const registerUserThunk = createAsyncThunk(
@@ -93,6 +96,75 @@ export const getProfileThunk = createAsyncThunk(
                 error.response?.data?.message ||
                 error.message ||
                 "Failed to fetch profile";
+
+            // Send the error to Redux
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+// Request a password reset OTP
+export const forgotPasswordThunk = createAsyncThunk(
+    "auth/forgotPassword",
+
+    async (email, thunkAPI) => {
+        try {
+            // Send the email to the backend
+            const response = await forgotPassword(email);
+
+            // Return the backend response
+            return response;
+        } catch (error) {
+            // Get the backend error message
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to request password reset";
+
+            // Send the error to Redux
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+// Verify the OTP used for password reset
+export const verifyResetOtpThunk = createAsyncThunk(
+    "auth/verifyResetOtp",
+
+    async (otpData, thunkAPI) => {
+        try {
+            // Send the email and OTP to the backend
+            const response = await verifyResetOtp(otpData);
+
+            // Return the backend response
+            return response;
+        } catch (error) {
+            // Get the backend error message
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "OTP verification failed";
+
+            // Send the error to Redux
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+// Reset the user's password
+export const resetPasswordThunk = createAsyncThunk(
+    "auth/resetPassword",
+
+    async (resetData, thunkAPI) => {
+        try {
+            // Send the reset token and new password to the backend
+            const response = await resetPassword(resetData);
+
+            // Return the backend response
+            return response;
+        } catch (error) {
+            // Get the backend error message
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to reset password";
 
             // Send the error to Redux
             return thunkAPI.rejectWithValue(message);
