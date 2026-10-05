@@ -10,8 +10,15 @@ import { useNavigate, useParams } from "react-router-dom";
 // Import the product fetching thunk
 import { fetchProductById } from "../../features/products/productThunk";
 
-// Import the cart thunk
+// Import cart thunk
 import { addToCartThunk } from "../../features/cart/cartThunk";
+
+// Import wishlist thunks
+import {
+    addToWishlistThunk,
+    getMyWishlistThunk,
+    removeFromWishlistThunk,
+} from "../../features/wishlist/wishlistThunk";
 
 // Import product selectors
 import {
@@ -26,18 +33,24 @@ import {
     selectCartError,
 } from "../../features/cart/cartSelectors";
 
+// Import wishlist selectors
+import {
+    selectWishlistLoading,
+    selectWishlistProducts,
+} from "../../features/wishlist/wishlistSelectors";
+
 // Product Details page component
 function ProductDetails() {
     // Get the product ID from the URL
     const { id } = useParams();
 
-    // Get the Redux dispatch function
+    // Get Redux dispatch function
     const dispatch = useDispatch();
 
     // Get navigation function
     const navigate = useNavigate();
 
-    // Get the selected product from Redux
+    // Get selected product from Redux
     const product = useSelector(selectSelectedProduct);
 
     // Get product loading state
@@ -52,12 +65,32 @@ function ProductDetails() {
     // Get cart error
     const cartError = useSelector(selectCartError);
 
-    // Fetch the selected product when the ID changes
+    // Get wishlist loading state
+    const wishlistLoading = useSelector(selectWishlistLoading);
+
+    // Get all products currently saved in the wishlist
+    const wishlistProducts = useSelector(selectWishlistProducts);
+
+    // Fetch the selected product and wishlist
+    // whenever the product ID changes
     useEffect(() => {
         if (id) {
+            // Fetch product details
             dispatch(fetchProductById(id));
         }
+
+        // Fetch the logged-in user's wishlist
+        dispatch(getMyWishlistThunk());
     }, [dispatch, id]);
+
+    // Stop here if the product hasn't loaded yet
+    // This prevents accessing product._id before product exists
+    const isInWishlist =
+        product &&
+        wishlistProducts.some(
+            (wishlistProduct) =>
+                wishlistProduct._id === product._id
+        );
 
     // Handle Add to Cart
     const handleAddToCart = async () => {
@@ -78,6 +111,27 @@ function ProductDetails() {
         // Navigate to cart only when the request succeeds
         if (addToCartThunk.fulfilled.match(result)) {
             navigate("/cart");
+        }
+    };
+
+    // Add or remove the current product from the wishlist
+    const handleWishlistToggle = () => {
+        // Make sure a product exists
+        if (!product) {
+            return;
+        }
+
+        // If product is already in wishlist,
+        // remove it
+        if (isInWishlist) {
+            dispatch(
+                removeFromWishlistThunk(product._id)
+            );
+        } else {
+            // Otherwise add it to wishlist
+            dispatch(
+                addToWishlistThunk(product._id)
+            );
         }
     };
 
@@ -187,22 +241,45 @@ function ProductDetails() {
                         </p>
                     )}
 
-                    {/* Add to Cart button */}
-                    <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        disabled={
-                            product.stock <= 0 ||
-                            cartLoading
-                        }
-                        className="mt-6 w-full rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
-                    >
-                        {cartLoading
-                            ? "Adding to Cart..."
-                            : product.stock > 0
-                              ? "Add to Cart"
-                              : "Out of Stock"}
-                    </button>
+                    {/* Product action buttons */}
+                    <div className="mt-6 flex gap-3">
+
+                        {/* Add to Cart button */}
+                        <button
+                            type="button"
+                            onClick={handleAddToCart}
+                            disabled={
+                                product.stock <= 0 ||
+                                cartLoading
+                            }
+                            className="flex-1 rounded-lg bg-gray-900 px-6 py-3 font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                        >
+                            {cartLoading
+                                ? "Adding to Cart..."
+                                : product.stock > 0
+                                  ? "Add to Cart"
+                                  : "Out of Stock"}
+                        </button>
+
+                        {/* Wishlist button */}
+                        <button
+                            type="button"
+                            onClick={handleWishlistToggle}
+                            disabled={wishlistLoading}
+                            className="rounded-lg border border-gray-300 px-5 py-3 text-xl transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
+                            aria-label={
+                                isInWishlist
+                                    ? "Remove from wishlist"
+                                    : "Add to wishlist"
+                            }
+                        >
+                            {wishlistLoading
+                                ? "..."
+                                : isInWishlist
+                                  ? "♥"
+                                  : "♡"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </main>

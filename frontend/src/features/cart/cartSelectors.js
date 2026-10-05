@@ -11,8 +11,6 @@ export const selectCartError = (state) =>
     state.cart.error;
 
 // Calculate the number of items in the cart
+// Select the number of different items in the cart
 export const selectCartItemCount = (state) =>
-    state.cart.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-    );
+    state.cart.items.length;

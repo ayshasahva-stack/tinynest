@@ -1,52 +1,75 @@
-// Import useState to manage the mobile menu state
-import { useState } from "react";
+// Import React hooks
+import { useEffect, useState } from "react";
 
-// Import React Router's Link for navigation
-import { Link } from "react-router-dom";
+// Import React Router navigation components
+import { Link, useNavigate } from "react-router-dom";
+
+// Import theme context
 import { useTheme } from "../app/ThemeContext";
-// Import Redux's dispatch hook
+
+// Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
-// Import the authentication selector
+
+// Import authentication selector
 import { selectIsAuthenticated } from "../features/auth/authSelectors";
-// Import Redux selector hook
 
-
-// Import cart item count selector
-import { selectCartItemCount } from "../features/cart/cartSelectors";
-
-// Import the logout action
+// Import authentication logout action
 import { logout } from "../features/auth/authSlice";
 
-// Import React Router's navigation hook
-import { useNavigate } from "react-router-dom";
+// Import cart selector
+import { selectCartItemCount } from "../features/cart/cartSelectors";
+
+// Import wishlist selector
+import { selectWishlistCount } from "../features/wishlist/wishlistSelectors";
+
+// Import wishlist thunk
+import { getMyWishlistThunk } from "../features/wishlist/wishlistThunk";
+import { getMyCartThunk } from "../features/cart/cartThunk";
 
 // Navbar component for customer-facing pages
 function Navbar() {
-
-
     // Store whether the mobile menu is open
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    // Get the current theme and theme toggle function
+
+    // Get current theme and theme toggle function
     const { theme, toggleTheme } = useTheme();
 
-    // Get the Redux dispatch function
+    // Get Redux dispatch function
     const dispatch = useDispatch();
-    // Get the number of items currently in the cart
+
+    // Get navigation function
+    const navigate = useNavigate();
+
+    // Get authentication status
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+
+    // Get number of different products in the cart
     const cartItemCount = useSelector(selectCartItemCount);
 
-    // Get the navigation function
-    const navigate = useNavigate();
-    // Get the current authentication status
-    const isAuthenticated = useSelector(selectIsAuthenticated);
+    // Get number of products in the wishlist
+    const wishlistCount = useSelector(selectWishlistCount);
+
+    // Fetch wishlist when an authenticated user loads the Navbar
+  useEffect(() => {
+    if (isAuthenticated) {
+        // Fetch the user's wishlist
+        dispatch(getMyWishlistThunk());
+
+        // Fetch the user's cart
+        dispatch(getMyCartThunk());
+    }
+}, [dispatch, isAuthenticated]);
+
     // Handle user logout
     const handleLogout = () => {
-        // Clear authentication data from Redux and localStorage
+        // Clear authentication data
         dispatch(logout());
 
-        // Redirect the user to the login page
+        // Redirect user to login page
         navigate("/login");
     };
-    // Toggle the mobile menu
+
+    // Toggle mobile menu
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -68,7 +91,7 @@ function Navbar() {
                 {/* Desktop navigation */}
                 <div className="hidden items-center gap-6 md:flex">
 
-                    {/* Home link */}
+                    {/* Home */}
                     <Link
                         to="/"
                         className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
@@ -76,7 +99,7 @@ function Navbar() {
                         Home
                     </Link>
 
-                    {/* Products link */}
+                    {/* Products */}
                     <Link
                         to="/products"
                         className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
@@ -84,8 +107,24 @@ function Navbar() {
                         Products
                     </Link>
 
-                    {/* Cart link */}
-                    <Link to="/cart">
+                    {/* Wishlist */}
+                    <Link
+                        to="/wishlist"
+                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                    >
+                        Wishlist
+                        {wishlistCount > 0 && (
+                            <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                                {wishlistCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    {/* Cart */}
+                    <Link
+                        to="/cart"
+                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                    >
                         Cart
                         {cartItemCount > 0 && (
                             <span className="ml-1">
@@ -115,6 +154,7 @@ function Navbar() {
                         </button>
                     ) : (
                         <>
+                            {/* Login */}
                             <Link
                                 to="/login"
                                 className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
@@ -122,6 +162,7 @@ function Navbar() {
                                 Login
                             </Link>
 
+                            {/* Register */}
                             <Link
                                 to="/register"
                                 className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
@@ -136,7 +177,7 @@ function Navbar() {
                 <button
                     type="button"
                     onClick={toggleMenu}
-                    className="text-2xl md:hidden"
+                    className="text-2xl md:hidden text-gray-900 dark:text-white"
                     aria-label="Toggle menu"
                 >
                     {isMenuOpen ? "✕" : "☰"}
@@ -145,29 +186,49 @@ function Navbar() {
 
             {/* Mobile navigation menu */}
             {isMenuOpen && (
-                <div className="border-t px-4 py-4 md:hidden">
+                <div className="border-t px-4 py-4 dark:border-gray-700 md:hidden">
 
-                    {/* Mobile Home link */}
+                    {/* Mobile Home */}
                     <Link
                         to="/"
-                        className="block py-2"
+                        className="block py-2 text-gray-800 dark:text-gray-200"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Home
                     </Link>
 
-                    {/* Mobile Products link */}
+                    {/* Mobile Products */}
                     <Link
                         to="/products"
-                        className="block py-2"
+                        className="block py-2 text-gray-800 dark:text-gray-200"
                         onClick={() => setIsMenuOpen(false)}
                     >
                         Products
                     </Link>
 
-                    {/* Mobile Cart link */}
-                    <Link to="/cart">
+                    {/* Mobile Wishlist */}
+                    <Link
+                        to="/wishlist"
+                        className="block py-2 text-gray-800 dark:text-gray-200"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Wishlist
+
+                        {wishlistCount > 0 && (
+                            <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                                {wishlistCount}
+                            </span>
+                        )}
+                    </Link>
+
+                    {/* Mobile Cart */}
+                    <Link
+                        to="/cart"
+                        className="block py-2 text-gray-800 dark:text-gray-200"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
                         Cart
+
                         {cartItemCount > 0 && (
                             <span className="ml-1">
                                 ({cartItemCount})
@@ -179,10 +240,12 @@ function Navbar() {
                     <button
                         type="button"
                         onClick={toggleTheme}
-                        className="mt-2 rounded-md border px-3 py-1"
+                        className="mt-2 rounded-md border px-3 py-1 dark:border-gray-600 dark:text-white"
                         aria-label="Toggle theme"
                     >
-                        {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+                        {theme === "light"
+                            ? "🌙 Dark Mode"
+                            : "☀️ Light Mode"}
                     </button>
 
                     {/* Mobile authentication actions */}
@@ -190,31 +253,31 @@ function Navbar() {
                         <button
                             type="button"
                             onClick={() => {
-                                // Close the mobile menu
+                                // Close mobile menu
                                 setIsMenuOpen(false);
 
-                                // Log the user out
+                                // Logout user
                                 handleLogout();
                             }}
-                            className="mt-3 block rounded-md border px-3 py-1"
+                            className="mt-3 block rounded-md border px-3 py-1 dark:border-gray-600 dark:text-white"
                         >
                             Logout
                         </button>
                     ) : (
                         <>
-                            {/* Mobile Login link */}
+                            {/* Mobile Login */}
                             <Link
                                 to="/login"
-                                className="mt-3 block py-2"
+                                className="mt-3 block py-2 text-gray-800 dark:text-gray-200"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 Login
                             </Link>
 
-                            {/* Mobile Register link */}
+                            {/* Mobile Register */}
                             <Link
                                 to="/register"
-                                className="block py-2"
+                                className="block py-2 text-gray-800 dark:text-gray-200"
                                 onClick={() => setIsMenuOpen(false)}
                             >
                                 Register

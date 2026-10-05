@@ -13,6 +13,7 @@ import VerifyResetOtp from "../../pages/auth/verifyResetOtp";
 import ProductDetails from "../../pages/productDetails/ProductDetails";
 // Import the Cart page
 import Cart from "../../pages/cart/Cart";
+import Wishlist from "../../pages/wishlist/Wishlist";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
 import Admin from "../../layouts/Admin";
@@ -61,7 +62,9 @@ function AppRouter() {
                         element={<ProductDetails />}
                     />
                     <Route path="/cart" element={<Cart />} />
+                    <Route path="/wishlist" element={<Wishlist />} />
                 </Route>
+
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Admin />} />
