@@ -10,6 +10,9 @@ import Login from "../../pages/auth/Login";
 import ForgotPassword from "../../pages/auth/ForgotPassword";
 // Import the password reset OTP page
 import VerifyResetOtp from "../../pages/auth/verifyResetOtp";
+import ProductDetails from "../../pages/productDetails/ProductDetails";
+// Import the Cart page
+import Cart from "../../pages/cart/Cart";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
 import Admin from "../../layouts/Admin";
@@ -53,6 +56,11 @@ function AppRouter() {
                         path="/reset-password"
                         element={<ResetPassword />}
                     />
+                    <Route
+                        path="/products/:id"
+                        element={<ProductDetails />}
+                    />
+                    <Route path="/cart" element={<Cart />} />
                 </Route>
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>

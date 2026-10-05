@@ -8,6 +8,11 @@ import { useTheme } from "../app/ThemeContext";
 import { useDispatch, useSelector } from "react-redux";
 // Import the authentication selector
 import { selectIsAuthenticated } from "../features/auth/authSelectors";
+// Import Redux selector hook
+
+
+// Import cart item count selector
+import { selectCartItemCount } from "../features/cart/cartSelectors";
 
 // Import the logout action
 import { logout } from "../features/auth/authSlice";
@@ -18,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 // Navbar component for customer-facing pages
 function Navbar() {
 
+
     // Store whether the mobile menu is open
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Get the current theme and theme toggle function
@@ -25,6 +31,8 @@ function Navbar() {
 
     // Get the Redux dispatch function
     const dispatch = useDispatch();
+    // Get the number of items currently in the cart
+    const cartItemCount = useSelector(selectCartItemCount);
 
     // Get the navigation function
     const navigate = useNavigate();
@@ -77,11 +85,13 @@ function Navbar() {
                     </Link>
 
                     {/* Cart link */}
-                    <Link
-                        to="/cart"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                    >
+                    <Link to="/cart">
                         Cart
+                        {cartItemCount > 0 && (
+                            <span className="ml-1">
+                                ({cartItemCount})
+                            </span>
+                        )}
                     </Link>
 
                     {/* Theme toggle */}
@@ -156,12 +166,13 @@ function Navbar() {
                     </Link>
 
                     {/* Mobile Cart link */}
-                    <Link
-                        to="/cart"
-                        className="block py-2"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
+                    <Link to="/cart">
                         Cart
+                        {cartItemCount > 0 && (
+                            <span className="ml-1">
+                                ({cartItemCount})
+                            </span>
+                        )}
                     </Link>
 
                     {/* Mobile theme toggle */}

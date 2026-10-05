@@ -1,23 +1,19 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchProducts } from "./ProductThunk";
+import {
+    fetchProducts,
+    fetchProductById,
+} from "./productThunk";
 
-// Initial state for the products feature
 const initialState = {
-    // Store the products returned from the backend
     products: [],
-
-    // Store pagination information returned by the backend
+    selectedProduct: null,
     pagination: {
         currentPage: 1,
         limit: 10,
         totalProducts: 0,
         totalPages: 0,
     },
-
-    // Track whether the API request is currently running
     loading: false,
-
-    // Store an error message if the request fails
     error: null,
 };
 
@@ -54,6 +50,26 @@ const productSlice = createSlice({
 
             // Store the error message
             state.error = action.payload || "Failed to fetch products";
+        });
+        // Single product request started
+        builder.addCase(fetchProductById.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+            state.selectedProduct = null;
+        });
+
+        // Single product request succeeded
+        builder.addCase(fetchProductById.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = null;
+            state.selectedProduct = action.payload.data;
+        });
+
+        // Single product request failed
+        builder.addCase(fetchProductById.rejected, (state, action) => {
+            state.loading = false;
+            state.error =
+                action.payload || "Failed to fetch product";
         });
     },
 });

@@ -7,6 +7,8 @@ import productReducer from "../features/products/productSlice";
 import authReducer from "../features/auth/authSlice";
 // Import the category reducer
 import categoryReducer from "../features/categories/categorySlice";
+// Import the cart reducer
+import cartReducer from "../features/cart/cartSlice";
 
 // Create the application's Redux store
 const store = configureStore({
@@ -15,6 +17,7 @@ const store = configureStore({
         products: productReducer,
         auth: authReducer,
         categories: categoryReducer,
+          cart: cartReducer,
     },
 });
 

@@ -20,3 +20,11 @@ export const testProductsApi = async () => {
     // Display the API response in the browser console
     console.log("Products API response:", data);
 };
+// Fetch a single product by its ID
+export const getProductById = async (productId) => {
+    // Send a GET request for the selected product
+    const response = await api.get(`/products/${productId}`);
+
+    // Return the backend response
+    return response.data;
+};
