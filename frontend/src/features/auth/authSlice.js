@@ -24,7 +24,25 @@ const authSlice = createSlice({
 
     initialState,
 
-    reducers: {},
+   reducers: {
+    // Clear all authentication data when the user logs out
+    logout: (state) => {
+        // Remove the user information from Redux
+        state.user = null;
+
+        // Remove the JWT token from Redux
+        state.token = null;
+
+        // Mark the user as logged out
+        state.isAuthenticated = false;
+
+        // Clear any previous authentication error
+        state.error = null;
+
+        // Remove the JWT token from browser storage
+        localStorage.removeItem("token");
+    },
+},
 
     extraReducers: (builder) => {
         // Registration started
@@ -123,4 +141,8 @@ builder.addCase(getProfileThunk.rejected, (state, action) => {
     },
 });
 
+// Export the logout action
+export const { logout } = authSlice.actions;
+
+// Export the authentication reducer
 export default authSlice.reducer;

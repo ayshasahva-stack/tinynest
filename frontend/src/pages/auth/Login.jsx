@@ -34,7 +34,7 @@ function Login() {
     // Get the current authentication error from Redux
     const error = useSelector(selectAuthError);
     // Get the authentication loading state from Redux
-const loading = useSelector(selectAuthLoading);
+    const loading = useSelector(selectAuthLoading);
     // Handle login form submission
     const handleSubmit = async (event) => {
         // Prevent the browser from refreshing the page
@@ -85,9 +85,9 @@ const loading = useSelector(selectAuthLoading);
                     placeholder="Enter your password"
                 />
 
-               <Button type="submit" disabled={loading}>
-    {loading ? "Logging in..." : "Login"}
-</Button>
+                <Button type="submit" disabled={loading}>
+                    {loading ? "Logging in..." : "Login"}
+                </Button>
             </form>
         </main>
     );
