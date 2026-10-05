@@ -2,21 +2,21 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Import the pages
-import Home from "../pages/home/Home";
-import Products from "../pages/products/Product";
-import Register from "../pages/auth/Register";
-import VerifyOtp from "../pages/auth/VerifyOtp";
-import Login from "../pages/auth/Login";
-import ForgotPassword from "../pages/auth/ForgotPassword";
+import Home from "../../pages/home/Home";
+import Products from "../../pages/products/Product";
+import Register from "../../pages/auth/Register";
+import VerifyOtp from "../../pages/auth/VerifyOtp";
+import Login from "../../pages/auth/Login";
+import ForgotPassword from "../../pages/auth/ForgotPassword";
 // Import the password reset OTP page
-import VerifyResetOtp from "../pages/auth/verifyResetOtp";
+import VerifyResetOtp from "../../pages/auth/verifyResetOtp";
 // Import the Reset Password page
-import ResetPassword from "../pages/auth/ResetPassword";
-import Admin from "../layouts/Admin";
+import ResetPassword from "../../pages/auth/ResetPassword";
+import Admin from "../../layouts/Admin";
 
 // Import the user layout
-import UserLayout from "../layouts/UserLayout";
-import AdminLayout from "../layouts/AdminLayout";
+import UserLayout from "../../layouts/UserLayout";
+import AdminLayout from "../../layouts/AdminLayout";
 // Main router component
 function AppRouter() {
     return (

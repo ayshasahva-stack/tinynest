@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 // Import the application's router
-import AppRouter from "./app/AppRouter";
+import AppRouter from "./app/router/AppRouter";
 
 // Import the profile thunk
 import { getProfileThunk } from "./features/auth/authThunk";

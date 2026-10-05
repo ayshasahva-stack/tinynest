@@ -5,13 +5,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import productReducer from "../features/products/productSlice";
 // Import the authentication reducer
 import authReducer from "../features/auth/authSlice";
+// Import the category reducer
+import categoryReducer from "../features/categories/categorySlice";
 
 // Create the application's Redux store
 const store = configureStore({
     reducer: {
         // Store all product-related state under "products"
         products: productReducer,
-        auth:authReducer,
+        auth: authReducer,
+        categories: categoryReducer,
     },
 });
 

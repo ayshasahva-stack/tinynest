@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
 // Import the product fetching thunk
-import { fetchProducts } from "../../features/products/ProductThunk";
+import { fetchProducts } from "../../features/products/productThunk";
 
 // Import the Home page sections
 import HeroSection from "./components/HeroSection";
