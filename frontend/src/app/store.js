@@ -10,6 +10,8 @@ import categoryReducer from "../features/categories/categorySlice";
 // Import the cart reducer
 import cartReducer from "../features/cart/cartSlice";
 import wishlistReducer from "../features/wishlist/wishlistSlice";
+import checkoutReducer from "../features/checkout/checkoutSlice";
+import orderReducer from "../features/orders/orderSlice";
 // Create the application's Redux store
 const store = configureStore({
     reducer: {
@@ -17,8 +19,10 @@ const store = configureStore({
         products: productReducer,
         auth: authReducer,
         categories: categoryReducer,
-          cart: cartReducer,
-             wishlist: wishlistReducer,
+        cart: cartReducer,
+        wishlist: wishlistReducer,
+        checkout: checkoutReducer,
+        orders:orderReducer
     },
 });
 

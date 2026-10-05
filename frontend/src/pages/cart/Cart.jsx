@@ -4,6 +4,7 @@ import { useEffect } from "react";
 // Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
 
+import { useNavigate } from "react-router-dom";
 // Import cart thunk
 import {
     getMyCartThunk,
@@ -29,7 +30,7 @@ import CartItem from "./components/CartItem";
 function Cart() {
     // Get the Redux dispatch function
     const dispatch = useDispatch();
-
+const navigate = useNavigate();
     // Get cart items from Redux
     const items = useSelector(selectCartItems);
 
@@ -119,6 +120,13 @@ function Cart() {
                                 ₹{totalPrice}
                             </p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={() => navigate("/checkout")}
+                            className="mt-4 w-full rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                        >
+                            Proceed to Checkout
+                        </button>
                     </section>
                 </>
             )}

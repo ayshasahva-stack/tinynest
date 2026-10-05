@@ -14,6 +14,9 @@ import ProductDetails from "../../pages/productDetails/ProductDetails";
 // Import the Cart page
 import Cart from "../../pages/cart/Cart";
 import Wishlist from "../../pages/wishlist/Wishlist";
+import Checkout from "../../pages/checkout/Checkout";
+import Order from "../../pages/orders/Order";
+import OrderDetails from "../../pages/orders/OrderDetails";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
 import Admin from "../../layouts/Admin";
@@ -63,8 +66,14 @@ function AppRouter() {
                     />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/wishlist" element={<Wishlist />} />
+                     <Route path="/checkout" element={<Checkout />} />
+                     <Route path="/orders" element={<Order />} />
+                     <Route
+    path="/orders/:orderId"
+    element={<OrderDetails />}
+/>
                 </Route>
-
+               
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                     <Route index element={<Admin />} />
