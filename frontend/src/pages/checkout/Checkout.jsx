@@ -171,19 +171,56 @@ function Checkout() {
     // CALCULATE SUBTOTAL
     // -----------------------------------
 
-    const subtotal = cartItems.reduce((total, item) => {
+   // Calculate the cart subtotal
+const subtotal = cartItems.reduce((total, item) => {
 
-        const product = item.product;
+    // -----------------------------------------
+    // PRODUCT
+    // -----------------------------------------
 
-        // Skip invalid cart items
-        if (!product) {
-            return total;
-        }
+    if (
+        item.itemType === "product" &&
+        item.product
+    ) {
 
-        // Add product price × quantity
-        return total + product.price * item.quantity;
+        return (
+            total +
+            item.product.price * item.quantity
+        );
 
-    }, 0);
+    }
+
+
+    // -----------------------------------------
+    // KIT
+    // -----------------------------------------
+
+    if (
+        item.itemType === "kit" &&
+        item.kit
+    ) {
+
+        // Calculate kit discount
+        const discountAmount =
+            (item.kit.price * item.kit.discount) / 100;
+
+        // Calculate discounted selling price
+        const sellingPrice =
+            item.kit.price - discountAmount;
+
+        // Add kit total
+        return (
+            total +
+            sellingPrice * item.quantity
+        );
+
+    }
+
+
+    // Ignore invalid cart items
+    return total;
+
+}, 0);
 
 
     // -----------------------------------

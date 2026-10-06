@@ -234,13 +234,24 @@ export const createOrder = async (req, res, next) => {
                     );
                 }
 
-                // Calculate the kit total
+                // -----------------------------------------------
+                // CALCULATE KIT SELLING PRICE
+                // -----------------------------------------------
+
+                // Calculate the discount amount
+                const kitDiscountAmount =
+                    (kit.price * kit.discount) / 100;
+
+                // Calculate the final selling price
+                const kitSellingPrice =
+                    kit.price - kitDiscountAmount;
+
+                // Calculate the total for the requested quantity
                 const itemTotal =
-                    kit.price * cartItem.quantity;
+                    kitSellingPrice * cartItem.quantity;
 
-                // Add it to the subtotal
+                // Add the discounted kit total to the subtotal
                 subtotal += itemTotal;
-
                 // Store a snapshot of every product inside the kit
                 // at the time the order is created.
                 const kitItems = kit.items.map((kitItem) => ({
@@ -258,7 +269,7 @@ export const createOrder = async (req, res, next) => {
                     product: null,
                     kit: kit._id,
                     title: kit.name,
-                    price: kit.price,
+                    price: kitSellingPrice,
                     quantity: cartItem.quantity,
                     image: kit.image,
 

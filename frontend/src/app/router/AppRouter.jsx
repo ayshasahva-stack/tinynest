@@ -18,6 +18,8 @@ import Checkout from "../../pages/checkout/Checkout";
 import Order from "../../pages/orders/Order";
 import OrderDetails from "../../pages/orders/OrderDetails";
 import Addresses from "../../pages/addresses/Addresses";
+import Kits from "../../pages/kits/Kits";
+import KitDetails from "../../pages/kitDetails/KitDetails";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
 import Admin from "../../layouts/Admin";
@@ -75,7 +77,12 @@ function AppRouter() {
 
                     />
                     <Route path="/addresses" element={<Addresses />} />
+                    <Route path="/kits" element={<Kits />} />
 
+                    <Route
+                        path="/kits/:kitId"
+                        element={<KitDetails />}
+                    />
                 </Route>
 
                 {/* Admin routes */}

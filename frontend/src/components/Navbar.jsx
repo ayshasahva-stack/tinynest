@@ -132,6 +132,12 @@ function Navbar() {
                             </span>
                         )}
                     </Link>
+                     <Link
+                        to="/kits"
+                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                    >
+                        Kits
+                    </Link>
 
                     {/* Theme toggle */}
                     <button
@@ -235,6 +241,14 @@ function Navbar() {
                             </span>
                         )}
                     </Link>
+                   <Link
+                        to="/kits"
+                        className="block py-2 text-gray-800 dark:text-gray-200"
+                        onClick={() => setIsMenuOpen(false)}
+                    >
+                        Kits
+                    </Link>
+
 
                     {/* Mobile theme toggle */}
                     <button
