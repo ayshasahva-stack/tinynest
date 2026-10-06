@@ -13,6 +13,7 @@ import wishlistReducer from "../features/wishlist/wishlistSlice";
 import checkoutReducer from "../features/checkout/checkoutSlice";
 import orderReducer from "../features/orders/orderSlice";
 import addressReducer from "../features/addresses/addressSlice";
+import reviewReducer from "../features/reviews/reviewSlice";
 // Create the application's Redux store
 const store = configureStore({
     reducer: {
@@ -25,6 +26,7 @@ const store = configureStore({
         checkout: checkoutReducer,
         orders:orderReducer,
         addresses: addressReducer,
+        reviews: reviewReducer,
     },
 });
 
