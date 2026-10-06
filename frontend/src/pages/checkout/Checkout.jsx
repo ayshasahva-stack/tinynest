@@ -5,13 +5,23 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 // Import React Router navigation
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 // Import cart thunk
 import { getMyCartThunk } from "../../features/cart/cartThunk";
 
 // Import checkout thunk
 import { createOrderThunk } from "../../features/checkout/checkoutThunk";
+
+// Import address thunk
+import {
+    getMyAddressesThunk,
+} from "../../features/addresses/addressThunk";
+
+// Import address selector
+import {
+    selectAddresses,
+} from "../../features/addresses/addressSelectors";
 
 // Import cart selectors
 import {
@@ -32,14 +42,24 @@ import Loading from "../../components/Loading";
 import EmptyState from "../../components/EmptyState";
 import ErrorMessage from "../../components/ErrorMessage";
 
+
 function Checkout() {
+
     // Redux dispatch function
     const dispatch = useDispatch();
 
     // Navigation function
     const navigate = useNavigate();
 
-    // Get cart items from Redux
+
+    // -----------------------------------
+    // REDUX STATE
+    // -----------------------------------
+
+    // Get saved addresses
+    const addresses = useSelector(selectAddresses);
+
+    // Get cart items
     const cartItems = useSelector(selectCartItems);
 
     // Get cart loading state
@@ -57,87 +77,150 @@ function Checkout() {
     // Check whether order creation succeeded
     const checkoutSuccess = useSelector(selectCheckoutSuccess);
 
-    // Shipping address form state
-    const [formData, setFormData] = useState({
-        fullName: "",
-        phone: "",
-        addressLine: "",
-        city: "",
-        state: "",
-        postalCode: "",
-        country: "India",
-    });
 
-    // Store frontend validation errors
+    // -----------------------------------
+    // LOCAL STATE
+    // -----------------------------------
+
+    // Stores the ID of the selected address
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+
+    // Stores frontend validation errors
     const [validationError, setValidationError] = useState("");
 
-    // Fetch the current cart when Checkout loads
+
+    // -----------------------------------
+    // FETCH CART + ADDRESSES
+    // -----------------------------------
+
     useEffect(() => {
+
+        // Fetch current cart
         dispatch(getMyCartThunk());
+
+        // Fetch saved addresses
+        dispatch(getMyAddressesThunk());
+
     }, [dispatch]);
 
-    // Navigate to orders after successful order creation
+
+    // -----------------------------------
+    // SELECT DEFAULT ADDRESS
+    // -----------------------------------
+
     useEffect(() => {
+
+        // If there are no addresses,
+        // there is nothing to select.
+        if (addresses.length === 0) {
+            setSelectedAddressId("");
+            return;
+        }
+
+        // Find the user's default address
+        const defaultAddress = addresses.find(
+            (address) => address.isDefault
+        );
+
+        // Select the default address.
+        // If no default exists, select the first address.
+        setSelectedAddressId(
+            defaultAddress?._id || addresses[0]._id
+        );
+
+    }, [addresses]);
+
+
+    // -----------------------------------
+    // GET SELECTED ADDRESS
+    // -----------------------------------
+
+    const selectedAddress = addresses.find(
+        (address) => address._id === selectedAddressId
+    );
+
+
+    // -----------------------------------
+    // NAVIGATE AFTER SUCCESSFUL ORDER
+    // -----------------------------------
+
+    useEffect(() => {
+
         if (checkoutSuccess) {
             navigate("/orders");
         }
+
     }, [checkoutSuccess, navigate]);
 
-    // Handle input changes
-    const handleChange = (event) => {
-        const { name, value } = event.target;
 
-        setFormData((previousData) => ({
-            ...previousData,
-            [name]: value,
-        }));
+    // -----------------------------------
+    // HANDLE ADDRESS SELECTION
+    // -----------------------------------
 
-        // Clear previous validation message
+    const handleAddressChange = (event) => {
+
+        setSelectedAddressId(event.target.value);
+
+        // Clear previous validation error
         setValidationError("");
+
     };
 
-    // Calculate subtotal
+
+    // -----------------------------------
+    // CALCULATE SUBTOTAL
+    // -----------------------------------
+
     const subtotal = cartItems.reduce((total, item) => {
+
         const product = item.product;
 
+        // Skip invalid cart items
         if (!product) {
             return total;
         }
 
+        // Add product price × quantity
         return total + product.price * item.quantity;
+
     }, 0);
 
-    // Calculate shipping fee
-    // Backend uses ₹50 shipping below ₹1000
-    // and free shipping for orders of ₹1000 or more.
+
+    // -----------------------------------
+    // CALCULATE SHIPPING
+    // -----------------------------------
+
+    // Backend uses:
+    // ₹50 shipping below ₹1000
+    // Free shipping for ₹1000 or more
     const shippingFee = subtotal >= 1000 ? 0 : 50;
 
-    // Calculate final total
+
+    // -----------------------------------
+    // CALCULATE FINAL TOTAL
+    // -----------------------------------
+
     const totalAmount = subtotal + shippingFee;
 
-    // Handle order submission
+
+    // -----------------------------------
+    // HANDLE ORDER SUBMISSION
+    // -----------------------------------
+
     const handleSubmit = async (event) => {
+
         event.preventDefault();
 
-        // Basic frontend validation
-        if (
-            !formData.fullName.trim() ||
-            !formData.phone.trim() ||
-            !formData.addressLine.trim() ||
-            !formData.city.trim() ||
-            !formData.state.trim() ||
-            !formData.postalCode.trim() ||
-            !formData.country.trim()
-        ) {
-            setValidationError(
-                "Please fill in all shipping address fields."
-            );
+        // Clear previous validation error
+        setValidationError("");
 
-            return;
-        }
 
-        // Make sure the cart contains products
+        // -----------------------------------
+        // VALIDATE CART
+        // -----------------------------------
+
         if (cartItems.length === 0) {
+
             setValidationError(
                 "Your cart is empty."
             );
@@ -145,24 +228,74 @@ function Checkout() {
             return;
         }
 
-        // Send shipping address to backend
-        await dispatch(
-            createOrderThunk({
-                shippingAddress: formData,
-            })
-        );
+
+        // -----------------------------------
+        // VALIDATE ADDRESS
+        // -----------------------------------
+
+        if (!selectedAddress) {
+
+            setValidationError(
+                "Please select a delivery address."
+            );
+
+            return;
+        }
+
+
+        // -----------------------------------
+        // CREATE ORDER
+        // -----------------------------------
+
+        try {
+
+            await dispatch(
+                createOrderThunk({
+                    shippingAddress: {
+                        fullName: selectedAddress.fullName,
+                        phone: selectedAddress.phone,
+                        addressLine: selectedAddress.addressLine,
+                        city: selectedAddress.city,
+                        state: selectedAddress.state,
+                        postalCode: selectedAddress.postalCode,
+                        country: selectedAddress.country,
+                    },
+                })
+            ).unwrap();
+
+        } catch (error) {
+
+            // Redux stores the backend error.
+            console.error(
+                "Order creation failed:",
+                error
+            );
+
+        }
     };
 
-    // Show cart loading state
+
+    // -----------------------------------
+    // CART LOADING
+    // -----------------------------------
+
     if (cartLoading && cartItems.length === 0) {
         return <Loading />;
     }
 
-    // Show empty cart
+
+    // -----------------------------------
+    // EMPTY CART
+    // -----------------------------------
+
     if (!cartLoading && cartItems.length === 0) {
+
         return (
+
             <main className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-900">
+
                 <div className="mx-auto max-w-4xl">
+
                     <EmptyState
                         title="Your cart is empty"
                         message="Add some products before proceeding to checkout."
@@ -175,25 +308,38 @@ function Checkout() {
                     >
                         Continue Shopping
                     </button>
+
                 </div>
+
             </main>
+
         );
     }
 
+
+    // -----------------------------------
+    // CHECKOUT PAGE
+    // -----------------------------------
+
     return (
+
         <main className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-900">
+
             <div className="mx-auto max-w-6xl">
 
                 {/* Page heading */}
                 <div className="mb-8">
+
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                         Checkout
                     </h1>
 
                     <p className="mt-2 text-gray-600 dark:text-gray-400">
-                        Enter your delivery details and place your order.
+                        Select your delivery address and place your order.
                     </p>
+
                 </div>
+
 
                 {/* Cart error */}
                 {cartError && (
@@ -202,6 +348,7 @@ function Checkout() {
                     </div>
                 )}
 
+
                 {/* Checkout error */}
                 {checkoutError && (
                     <div className="mb-6">
@@ -209,207 +356,203 @@ function Checkout() {
                     </div>
                 )}
 
+
                 {/* Frontend validation error */}
                 {validationError && (
+
                     <div className="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20">
                         {validationError}
                     </div>
+
                 )}
+
 
                 <div className="grid gap-8 lg:grid-cols-3">
 
-                    {/* Shipping address */}
+
+                    {/* ========================================= */}
+                    {/* DELIVERY ADDRESS SECTION */}
+                    {/* ========================================= */}
+
                     <section className="lg:col-span-2">
+
                         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
 
-                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                Delivery Address
-                            </h2>
+                            {/* Section heading */}
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-                            <form
-                                onSubmit={handleSubmit}
-                                className="mt-6 space-y-5"
-                            >
-
-                                {/* Full name */}
                                 <div>
-                                    <label
-                                        htmlFor="fullName"
-                                        className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        Full Name
-                                    </label>
 
-                                    <input
-                                        id="fullName"
-                                        name="fullName"
-                                        type="text"
-                                        value={formData.fullName}
-                                        onChange={handleChange}
-                                        placeholder="Enter your full name"
-                                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    />
+                                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                        Delivery Address
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                        Select a saved address for this order.
+                                    </p>
+
                                 </div>
 
-                                {/* Phone */}
-                                <div>
-                                    <label
-                                        htmlFor="phone"
-                                        className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        Phone
-                                    </label>
 
-                                    <input
-                                        id="phone"
-                                        name="phone"
-                                        type="tel"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="Enter your phone number"
-                                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    />
-                                </div>
-
-                                {/* Address */}
-                                <div>
-                                    <label
-                                        htmlFor="addressLine"
-                                        className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                    >
-                                        Address
-                                    </label>
-
-                                    <textarea
-                                        id="addressLine"
-                                        name="addressLine"
-                                        value={formData.addressLine}
-                                        onChange={handleChange}
-                                        placeholder="House number, street, area"
-                                        rows="3"
-                                        className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                    />
-                                </div>
-
-                                {/* City and state */}
-                                <div className="grid gap-5 sm:grid-cols-2">
-
-                                    <div>
-                                        <label
-                                            htmlFor="city"
-                                            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                        >
-                                            City
-                                        </label>
-
-                                        <input
-                                            id="city"
-                                            name="city"
-                                            type="text"
-                                            value={formData.city}
-                                            onChange={handleChange}
-                                            placeholder="City"
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label
-                                            htmlFor="state"
-                                            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                        >
-                                            State
-                                        </label>
-
-                                        <input
-                                            id="state"
-                                            name="state"
-                                            type="text"
-                                            value={formData.state}
-                                            onChange={handleChange}
-                                            placeholder="State"
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Postal code and country */}
-                                <div className="grid gap-5 sm:grid-cols-2">
-
-                                    <div>
-                                        <label
-                                            htmlFor="postalCode"
-                                            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                        >
-                                            Postal Code
-                                        </label>
-
-                                        <input
-                                            id="postalCode"
-                                            name="postalCode"
-                                            type="text"
-                                            value={formData.postalCode}
-                                            onChange={handleChange}
-                                            placeholder="Postal code"
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label
-                                            htmlFor="country"
-                                            className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                        >
-                                            Country
-                                        </label>
-
-                                        <input
-                                            id="country"
-                                            name="country"
-                                            type="text"
-                                            value={formData.country}
-                                            onChange={handleChange}
-                                            className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Place order button */}
-                                <button
-                                    type="submit"
-                                    disabled={checkoutLoading}
-                                    className="w-full rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                                {/* Manage addresses link */}
+                                <Link
+                                    to="/addresses"
+                                    className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
                                 >
-                                    {checkoutLoading
-                                        ? "Placing Order..."
-                                        : "Place Order"}
-                                </button>
-                            </form>
+                                    Manage Addresses
+                                </Link>
+
+                            </div>
+
+
+                            {/* --------------------------------- */}
+                            {/* NO SAVED ADDRESSES */}
+                            {/* --------------------------------- */}
+
+                            {addresses.length === 0 ? (
+
+                                <div className="mt-6 rounded-lg border border-dashed border-gray-300 p-6 text-center dark:border-gray-600">
+
+                                    <p className="mb-4 text-gray-600 dark:text-gray-300">
+                                        You don't have any saved addresses yet.
+                                    </p>
+
+                                    <Link
+                                        to="/addresses"
+                                        className="inline-block rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 dark:bg-white dark:text-gray-900"
+                                    >
+                                        Add Address
+                                    </Link>
+
+                                </div>
+
+                            ) : (
+
+                                /* --------------------------------- */
+                                /* SAVED ADDRESSES */
+                                /* --------------------------------- */
+
+                                <div className="mt-6 space-y-3">
+
+                                    {addresses.map((address) => (
+
+                                        <label
+                                            key={address._id}
+                                            className={`block cursor-pointer rounded-xl border p-4 transition ${
+                                                selectedAddressId === address._id
+                                                    ? "border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
+                                                    : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
+                                            }`}
+                                        >
+
+                                            <div className="flex gap-3">
+
+                                                {/* Radio button */}
+                                                <input
+                                                    type="radio"
+                                                    name="selectedAddress"
+                                                    value={address._id}
+                                                    checked={
+                                                        selectedAddressId === address._id
+                                                    }
+                                                    onChange={handleAddressChange}
+                                                    className="mt-1 h-4 w-4"
+                                                />
+
+
+                                                {/* Address information */}
+                                                <div className="flex-1">
+
+                                                    {/* Name + default badge */}
+                                                    <div className="flex flex-wrap items-center gap-2">
+
+                                                        <p className="font-semibold text-gray-900 dark:text-white">
+                                                            {address.fullName}
+                                                        </p>
+
+                                                        {address.isDefault && (
+
+                                                            <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                                                Default
+                                                            </span>
+
+                                                        )}
+
+                                                    </div>
+
+
+                                                    {/* Address */}
+                                                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                                        {address.addressLine}
+                                                    </p>
+
+
+                                                    {/* City + State + Postal */}
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                        {address.city}, {address.state} - {address.postalCode}
+                                                    </p>
+
+
+                                                    {/* Country */}
+                                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                                        {address.country}
+                                                    </p>
+
+
+                                                    {/* Phone */}
+                                                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                                                        Phone: {address.phone}
+                                                    </p>
+
+                                                </div>
+
+                                            </div>
+
+                                        </label>
+
+                                    ))}
+
+                                </div>
+
+                            )}
+
                         </div>
+
                     </section>
 
-                    {/* Order summary */}
+
+                    {/* ========================================= */}
+                    {/* ORDER SUMMARY */}
+                    {/* ========================================= */}
+
                     <aside>
+
                         <div className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
 
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                                 Order Summary
                             </h2>
 
+
                             {/* Cart products */}
                             <div className="mt-6 space-y-4">
+
                                 {cartItems.map((item) => {
+
                                     const product = item.product;
 
+                                    // Skip invalid product
                                     if (!product) {
                                         return null;
                                     }
 
                                     return (
+
                                         <div
                                             key={product._id}
                                             className="flex gap-3"
                                         >
+
                                             {/* Product image */}
                                             <img
                                                 src={product.images?.[0]}
@@ -417,8 +560,10 @@ function Checkout() {
                                                 className="h-16 w-16 rounded-lg object-cover"
                                             />
 
+
                                             {/* Product information */}
                                             <div className="min-w-0 flex-1">
+
                                                 <p className="truncate font-medium text-gray-900 dark:text-white">
                                                     {product.title}
                                                 </p>
@@ -426,57 +571,105 @@ function Checkout() {
                                                 <p className="text-sm text-gray-500 dark:text-gray-400">
                                                     Qty: {item.quantity}
                                                 </p>
+
                                             </div>
+
 
                                             {/* Item total */}
                                             <p className="font-medium text-gray-900 dark:text-white">
                                                 ₹{product.price * item.quantity}
                                             </p>
+
                                         </div>
+
                                     );
+
                                 })}
+
                             </div>
+
 
                             {/* Price breakdown */}
                             <div className="mt-6 space-y-3 border-t border-gray-200 pt-6 dark:border-gray-700">
 
+                                {/* Subtotal */}
                                 <div className="flex justify-between text-sm">
+
                                     <span className="text-gray-600 dark:text-gray-400">
                                         Subtotal
                                     </span>
 
                                     <span className="font-medium text-gray-900 dark:text-white">
-                                        ₹{subtotal}
+                                        ₹{subtotal.toFixed(2)}
                                     </span>
+
                                 </div>
 
+
+                                {/* Shipping */}
                                 <div className="flex justify-between text-sm">
+
                                     <span className="text-gray-600 dark:text-gray-400">
                                         Shipping
                                     </span>
 
                                     <span className="font-medium text-gray-900 dark:text-white">
+
                                         {shippingFee === 0
                                             ? "Free"
                                             : `₹${shippingFee}`}
+
                                     </span>
+
                                 </div>
 
+
+                                {/* Total */}
                                 <div className="flex justify-between border-t border-gray-200 pt-3 text-lg font-bold dark:border-gray-700">
+
                                     <span className="text-gray-900 dark:text-white">
                                         Total
                                     </span>
 
                                     <span className="text-gray-900 dark:text-white">
-                                        ₹{totalAmount}
+                                        ₹{totalAmount.toFixed(2)}
                                     </span>
+
                                 </div>
+
                             </div>
+
+
+                            {/* --------------------------------- */}
+                            {/* PLACE ORDER BUTTON */}
+                            {/* --------------------------------- */}
+
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={
+                                    checkoutLoading ||
+                                    addresses.length === 0
+                                }
+                                className="mt-6 w-full rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                            >
+
+                                {checkoutLoading
+                                    ? "Placing Order..."
+                                    : "Place Order"}
+
+                            </button>
+
                         </div>
+
                     </aside>
+
                 </div>
+
             </div>
+
         </main>
+
     );
 }
 
