@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Product from "./product.model.js";
 import ApiError from "../../utils/Apierror.js";
+import { deleteCloudinaryImage } from "../../utils/cloudinary.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import Category from "../categories/category.model.js";
 import {
@@ -482,8 +483,8 @@ export const deleteProduct = async (req, res, next) => {
             );
         }
 
-        // Find and delete the product
-        const product = await Product.findByIdAndDelete(id);
+        // Find the product first
+        const product = await Product.findById(id);
 
         // Return an error if the product doesn't exist
         if (!product) {
@@ -491,6 +492,18 @@ export const deleteProduct = async (req, res, next) => {
                 new ApiError(404, "Product not found")
             );
         }
+
+        /*
+         * Delete all product images from Cloudinary.
+         *
+         * product.images contains the Cloudinary URLs.
+         */
+        for (const imageUrl of product.images) {
+            await deleteCloudinaryImage(imageUrl);
+        }
+
+        // Delete the product from MongoDB
+        await Product.findByIdAndDelete(id);
 
         // Send a successful response
         sendSuccessResponse(
