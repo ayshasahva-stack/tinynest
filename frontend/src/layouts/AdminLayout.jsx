@@ -1,18 +1,19 @@
-// Import Outlet to display the current admin page
+// Import Outlet to display the current nested admin page
 import { Outlet } from "react-router-dom";
+
+// Admin sidebar component
+import AdminSidebar from "../components/AdminSidebar";
 
 // AdminLayout provides the common structure for admin pages
 function AdminLayout() {
     return (
-        <div>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
 
-            {/* Admin sidebar will be added here later */}
-            <aside>
-                <h2>TinyNest Admin</h2>
-            </aside>
+            {/* Admin navigation sidebar */}
+            <AdminSidebar />
 
-            {/* Current admin page appears here */}
-            <main>
+            {/* Current admin page */}
+            <main className="ml-64">
                 <Outlet />
             </main>
 

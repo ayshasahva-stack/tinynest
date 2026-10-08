@@ -10,11 +10,22 @@ import {
 
 import protect from "../../middleware/auth.middleware.js";
 import authorizeAdmin from "../../middleware/admin.middleware.js";
+// Handles product image uploads
+import upload from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
 // Only authenticated admins can create products
-router.post("/", protect, authorizeAdmin, createProduct);
+// Create product - admin only
+// "images" is the field name that will contain the uploaded files.
+// Maximum 5 product images are allowed.
+router.post(
+    "/",
+    protect,
+    authorizeAdmin,
+    upload.array("images", 5),
+    createProduct
+);
 
 // Get all products
 // This is a public route

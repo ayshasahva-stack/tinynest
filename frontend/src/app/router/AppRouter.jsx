@@ -25,6 +25,8 @@ import ResetPassword from "../../pages/auth/ResetPassword";
 
 
 import AdminDashboard from "../../pages/admin/AdminDashboard";
+import AdminProducts from "../../pages/admin/AdminProducts";
+import AdminAddProduct from "../../pages/admin/AdminAddProducts";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -89,9 +91,21 @@ function AppRouter() {
 
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<AdminDashboard />} />
-                </Route>
 
+                    {/* Admin dashboard */}
+                    <Route index element={<AdminDashboard />} />
+
+                    {/* Admin product management */}
+                    <Route
+                        path="products"
+                        element={<AdminProducts />}
+                    />
+                    <Route
+                        path="products/new"
+                        element={<AdminAddProduct />}
+                    />
+
+                </Route>
             </Routes>
         </BrowserRouter>
     );
