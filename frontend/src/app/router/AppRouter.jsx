@@ -22,7 +22,9 @@ import Kits from "../../pages/kits/Kits";
 import KitDetails from "../../pages/kitDetails/KitDetails";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
-import Admin from "../../layouts/Admin";
+
+
+import AdminDashboard from "../../pages/admin/AdminDashboard";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -87,7 +89,7 @@ function AppRouter() {
 
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<Admin />} />
+                    <Route index element={<AdminDashboard />} />
                 </Route>
 
             </Routes>

@@ -15,6 +15,8 @@ import orderReducer from "../features/orders/orderSlice";
 import addressReducer from "../features/addresses/addressSlice";
 import reviewReducer from "../features/reviews/reviewSlice";
 import kitReducer from "../features/kits/kitSlice";
+
+import adminReducer from "../features/admin/adminSlice";
 // Create the application's Redux store
 const store = configureStore({
     reducer: {
@@ -29,6 +31,8 @@ const store = configureStore({
         addresses: addressReducer,
         reviews: reviewReducer,
         kits: kitReducer,
+
+        admin: adminReducer,
     },
 });
 
