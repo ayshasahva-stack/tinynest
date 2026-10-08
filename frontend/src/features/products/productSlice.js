@@ -8,6 +8,7 @@ import {
     fetchProductById,
     createProductThunk,
     deleteProductThunk,
+    updateProductThunk,
 } from "./productThunk";
 
 // ======================================================
@@ -263,8 +264,75 @@ const productSlice = createSlice({
                     action.payload ||
                     "Failed to delete product";
             }
+            
         );
+        
+        // ==========================================
+// UPDATE PRODUCT
+// ==========================================
+
+builder.addCase(
+    updateProductThunk.pending,
+    (state) => {
+        // Show loading state while updating.
+        state.loading = true;
+
+        // Clear previous error.
+        state.error = null;
+    }
+)
+
+builder.addCase(
+    updateProductThunk.fulfilled,
+    (state, action) => {
+        // Update finished successfully.
+        state.loading = false;
+
+        // Get the updated product from the response.
+        const updatedProduct =
+            action.payload.data;
+
+        // Find the product's position in
+        // the current Redux products array.
+        const index = state.products.findIndex(
+            (product) =>
+                product._id ===
+                updatedProduct._id
+        );
+
+        // Replace the old product with
+        // the updated product.
+        if (index !== -1) {
+            state.products[index] =
+                updatedProduct;
+        }
+
+        // Also update selectedProduct if
+        // this product is currently selected.
+        if (
+            state.selectedProduct?._id ===
+            updatedProduct._id
+        ) {
+            state.selectedProduct =
+                updatedProduct;
+        }
+    }
+)
+
+builder.addCase(
+    updateProductThunk.rejected,
+    (state, action) => {
+        // Update failed.
+        state.loading = false;
+
+        // Store the error message.
+        state.error =
+            action.payload ||
+            "Failed to update product";
+    }
+)
     },
+    
 });
 
 

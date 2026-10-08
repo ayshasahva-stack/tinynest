@@ -34,7 +34,15 @@ router.get("/", getProducts);
 // Get a single product - public
 router.get("/:id", getProductById);
 // Update product - admin only
-router.put("/:id",protect,authorizeAdmin,updateProduct);
+// Update product - admin only
+// Multer handles newly uploaded product images.
+router.put(
+    "/:id",
+    protect,
+    authorizeAdmin,
+    upload.array("images", 5),
+    updateProduct
+);
 
 // Delete product - admin only
 router.delete( "/:id", protect, authorizeAdmin, deleteProduct);

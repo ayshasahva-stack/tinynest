@@ -16,7 +16,7 @@ import {
 
 function AdminProducts() {
     const dispatch = useDispatch();
-const navigate = useNavigate();
+    const navigate = useNavigate();
     // Get product information from Redux.
     const products = useSelector(selectProducts);
 
@@ -445,23 +445,27 @@ const navigate = useNavigate();
                                             <div className="flex gap-2">
 
                                                 {/* Edit will be implemented next */}
+                                                {/* Edit product */}
                                                 <button
                                                     type="button"
-                                                    disabled
+                                                    onClick={() =>
+                                                        navigate(`/admin/products/edit/${product._id}`)
+                                                    }
                                                     className="
-                                                        rounded-lg
-                                                        border
-                                                        border-gray-300
-                                                        px-3
-                                                        py-1.5
-                                                        text-sm
-                                                        text-gray-400
-                                                        cursor-not-allowed
-                                                    "
+        rounded-lg
+        border
+        border-blue-200
+        px-3
+        py-1.5
+        text-sm
+        font-medium
+        text-blue-600
+        transition
+        hover:bg-blue-50
+    "
                                                 >
                                                     Edit
                                                 </button>
-
                                                 {/* Delete */}
                                                 <button
                                                     type="button"

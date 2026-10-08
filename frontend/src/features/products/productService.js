@@ -76,7 +76,20 @@ export const createProduct = async (formData) => {
     // Return the backend response
     return response.data;
 };
+// Update an existing product
+export const updateProduct = async (
+    productId,
+    formData
+) => {
+    // Send FormData because the request can contain
+    // both product fields and new image files.
+    const response = await api.put(
+        `/products/${productId}`,
+        formData
+    );
 
+    return response.data;
+};
 // ======================================================
 // DELETE PRODUCT
 // ======================================================

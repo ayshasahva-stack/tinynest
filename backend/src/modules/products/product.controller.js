@@ -25,25 +25,25 @@ export const createProduct = async (req, res, next) => {
         req.body.images = imageUrls;
 
         // Convert numeric fields because multipart/form-data
-// sends text values as strings.
-req.body.price = Number(req.body.price);
-req.body.discount = Number(req.body.discount || 0);
-req.body.stock = Number(req.body.stock);
-// ==========================================
-// CONVERT TAGS FROM FORM-DATA
-// ==========================================
+        // sends text values as strings.
+        req.body.price = Number(req.body.price);
+        req.body.discount = Number(req.body.discount || 0);
+        req.body.stock = Number(req.body.stock);
+        // ==========================================
+        // CONVERT TAGS FROM FORM-DATA
+        // ==========================================
 
-// FormData sends tags as a string.
-// Example:
-// "romper,baby clothing,cotton"
-//
-// Convert that string into an array.
-if (typeof req.body.tags === "string") {
-    req.body.tags = req.body.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-}
+        // FormData sends tags as a string.
+        // Example:
+        // "romper,baby clothing,cotton"
+        //
+        // Convert that string into an array.
+        if (typeof req.body.tags === "string") {
+            req.body.tags = req.body.tags
+                .split(",")
+                .map((tag) => tag.trim())
+                .filter(Boolean);
+        }
         // Validate the product data from the request
         const error = validateProduct(req.body);
 
@@ -231,31 +231,60 @@ export const updateProduct = async (req, res, next) => {
         // Get the product ID from the URL
         const { id } = req.params;
 
-        // Check whether the ID has a valid MongoDB format
+        // ==========================================
+        // VALIDATE PRODUCT ID
+        // ==========================================
+
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(
                 new ApiError(400, "Invalid product ID")
             );
         }
 
-        // Validate the fields being updated
-        const error = validateProductUpdate(req.body);
+        // ==========================================
+        // CONVERT MULTIPART FORM-DATA VALUES
+        // ==========================================
 
-        if (error) {
-            return next(new ApiError(400, error));
-        }
-        // If category is being updated, verify that it exists and is active
-        if (req.body.category !== undefined) {
-            const category = await Category.findOne({
-                _id: req.body.category,
-                isActive: true
-            });
+        // When using FormData, numbers arrive as strings.
+        // Convert them back to numbers before validation.
 
-            if (!category) {
-                return next(new ApiError(400, "Category not found or inactive"));
-            }
+        if (req.body.price !== undefined) {
+            req.body.price = Number(req.body.price);
         }
-        // Find the existing product
+
+        if (req.body.discount !== undefined) {
+            req.body.discount = Number(
+                req.body.discount || 0
+            );
+        }
+
+        if (req.body.stock !== undefined) {
+            req.body.stock = Number(req.body.stock);
+        }
+
+        // ==========================================
+        // CONVERT TAGS
+        // ==========================================
+
+        // FormData sends tags as a comma-separated string.
+        //
+        // Example:
+        // "romper,baby clothing,cotton"
+        //
+        // Convert it into:
+        // ["romper", "baby clothing", "cotton"]
+
+        if (typeof req.body.tags === "string") {
+            req.body.tags = req.body.tags
+                .split(",")
+                .map((tag) => tag.trim())
+                .filter(Boolean);
+        }
+
+        // ==========================================
+        // FIND EXISTING PRODUCT
+        // ==========================================
+
         const product = await Product.findById(id);
 
         if (!product) {
@@ -264,7 +293,136 @@ export const updateProduct = async (req, res, next) => {
             );
         }
 
-        // List of fields that admins are allowed to update
+        // ==========================================
+        // HANDLE EXISTING IMAGES
+        // ==========================================
+
+        let existingImages = [];
+
+        // The frontend will send existingImages
+        // as a JSON string.
+        //
+        // Example:
+        // '["image1.jpg","image2.jpg"]'
+
+        if (req.body.existingImages) {
+            try {
+                existingImages = JSON.parse(
+                    req.body.existingImages
+                );
+            } catch (error) {
+                return next(
+                    new ApiError(
+                        400,
+                        "Invalid existing images format"
+                    )
+                );
+            }
+        } else {
+            // If frontend does not send existingImages,
+            // keep the product's current images.
+            existingImages = product.images || [];
+        }
+
+        // Make sure existingImages is actually an array.
+        if (!Array.isArray(existingImages)) {
+            return next(
+                new ApiError(
+                    400,
+                    "Existing images must be an array"
+                )
+            );
+        }
+
+        // ==========================================
+        // GET NEW CLOUDINARY IMAGE URLS
+        // ==========================================
+
+        // Multer + Cloudinary gives us the uploaded
+        // image URL through file.path.
+
+        const newImageUrls =
+            req.files?.map((file) => file.path) || [];
+
+        // ==========================================
+        // COMBINE IMAGES
+        // ==========================================
+
+        // Keep the existing images selected by admin
+        // and add newly uploaded images.
+
+        const finalImages = [
+            ...existingImages,
+            ...newImageUrls,
+        ];
+
+        // ==========================================
+        // IMAGE LIMIT
+        // ==========================================
+
+        // TinyNest allows maximum 5 product images.
+
+        if (finalImages.length > 5) {
+            return next(
+                new ApiError(
+                    400,
+                    "A product can have a maximum of 5 images"
+                )
+            );
+        }
+
+        // ==========================================
+        // PREPARE IMAGE DATA
+        // ==========================================
+
+        // Set the final image array.
+        req.body.images = finalImages;
+
+        // Remove existingImages because it is only
+        // used internally and is NOT a Product field.
+        delete req.body.existingImages;
+
+        // ==========================================
+        // VALIDATE PRODUCT DATA
+        // ==========================================
+
+        const error = validateProductUpdate(
+            req.body
+        );
+
+        if (error) {
+            return next(
+                new ApiError(400, error)
+            );
+        }
+
+        // ==========================================
+        // CHECK CATEGORY
+        // ==========================================
+
+        // If category is being updated,
+        // verify that it exists and is active.
+
+        if (req.body.category !== undefined) {
+            const category = await Category.findOne({
+                _id: req.body.category,
+                isActive: true,
+            });
+
+            if (!category) {
+                return next(
+                    new ApiError(
+                        400,
+                        "Category not found or inactive"
+                    )
+                );
+            }
+        }
+
+        // ==========================================
+        // ALLOWED FIELDS
+        // ==========================================
+
         const allowedFields = [
             "title",
             "description",
@@ -275,22 +433,29 @@ export const updateProduct = async (req, res, next) => {
             "ageGroup",
             "images",
             "stock",
-            "tags"
+            "tags",
         ];
 
-        // Update only the allowed fields
+        // ==========================================
+        // UPDATE PRODUCT
+        // ==========================================
+
         allowedFields.forEach((field) => {
             if (req.body[field] !== undefined) {
                 product[field] = req.body[field];
             }
         });
 
+        // Save updated product
         await product.save();
 
-        // Load the category information for the response
+        // Load category information
         await product.populate("category");
 
-        // Return the updated product
+        // ==========================================
+        // SEND RESPONSE
+        // ==========================================
+
         sendSuccessResponse(
             res,
             200,
@@ -299,7 +464,8 @@ export const updateProduct = async (req, res, next) => {
         );
 
     } catch (error) {
-        // Pass unexpected errors to the centralized error handler
+        // Pass unexpected errors to centralized
+        // error handling middleware.
         next(error);
     }
 };

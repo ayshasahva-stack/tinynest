@@ -8,8 +8,8 @@ import {
     getProductById,
     createProduct,
     deleteProduct,
+    updateProduct,
 } from "./productService";
-
 // ======================================================
 // FETCH ALL PRODUCTS
 // ======================================================
@@ -141,6 +141,40 @@ export const deleteProductThunk = createAsyncThunk(
 
             // Send the error to Redux
             return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+// Update an existing product
+export const updateProductThunk = createAsyncThunk(
+    "products/updateProduct",
+
+    async (
+        { productId, formData },
+        thunkAPI
+    ) => {
+        try {
+            // Send the product ID and FormData
+            // to the service function.
+            const response = await updateProduct(
+                productId,
+                formData
+            );
+
+            // Return the updated product response.
+            return response;
+
+        } catch (error) {
+            // Get a useful error message from
+            // the backend response.
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update product";
+
+            // Send the error to Redux.
+            return thunkAPI.rejectWithValue(
+                message
+            );
         }
     }
 );
