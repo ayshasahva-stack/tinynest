@@ -331,34 +331,66 @@ function AdminProducts() {
 
                                             <div className="flex items-center gap-4">
 
-                                                {/* Product image */}
-                                                {product.images?.[0] ? (
-                                                    <img
-                                                        src={product.images[0]}
-                                                        alt={product.title}
-                                                        className="
-                                                            h-14
-                                                            w-14
-                                                            rounded-lg
-                                                            object-cover
-                                                        "
-                                                    />
+                                                {/* Product thumbnails */}
+                                                {product.images?.length > 0 ? (
+                                                    <div className="flex items-center gap-1.5">
+
+                                                        {/* Show maximum 3 thumbnails */}
+                                                        {product.images.slice(0, 3).map((image, index) => (
+                                                            <img
+                                                                key={`${image}-${index}`}
+                                                                src={image}
+                                                                alt={`${product.title} ${index + 1}`}
+                                                                className="
+                    h-14
+                    w-14
+                    rounded-lg
+                    border
+                    border-gray-200
+                    object-cover
+                    dark:border-gray-700
+                "
+                                                            />
+                                                        ))}
+
+                                                        {/* Show remaining image count */}
+                                                        {product.images.length > 3 && (
+                                                            <div
+                                                                className="
+                    flex
+                    h-14
+                    w-14
+                    items-center
+                    justify-center
+                    rounded-lg
+                    bg-gray-100
+                    text-xs
+                    font-semibold
+                    text-gray-600
+                    dark:bg-gray-700
+                    dark:text-gray-200
+                "
+                                                            >
+                                                                +{product.images.length - 3}
+                                                            </div>
+                                                        )}
+
+                                                    </div>
                                                 ) : (
                                                     <div className="
-                                                        flex
-                                                        h-14
-                                                        w-14
-                                                        items-center
-                                                        justify-center
-                                                        rounded-lg
-                                                        bg-gray-100
-                                                        text-xs
-                                                        text-gray-400
-                                                    ">
+        flex
+        h-14
+        w-14
+        items-center
+        justify-center
+        rounded-lg
+        bg-gray-100
+        text-xs
+        text-gray-400
+    ">
                                                         No image
                                                     </div>
                                                 )}
-
                                                 <div className="min-w-0">
 
                                                     <p className="
