@@ -28,3 +28,37 @@ export const getLowStockProducts = async () => {
 
     return response.data;
 };
+// Get daily sales for the current month.
+export const getSalesStatistics = async () => {
+    const response = await api.get("/admin/dashboard/sales");
+
+    return response.data;
+};
+
+// Get monthly sales for the current year.
+export const getMonthlySales = async () => {
+    const response = await api.get("/admin/dashboard/monthly-sales");
+
+    return response.data;
+};
+
+// Get order counts grouped by order status.
+export const getOrderStatistics = async () => {
+    const response = await api.get("/admin/dashboard/order-statistics");
+
+    return response.data;
+};
+
+// Get successful payment statistics grouped by payment method.
+export const getPaymentStatistics = async () => {
+    const response = await api.get("/admin/dashboard/payment-statistics");
+
+    return response.data;
+};
+
+// Get the top-selling products.
+export const getTopSellingProducts = async () => {
+    const response = await api.get("/admin/dashboard/top-products");
+
+    return response.data;
+};

@@ -39,3 +39,38 @@ export const selectLowStockLoading = (state) =>
 
 export const selectLowStockError = (state) =>
     state.admin.lowStockError;
+
+// Daily sales.
+export const selectSales = (state) =>
+    state.admin.sales;
+
+export const selectSalesLoading = (state) =>
+    state.admin.salesLoading;
+
+// Monthly sales.
+export const selectMonthlySales = (state) =>
+    state.admin.monthlySales;
+
+export const selectMonthlySalesLoading = (state) =>
+    state.admin.monthlySalesLoading;
+
+// Order statistics.
+export const selectOrderStatistics = (state) =>
+    state.admin.orderStatistics;
+
+export const selectOrderStatisticsLoading = (state) =>
+    state.admin.orderStatisticsLoading;
+
+// Payment statistics.
+export const selectPaymentStatistics = (state) =>
+    state.admin.paymentStatistics;
+
+export const selectPaymentStatisticsLoading = (state) =>
+    state.admin.paymentStatisticsLoading;
+
+// Top-selling products.
+export const selectTopSellingProducts = (state) =>
+    state.admin.topSellingProducts;
+
+export const selectTopProductsLoading = (state) =>
+    state.admin.topProductsLoading;

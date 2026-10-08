@@ -2,64 +2,180 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+} from "recharts";
+
+import {
     getDashboardOverviewThunk,
     getRecentOrdersThunk,
     getRecentCustomersThunk,
     getLowStockProductsThunk,
+    getSalesStatisticsThunk,
+    getMonthlySalesThunk,
+    getOrderStatisticsThunk,
+    getPaymentStatisticsThunk,
+    getTopSellingProductsThunk,
 } from "../../features/admin/adminThunk";
 
 import {
     selectAdminOverview,
     selectAdminLoading,
     selectAdminError,
+
     selectRecentOrders,
     selectRecentOrdersLoading,
+
     selectRecentCustomers,
     selectRecentCustomersLoading,
+
     selectLowStockProducts,
     selectLowStockLoading,
+
+    selectSales,
+    selectSalesLoading,
+
+    selectMonthlySales,
+    selectMonthlySalesLoading,
+
+    selectOrderStatistics,
+    selectOrderStatisticsLoading,
+
+    selectPaymentStatistics,
+    selectPaymentStatisticsLoading,
+
+    selectTopSellingProducts,
+    selectTopProductsLoading,
 } from "../../features/admin/adminSelectors";
 
 function AdminDashboard() {
     // Redux dispatch allows us to send actions/thunks.
     const dispatch = useDispatch();
 
-    // Main dashboard statistics.
-    const overview = useSelector(selectAdminOverview);
-    const overviewLoading = useSelector(selectAdminLoading);
-    const overviewError = useSelector(selectAdminError);
+    // -----------------------------------------
+    // Dashboard overview
+    // -----------------------------------------
 
-    // Recent orders.
-    const recentOrders = useSelector(selectRecentOrders);
+    const overview = useSelector(selectAdminOverview);
+
+    const overviewLoading = useSelector(
+        selectAdminLoading
+    );
+
+    const overviewError = useSelector(
+        selectAdminError
+    );
+
+    // -----------------------------------------
+    // Recent activity
+    // -----------------------------------------
+
+    const recentOrders = useSelector(
+        selectRecentOrders
+    );
+
     const recentOrdersLoading = useSelector(
         selectRecentOrdersLoading
     );
 
-    // Recent customers.
     const recentCustomers = useSelector(
         selectRecentCustomers
     );
+
     const recentCustomersLoading = useSelector(
         selectRecentCustomersLoading
     );
 
-    // Low-stock products.
     const lowStockProducts = useSelector(
         selectLowStockProducts
     );
+
     const lowStockLoading = useSelector(
         selectLowStockLoading
     );
 
-    // Fetch all dashboard data when the page loads.
+    // -----------------------------------------
+    // Sales analytics
+    // -----------------------------------------
+
+    const sales = useSelector(selectSales);
+
+    const salesLoading = useSelector(
+        selectSalesLoading
+    );
+
+    const monthlySales = useSelector(
+        selectMonthlySales
+    );
+
+    const monthlySalesLoading = useSelector(
+        selectMonthlySalesLoading
+    );
+
+    const orderStatistics = useSelector(
+        selectOrderStatistics
+    );
+
+    const orderStatisticsLoading = useSelector(
+        selectOrderStatisticsLoading
+    );
+
+    const paymentStatistics = useSelector(
+        selectPaymentStatistics
+    );
+
+    const paymentStatisticsLoading = useSelector(
+        selectPaymentStatisticsLoading
+    );
+
+    const topSellingProducts = useSelector(
+        selectTopSellingProducts
+    );
+
+    const topProductsLoading = useSelector(
+        selectTopProductsLoading
+    );
+
+    // -----------------------------------------
+    // Fetch all admin dashboard data
+    // -----------------------------------------
+
     useEffect(() => {
+        // Dashboard overview.
         dispatch(getDashboardOverviewThunk());
+
+        // Recent activity.
         dispatch(getRecentOrdersThunk());
         dispatch(getRecentCustomersThunk());
         dispatch(getLowStockProductsThunk());
+
+        // Sales analytics.
+        dispatch(getSalesStatisticsThunk());
+        dispatch(getMonthlySalesThunk());
+
+        // Order and payment analytics.
+        dispatch(getOrderStatisticsThunk());
+        dispatch(getPaymentStatisticsThunk());
+
+        // Top-selling products.
+        dispatch(getTopSellingProductsThunk());
     }, [dispatch]);
 
-    // Show loading message while the main overview is loading.
+    // -----------------------------------------
+    // Main dashboard loading
+    // -----------------------------------------
+
     if (overviewLoading) {
         return (
             <div className="p-6">
@@ -70,7 +186,10 @@ function AdminDashboard() {
         );
     }
 
-    // Show error if the main overview request failed.
+    // -----------------------------------------
+    // Main dashboard error
+    // -----------------------------------------
+
     if (overviewError) {
         return (
             <div className="p-6">
@@ -86,12 +205,69 @@ function AdminDashboard() {
         return null;
     }
 
+    // -----------------------------------------
+    // Prepare monthly sales chart data
+    // -----------------------------------------
+
+    const monthlySalesChartData = monthlySales.map(
+        (item) => ({
+            month: `Month ${item._id.month}`,
+            sales: item.totalSales,
+            orders: item.orderCount,
+        })
+    );
+
+    // -----------------------------------------
+    // Prepare daily sales chart data
+    // -----------------------------------------
+
+    const dailySalesChartData = sales.map(
+        (item) => ({
+            date: item._id,
+            sales: item.totalSales,
+            orders: item.orderCount,
+        })
+    );
+
+    // -----------------------------------------
+    // Prepare order statistics chart data
+    // -----------------------------------------
+
+    const orderChartData = orderStatistics.map(
+        (item) => ({
+            name: item._id,
+            value: item.count,
+        })
+    );
+
+    // -----------------------------------------
+    // Prepare payment statistics chart data
+    // -----------------------------------------
+
+    const paymentChartData = paymentStatistics.map(
+        (item) => ({
+            name: item._id,
+            value: item.totalAmount,
+            payments: item.paymentCount,
+        })
+    );
+
+    // -----------------------------------------
+    // Prepare top-selling products chart data
+    // -----------------------------------------
+
+    const topProductsChartData =
+        topSellingProducts.map((product) => ({
+            name: product.title,
+            sold: product.totalSold,
+        }));
+
     return (
         <div className="min-h-screen bg-gray-100 p-6 dark:bg-gray-900">
 
-            {/* -------------------------------- */}
+            {/* ===================================== */}
             {/* Dashboard Header */}
-            {/* -------------------------------- */}
+            {/* ===================================== */}
 
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -103,9 +279,9 @@ function AdminDashboard() {
                 </p>
             </div>
 
-            {/* -------------------------------- */}
+            {/* ===================================== */}
             {/* Main Statistics */}
-            {/* -------------------------------- */}
+            {/* ===================================== */}
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -155,9 +331,9 @@ function AdminDashboard() {
 
             </div>
 
-            {/* -------------------------------- */}
+            {/* ===================================== */}
             {/* Order & Refund Statistics */}
-            {/* -------------------------------- */}
+            {/* ===================================== */}
 
             <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -207,16 +383,13 @@ function AdminDashboard() {
 
             </div>
 
-            {/* -------------------------------- */}
+            {/* ===================================== */}
             {/* Recent Activity */}
-            {/* -------------------------------- */}
+            {/* ===================================== */}
 
             <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-                {/* -------------------------------- */}
                 {/* Recent Orders */}
-                {/* -------------------------------- */}
-
                 <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
 
                     <div className="mb-4">
@@ -245,7 +418,6 @@ function AdminDashboard() {
                                     key={order._id}
                                     className="flex items-center justify-between border-b border-gray-200 pb-4 last:border-b-0 last:pb-0 dark:border-gray-700"
                                 >
-
                                     <div>
                                         <p className="font-medium text-gray-900 dark:text-white">
                                             #{order._id.slice(-6)}
@@ -266,7 +438,6 @@ function AdminDashboard() {
                                             {order.status}
                                         </p>
                                     </div>
-
                                 </div>
                             ))}
 
@@ -275,10 +446,7 @@ function AdminDashboard() {
 
                 </section>
 
-                {/* -------------------------------- */}
                 {/* Recent Customers */}
-                {/* -------------------------------- */}
-
                 <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
 
                     <div className="mb-4">
@@ -307,7 +475,6 @@ function AdminDashboard() {
                                     key={customer._id}
                                     className="flex items-center justify-between border-b border-gray-200 pb-4 last:border-b-0 last:pb-0 dark:border-gray-700"
                                 >
-
                                     <div>
                                         <p className="font-medium text-gray-900 dark:text-white">
                                             {customer.email}
@@ -330,7 +497,6 @@ function AdminDashboard() {
                                             ? "Verified"
                                             : "Not verified"}
                                     </span>
-
                                 </div>
                             ))}
 
@@ -341,9 +507,9 @@ function AdminDashboard() {
 
             </div>
 
-            {/* -------------------------------- */}
+            {/* ===================================== */}
             {/* Low Stock Products */}
-            {/* -------------------------------- */}
+            {/* ===================================== */}
 
             <section className="mt-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
 
@@ -372,6 +538,7 @@ function AdminDashboard() {
 
                             <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-700">
+
                                     <th className="pb-3 text-sm font-semibold text-gray-600 dark:text-gray-300">
                                         Product
                                     </th>
@@ -387,6 +554,7 @@ function AdminDashboard() {
                                     <th className="pb-3 text-sm font-semibold text-gray-600 dark:text-gray-300">
                                         Status
                                     </th>
+
                                 </tr>
                             </thead>
 
@@ -427,6 +595,390 @@ function AdminDashboard() {
                 )}
 
             </section>
+
+            {/* ===================================== */}
+            {/* SALES ANALYTICS */}
+            {/* ===================================== */}
+
+            <div className="mt-8">
+
+                <div className="mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        Sales Analytics
+                    </h2>
+
+                    <p className="mt-1 text-gray-600 dark:text-gray-400">
+                        Understand sales, orders and product performance
+                    </p>
+                </div>
+
+                {/* ================================= */}
+                {/* Monthly Sales */}
+                {/* ================================= */}
+
+                <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+
+                    <div className="mb-6">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            Monthly Sales
+                        </h3>
+
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Sales performance for the current year
+                        </p>
+                    </div>
+
+                    {monthlySalesLoading ? (
+                        <p className="text-gray-500 dark:text-gray-400">
+                            Loading monthly sales...
+                        </p>
+                    ) : monthlySalesChartData.length === 0 ? (
+                        <p className="text-gray-500 dark:text-gray-400">
+                            No monthly sales data available.
+                        </p>
+                    ) : (
+                        <div className="h-[350px] w-full">
+
+                            <ResponsiveContainer
+                                width="100%"
+                                height="100%"
+                            >
+                                <LineChart
+                                    data={monthlySalesChartData}
+                                    margin={{
+                                        top: 10,
+                                        right: 20,
+                                        left: 10,
+                                        bottom: 10,
+                                    }}
+                                >
+
+                                    <CartesianGrid
+                                        strokeDasharray="3 3"
+                                    />
+
+                                    <XAxis
+                                        dataKey="month"
+                                    />
+
+                                    <YAxis />
+
+                                    <Tooltip
+                                        formatter={(value) =>
+                                            `₹${value}`
+                                        }
+                                    />
+
+                                    <Legend />
+
+                                    <Line
+                                        type="monotone"
+                                        dataKey="sales"
+                                        name="Sales"
+                                        stroke="#2563eb"
+                                        strokeWidth={3}
+                                        activeDot={{
+                                            r: 6,
+                                        }}
+                                    />
+
+                                </LineChart>
+                            </ResponsiveContainer>
+
+                        </div>
+                    )}
+
+                </section>
+
+                {/* ================================= */}
+                {/* Daily Sales + Order Statistics */}
+                {/* ================================= */}
+
+                <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+                    {/* Daily Sales */}
+                    <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+
+                        <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Daily Sales
+                            </h3>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Sales for the current month
+                            </p>
+                        </div>
+
+                        {salesLoading ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Loading daily sales...
+                            </p>
+                        ) : dailySalesChartData.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                No daily sales data available.
+                            </p>
+                        ) : (
+                            <div className="h-[320px]">
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+                                    <BarChart
+                                        data={dailySalesChartData}
+                                    >
+
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                        />
+
+                                        <XAxis
+                                            dataKey="date"
+                                        />
+
+                                        <YAxis />
+
+                                        <Tooltip
+                                            formatter={(value) =>
+                                                `₹${value}`
+                                            }
+                                        />
+
+                                        <Bar
+                                            dataKey="sales"
+                                            name="Sales"
+                                            fill="#16a34a"
+                                        />
+
+                                    </BarChart>
+                                </ResponsiveContainer>
+
+                            </div>
+                        )}
+
+                    </section>
+
+                    {/* Order Statistics */}
+                    <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+
+                        <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Order Statistics
+                            </h3>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Orders grouped by status
+                            </p>
+                        </div>
+
+                        {orderStatisticsLoading ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Loading order statistics...
+                            </p>
+                        ) : orderChartData.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                No order statistics available.
+                            </p>
+                        ) : (
+                            <div className="h-[320px]">
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+                                    <PieChart>
+
+                                        <Pie
+                                            data={orderChartData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={100}
+                                            label
+                                        >
+                                            {orderChartData.map(
+                                                (_, index) => (
+                                                    <Cell
+                                                        key={`order-${index}`}
+                                                        fill={[
+                                                            "#f59e0b",
+                                                            "#3b82f6",
+                                                            "#8b5cf6",
+                                                            "#22c55e",
+                                                            "#ef4444",
+                                                        ][
+                                                            index %
+                                                                5
+                                                        ]}
+                                                    />
+                                                )
+                                            )}
+                                        </Pie>
+
+                                        <Tooltip />
+
+                                        <Legend />
+
+                                    </PieChart>
+                                </ResponsiveContainer>
+
+                            </div>
+                        )}
+
+                    </section>
+
+                </div>
+
+                {/* ================================= */}
+                {/* Payment Statistics + Top Products */}
+                {/* ================================= */}
+
+                <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+
+                    {/* Payment Statistics */}
+                    <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+
+                        <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Payment Methods
+                            </h3>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Successful payments by method
+                            </p>
+                        </div>
+
+                        {paymentStatisticsLoading ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Loading payment statistics...
+                            </p>
+                        ) : paymentChartData.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                No payment data available.
+                            </p>
+                        ) : (
+                            <div className="h-[320px]">
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+                                    <PieChart>
+
+                                        <Pie
+                                            data={paymentChartData}
+                                            dataKey="value"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            outerRadius={100}
+                                            label
+                                        >
+                                            {paymentChartData.map(
+                                                (_, index) => (
+                                                    <Cell
+                                                        key={`payment-${index}`}
+                                                        fill={[
+                                                            "#2563eb",
+                                                            "#16a34a",
+                                                            "#f59e0b",
+                                                            "#9333ea",
+                                                        ][
+                                                            index %
+                                                                4
+                                                        ]}
+                                                    />
+                                                )
+                                            )}
+                                        </Pie>
+
+                                        <Tooltip
+                                            formatter={(value) =>
+                                                `₹${value}`
+                                            }
+                                        />
+
+                                        <Legend />
+
+                                    </PieChart>
+                                </ResponsiveContainer>
+
+                            </div>
+                        )}
+
+                    </section>
+
+                    {/* Top Selling Products */}
+                    <section className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+
+                        <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                Top Selling Products
+                            </h3>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Best-performing products
+                            </p>
+                        </div>
+
+                        {topProductsLoading ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                Loading top products...
+                            </p>
+                        ) : topProductsChartData.length === 0 ? (
+                            <p className="text-gray-500 dark:text-gray-400">
+                                No product sales data available.
+                            </p>
+                        ) : (
+                            <div className="h-[320px]">
+
+                                <ResponsiveContainer
+                                    width="100%"
+                                    height="100%"
+                                >
+                                    <BarChart
+                                        data={topProductsChartData}
+                                        layout="vertical"
+                                        margin={{
+                                            left: 20,
+                                            right: 20,
+                                        }}
+                                    >
+
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                        />
+
+                                        <XAxis
+                                            type="number"
+                                        />
+
+                                        <YAxis
+                                            type="category"
+                                            dataKey="name"
+                                            width={120}
+                                        />
+
+                                        <Tooltip />
+
+                                        <Bar
+                                            dataKey="sold"
+                                            name="Units Sold"
+                                            fill="#9333ea"
+                                        />
+
+                                    </BarChart>
+                                </ResponsiveContainer>
+
+                            </div>
+                        )}
+
+                    </section>
+
+                </div>
+
+            </div>
 
         </div>
     );
