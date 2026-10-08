@@ -229,26 +229,17 @@ export const getProductById = async (req, res, next) => {
 // Update an existing product
 export const updateProduct = async (req, res, next) => {
     try {
-        // Get the product ID from the URL
+        // Get product ID from the URL
         const { id } = req.params;
 
-        // ==========================================
-        // VALIDATE PRODUCT ID
-        // ==========================================
-
+        // Check whether the ID is valid
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return next(
                 new ApiError(400, "Invalid product ID")
             );
         }
 
-        // ==========================================
-        // CONVERT MULTIPART FORM-DATA VALUES
-        // ==========================================
-
-        // When using FormData, numbers arrive as strings.
-        // Convert them back to numbers before validation.
-
+        // Convert numeric form-data values to numbers
         if (req.body.price !== undefined) {
             req.body.price = Number(req.body.price);
         }
@@ -263,18 +254,7 @@ export const updateProduct = async (req, res, next) => {
             req.body.stock = Number(req.body.stock);
         }
 
-        // ==========================================
-        // CONVERT TAGS
-        // ==========================================
-
-        // FormData sends tags as a comma-separated string.
-        //
-        // Example:
-        // "romper,baby clothing,cotton"
-        //
-        // Convert it into:
-        // ["romper", "baby clothing", "cotton"]
-
+        // Convert comma-separated tags into an array
         if (typeof req.body.tags === "string") {
             req.body.tags = req.body.tags
                 .split(",")
@@ -282,10 +262,7 @@ export const updateProduct = async (req, res, next) => {
                 .filter(Boolean);
         }
 
-        // ==========================================
-        // FIND EXISTING PRODUCT
-        // ==========================================
-
+        // Find the existing product
         const product = await Product.findById(id);
 
         if (!product) {
@@ -294,17 +271,17 @@ export const updateProduct = async (req, res, next) => {
             );
         }
 
-        // ==========================================
-        // HANDLE EXISTING IMAGES
-        // ==========================================
-
-        let existingImages = [];
-
-        // The frontend will send existingImages
-        // as a JSON string.
-        //
-        // Example:
-        // '["image1.jpg","image2.jpg"]'
+        /*
+         * Get the images that the admin wants to keep.
+         *
+         * AdminEditProduct sends these as JSON:
+         *
+         * existingImages = [
+         *   "image1",
+         *   "image3"
+         * ]
+         */
+        let existingImages = product.images;
 
         if (req.body.existingImages) {
             try {
@@ -315,54 +292,50 @@ export const updateProduct = async (req, res, next) => {
                 return next(
                     new ApiError(
                         400,
-                        "Invalid existing images format"
+                        "Invalid existingImages data"
                     )
                 );
             }
-        } else {
-            // If frontend does not send existingImages,
-            // keep the product's current images.
-            existingImages = product.images || [];
         }
 
-        // Make sure existingImages is actually an array.
-        if (!Array.isArray(existingImages)) {
-            return next(
-                new ApiError(
-                    400,
-                    "Existing images must be an array"
-                )
-            );
-        }
+        /*
+         * Find which old images were removed.
+         *
+         * Example:
+         *
+         * Old images:
+         * [image1, image2, image3]
+         *
+         * Remaining images:
+         * [image1, image3]
+         *
+         * Removed images:
+         * [image2]
+         */
+        const removedImages = product.images.filter(
+            (oldImage) =>
+                !existingImages.includes(oldImage)
+        );
 
-        // ==========================================
-        // GET NEW CLOUDINARY IMAGE URLS
-        // ==========================================
+     
 
-        // Multer + Cloudinary gives us the uploaded
-        // image URL through file.path.
-
+        // Get newly uploaded Cloudinary image URLs
         const newImageUrls =
             req.files?.map((file) => file.path) || [];
 
-        // ==========================================
-        // COMBINE IMAGES
-        // ==========================================
-
-        // Keep the existing images selected by admin
-        // and add newly uploaded images.
-
+        /*
+         * Combine:
+         *
+         * Existing images that were kept
+         * +
+         * Newly uploaded images
+         */
         const finalImages = [
             ...existingImages,
             ...newImageUrls,
         ];
 
-        // ==========================================
-        // IMAGE LIMIT
-        // ==========================================
-
-        // TinyNest allows maximum 5 product images.
-
+        // Maximum 5 images per product
         if (finalImages.length > 5) {
             return next(
                 new ApiError(
@@ -372,58 +345,55 @@ export const updateProduct = async (req, res, next) => {
             );
         }
 
-        // ==========================================
-        // PREPARE IMAGE DATA
-        // ==========================================
-
-        // Set the final image array.
-        req.body.images = finalImages;
-
-        // Remove existingImages because it is only
-        // used internally and is NOT a Product field.
-        delete req.body.existingImages;
-
-        // ==========================================
-        // VALIDATE PRODUCT DATA
-        // ==========================================
-
-        const error = validateProductUpdate(
-            req.body
-        );
-
-        if (error) {
+        // Product must have at least one image
+        if (finalImages.length === 0) {
             return next(
-                new ApiError(400, error)
+                new ApiError(
+                    400,
+                    "At least one product image is required"
+                )
             );
         }
 
-        // ==========================================
-        // CHECK CATEGORY
-        // ==========================================
+        // Set final image list
+        req.body.images = finalImages;
 
-        // If category is being updated,
-        // verify that it exists and is active.
+        // Remove helper field before validation/update
+        delete req.body.existingImages;
 
-        if (req.body.category !== undefined) {
-            const category = await Category.findOne({
-                _id: req.body.category,
-                isActive: true,
-            });
+        /*
+         * Validate the updated product data.
+         */
+       // Validate the updated product data
+const error = validateProductUpdate(req.body);
+
+if (error) {
+    return next(
+        new ApiError(400, error)
+    );
+}
+
+        // If category is being changed, verify it exists
+        if (req.body.category) {
+            const category =
+                await Category.findOne({
+                    _id: req.body.category,
+                    isActive: true,
+                });
 
             if (!category) {
                 return next(
                     new ApiError(
                         400,
-                        "Category not found or inactive"
+                        "Invalid or inactive category"
                     )
                 );
             }
         }
 
-        // ==========================================
-        // ALLOWED FIELDS
-        // ==========================================
-
+        /*
+         * Update only the fields allowed for a product.
+         */
         const allowedFields = [
             "title",
             "description",
@@ -437,10 +407,6 @@ export const updateProduct = async (req, res, next) => {
             "tags",
         ];
 
-        // ==========================================
-        // UPDATE PRODUCT
-        // ==========================================
-
         allowedFields.forEach((field) => {
             if (req.body[field] !== undefined) {
                 product[field] = req.body[field];
@@ -448,15 +414,23 @@ export const updateProduct = async (req, res, next) => {
         });
 
         // Save updated product
-        await product.save();
+       // Save updated product
+await product.save();
 
-        // Load category information
+/*
+ * MongoDB update was successful.
+ *
+ * Now it is safe to delete the images
+ * that the admin removed from the product.
+ */
+for (const imageUrl of removedImages) {
+    await deleteCloudinaryImage(imageUrl);
+}
+
+        // Populate category information
         await product.populate("category");
 
-        // ==========================================
-        // SEND RESPONSE
-        // ==========================================
-
+        // Send success response
         sendSuccessResponse(
             res,
             200,
@@ -465,8 +439,7 @@ export const updateProduct = async (req, res, next) => {
         );
 
     } catch (error) {
-        // Pass unexpected errors to centralized
-        // error handling middleware.
+        // Pass unexpected errors to the error handler
         next(error);
     }
 };
