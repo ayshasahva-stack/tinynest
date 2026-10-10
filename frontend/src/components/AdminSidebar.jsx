@@ -79,6 +79,22 @@ function AdminSidebar() {
                 >
                     Products
                 </Link>
+                <Link
+                    to="/admin/orders"
+                    className="
+                        block
+                        rounded-lg
+                        px-4
+                        py-3
+                        text-gray-700
+                        transition
+                        hover:bg-gray-100
+                        dark:text-gray-200
+                        dark:hover:bg-gray-700
+                    "
+                >
+                    orders
+                </Link>
 
             </nav>
 

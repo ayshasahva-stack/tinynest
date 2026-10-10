@@ -29,6 +29,7 @@ import AdminProducts from "../../pages/admin/AdminProducts";
 import AdminAddProduct from "../../pages/admin/AdminAddProduct";
 import AdminEditProduct from "../../pages/admin/AddminEditProduct";
 import AdminCategories from "../../pages/admin/AdminCategories";
+import AdminOrders from "../../pages/admin/AdminOrders";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -114,6 +115,7 @@ function AppRouter() {
 
                     {/* Category management */}
                     <Route path="categories" element={<AdminCategories />} />
+                    <Route path="orders" element={<AdminOrders />} />
 
                 </Route>
             </Routes>
