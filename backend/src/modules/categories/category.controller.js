@@ -219,3 +219,20 @@ export const deleteCategory = async (req, res, next) => {
         next(error);
     }
 };
+
+// Get all categories for admin management, including inactive ones
+export const getAllCategoriesForAdmin = async (req, res, next) => {
+    try {
+        // Fetch active and inactive categories, newest first
+        const categories = await Category.find().sort({ createdAt: -1 });
+
+        sendSuccessResponse(
+            res,
+            200,
+            categories,
+            "All categories fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
