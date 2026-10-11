@@ -7,6 +7,7 @@ import {
     getKitById,
     updateKit,
     updateKitStatus,
+    getAllKitsForAdmin,
 } from "./kit.controller.js";
 
 const router = express.Router();
@@ -15,6 +16,13 @@ const router = express.Router();
 router.post("/", protect, authorizeAdmin, createKit);
 // Public: get all active kits
 router.get("/", getKits);
+// Admin: get all kits, including inactive ones.
+router.get(
+    "/admin/all",
+    protect,
+    authorizeAdmin,
+    getAllKitsForAdmin
+);
 // Public: get one active kit by ID
 router.get("/:kitId", getKitById);
 // Admin: update an existing kit

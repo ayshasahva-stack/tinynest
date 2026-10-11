@@ -424,3 +424,26 @@ export const updateKitStatus = async (req, res, next) => {
         next(error);
     }
 };
+
+// Admin: fetch all kits, including inactive kits.
+export const getAllKitsForAdmin = async (req, res, next) => {
+    try {
+        const kits = await Kit.find()
+            // Include product information for each kit item.
+            .populate(
+                "items.product",
+                "title price images brand description"
+            )
+            // Display the newest kits first.
+            .sort({ createdAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            kits,
+            "All kits fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
