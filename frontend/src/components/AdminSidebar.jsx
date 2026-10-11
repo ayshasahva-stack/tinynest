@@ -1,5 +1,5 @@
 // Link is used for navigation between admin pages
-import { Link,NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 // Sidebar used by all admin pages
 function AdminSidebar() {
@@ -112,30 +112,40 @@ function AdminSidebar() {
                     kits
                 </Link>
                 <NavLink
-    to="/admin/coupons"
-    className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-4 py-3 transition ${
-            isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-        }`
-    }
->
-    <span>🎟️</span>
-    <span>Coupons</span>
-</NavLink>
-<NavLink
-    to="/admin/users"
-    className={({ isActive }) =>
-        `block rounded-lg px-4 py-3 transition ${
-            isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-        }`
-    }
->
-    Users
-</NavLink>
+                    to="/admin/coupons"
+                    className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-lg px-4 py-3 transition ${isActive
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        }`
+                    }
+                >
+                    <span>🎟️</span>
+                    <span>Coupons</span>
+                </NavLink>
+                <NavLink
+                    to="/admin/users"
+                    className={({ isActive }) =>
+                        `block rounded-lg px-4 py-3 transition ${isActive
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        }`
+                    }
+                >
+                    Users
+                </NavLink>
+                {/* Reviews and ratings */}
+                <NavLink
+                    to="/admin/reviews"
+                    className={({ isActive }) =>
+                        `block rounded-lg px-4 py-3 transition ${isActive
+                            ? "bg-blue-600 text-white"
+                            : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+                        }`
+                    }
+                >
+                    Reviews & Ratings
+                </NavLink>
             </nav>
 
         </aside>
