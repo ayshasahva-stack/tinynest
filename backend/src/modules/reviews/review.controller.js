@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Review from "./review.model.js";
 import Product from "../products/product.model.js";
 import ApiError from "../../utils/Apierror.js";
+import Order from "../orders/order.model.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { updateProductRating } from "./review.helper.js";
 import {
@@ -35,7 +36,27 @@ export const addReview = async (req, res, next) => {
         if (!product) {
             return next(new ApiError(404, "Product not found"));
         }
+// -----------------------------------------
+// VERIFY CUSTOMER PURCHASE
+// -----------------------------------------
 
+// Find a delivered order belonging to this customer
+// that contains the product they want to review.
+const purchasedOrder = await Order.findOne({
+    user: req.user._id,
+    status: "delivered",
+    "items.product": productId,
+});
+
+// Only customers who received the product can review it.
+if (!purchasedOrder) {
+    return next(
+        new ApiError(
+            403,
+            "You can review this product only after it has been delivered."
+        )
+    );
+}
         // Check whether this user has already reviewed this product
         const existingReview = await Review.findOne({
             user: req.user._id,
