@@ -124,7 +124,18 @@ function AdminSidebar() {
     <span>🎟️</span>
     <span>Coupons</span>
 </NavLink>
-
+<NavLink
+    to="/admin/users"
+    className={({ isActive }) =>
+        `block rounded-lg px-4 py-3 transition ${
+            isActive
+                ? "bg-blue-600 text-white"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+        }`
+    }
+>
+    Users
+</NavLink>
             </nav>
 
         </aside>

@@ -16,6 +16,7 @@ import addressReducer from "../features/addresses/addressSlice";
 import reviewReducer from "../features/reviews/reviewSlice";
 import kitReducer from "../features/kits/kitSlice";
 import couponReducer from "../features/coupons/couponSlice";
+import userReducer from "../features/users/userSlice";
 
 import adminReducer from "../features/admin/adminSlice";
 // Create the application's Redux store
@@ -35,6 +36,7 @@ const store = configureStore({
         coupons: couponReducer,
 
         admin: adminReducer,
+        users: userReducer,
     },
 });
 

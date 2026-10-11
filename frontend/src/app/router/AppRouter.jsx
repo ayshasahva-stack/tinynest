@@ -33,6 +33,7 @@ import AdminCategories from "../../pages/admin/AdminCategories";
 import AdminOrders from "../../pages/admin/AdminOrders";
 import AdminKits from "../../pages/admin/AdminKits";
 import AdminCoupons from "../../pages/admin/AdminCoupons";
+import AdminUsers from "../../pages/admin/AdminUsers";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -121,6 +122,7 @@ function AppRouter() {
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="kits" element={<AdminKits />} />
                     <Route path="coupons" element={<AdminCoupons />} />
+                    <Route path="users" element={<AdminUsers />} />
 
                 </Route>
             </Routes>
