@@ -22,7 +22,16 @@ import {
 import {
     selectAddresses,
 } from "../../features/addresses/addressSelectors";
+import {
+    createRazorpayOrderThunk,
+    verifyRazorpayPaymentThunk,
+    createPaymentThunk,
+} from "../../features/payments/paymentThunk";
 
+import {
+    selectPaymentLoading,
+    selectPaymentError,
+} from "../../features/payments/paymentSelectors";
 // Import cart selectors
 import {
     selectCartItems,
@@ -34,7 +43,6 @@ import {
 import {
     selectCheckoutLoading,
     selectCheckoutError,
-    selectCheckoutSuccess,
 } from "../../features/checkout/checkoutSelectors";
 
 // Import reusable components
@@ -44,6 +52,11 @@ import ErrorMessage from "../../components/ErrorMessage";
 
 
 function Checkout() {
+    const [paymentMethod, setPaymentMethod] = useState("online");
+    // Tracks whether Razorpay Checkout has loaded successfully
+    const [razorpayLoaded, setRazorpayLoaded] = useState(
+        () => Boolean(window.Razorpay)
+    );
 
     // Redux dispatch function
     const dispatch = useDispatch();
@@ -74,10 +87,12 @@ function Checkout() {
     // Get checkout error
     const checkoutError = useSelector(selectCheckoutError);
 
-    // Check whether order creation succeeded
-    const checkoutSuccess = useSelector(selectCheckoutSuccess);
 
+    // Selected payment method
 
+    // Payment loading and error states from Redux
+    const paymentLoading = useSelector(selectPaymentLoading);
+    const paymentError = useSelector(selectPaymentError);
     // -----------------------------------
     // LOCAL STATE
     // -----------------------------------
@@ -140,17 +155,7 @@ function Checkout() {
     );
 
 
-    // -----------------------------------
-    // NAVIGATE AFTER SUCCESSFUL ORDER
-    // -----------------------------------
 
-    useEffect(() => {
-
-        if (checkoutSuccess) {
-            navigate("/orders");
-        }
-
-    }, [checkoutSuccess, navigate]);
 
 
     // -----------------------------------
@@ -171,56 +176,40 @@ function Checkout() {
     // CALCULATE SUBTOTAL
     // -----------------------------------
 
-   // Calculate the cart subtotal
-const subtotal = cartItems.reduce((total, item) => {
+    // Use the discounted product price for products.
+    // The backend applies active offers when creating the order.
+    const subtotal = cartItems.reduce((total, item) => {
+        // -----------------------------------------
+        // PRODUCT
+        // -----------------------------------------
+        if (item.itemType === "product" && item.product) {
+            const product = item.product;
 
-    // -----------------------------------------
-    // PRODUCT
-    // -----------------------------------------
+            // Apply the product's regular discount (e.g. 10%).
+            const discountAmount =
+                (product.price * (product.discount || 0)) / 100;
 
-    if (
-        item.itemType === "product" &&
-        item.product
-    ) {
+            const sellingPrice = product.price - discountAmount;
 
-        return (
-            total +
-            item.product.price * item.quantity
-        );
+            return total + sellingPrice * item.quantity;
+        }
 
-    }
+        // -----------------------------------------
+        // KIT
+        // -----------------------------------------
+        if (item.itemType === "kit" && item.kit) {
+            const discountAmount =
+                (item.kit.price * (item.kit.discount || 0)) / 100;
 
+            const sellingPrice = item.kit.price - discountAmount;
 
-    // -----------------------------------------
-    // KIT
-    // -----------------------------------------
+            return total + sellingPrice * item.quantity;
+        }
 
-    if (
-        item.itemType === "kit" &&
-        item.kit
-    ) {
+        // Ignore invalid cart items.
+        return total;
+    }, 0);
 
-        // Calculate kit discount
-        const discountAmount =
-            (item.kit.price * item.kit.discount) / 100;
-
-        // Calculate discounted selling price
-        const sellingPrice =
-            item.kit.price - discountAmount;
-
-        // Add kit total
-        return (
-            total +
-            sellingPrice * item.quantity
-        );
-
-    }
-
-
-    // Ignore invalid cart items
-    return total;
-
-}, 0);
 
 
     // -----------------------------------
@@ -245,48 +234,22 @@ const subtotal = cartItems.reduce((total, item) => {
     // -----------------------------------
 
     const handleSubmit = async (event) => {
-
         event.preventDefault();
-
-        // Clear previous validation error
         setValidationError("");
 
-
-        // -----------------------------------
-        // VALIDATE CART
-        // -----------------------------------
-
         if (cartItems.length === 0) {
-
-            setValidationError(
-                "Your cart is empty."
-            );
-
+            setValidationError("Your cart is empty.");
             return;
         }
-
-
-        // -----------------------------------
-        // VALIDATE ADDRESS
-        // -----------------------------------
 
         if (!selectedAddress) {
-
-            setValidationError(
-                "Please select a delivery address."
-            );
-
+            setValidationError("Please select a delivery address.");
             return;
         }
 
-
-        // -----------------------------------
-        // CREATE ORDER
-        // -----------------------------------
-
         try {
-
-            await dispatch(
+            // Step 1: Create the order using the existing checkout API.
+            const orderResult = await dispatch(
                 createOrderThunk({
                     shippingAddress: {
                         fullName: selectedAddress.fullName,
@@ -300,17 +263,139 @@ const subtotal = cartItems.reduce((total, item) => {
                 })
             ).unwrap();
 
+            const order = orderResult.data;
+            const orderId = order?._id;
+
+            if (!orderId) {
+                throw new Error("The created order ID was not returned.");
+            }
+
+            // Step 2: Handle Cash on Delivery separately.
+            if (paymentMethod === "cod") {
+                await dispatch(
+                    createPaymentThunk({
+                        orderId,
+                        paymentMethod: "cod",
+                    })
+                ).unwrap();
+
+                navigate("/orders");
+                return;
+            }
+
+            // Step 3: Make sure the Razorpay Checkout script loaded.
+            if (!razorpayLoaded || !window.Razorpay) {
+                throw new Error(
+                    "Razorpay Checkout has not loaded. Please refresh and try again."
+                );
+            }
+
+            // Step 4: Create a Razorpay order through our backend.
+            const razorpayResult = await dispatch(
+                createRazorpayOrderThunk(orderId)
+            ).unwrap();
+
+            const razorpayOrder = razorpayResult.data;
+
+            // Step 5: Open Razorpay Checkout.
+            const options = {
+                key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                amount: razorpayOrder.amount,
+                currency: razorpayOrder.currency,
+                name: "TinyNest",
+                description: "Baby essentials order",
+                order_id: razorpayOrder.razorpayOrderId,
+
+                handler: async (response) => {
+                    try {
+                        // Step 6: Verify the payment on the backend.
+                        await dispatch(
+                            verifyRazorpayPaymentThunk({
+                                razorpay_order_id:
+                                    response.razorpay_order_id,
+                                razorpay_payment_id:
+                                    response.razorpay_payment_id,
+                                razorpay_signature:
+                                    response.razorpay_signature,
+                            })
+                        ).unwrap();
+
+                        // Navigate only after backend verification succeeds.
+                        navigate("/orders");
+                    } catch (error) {
+                        console.error(
+                            "Payment verification failed:",
+                            error
+                        );
+
+                        setValidationError(
+                            typeof error === "string"
+                                ? error
+                                : "Payment verification failed. Please contact support before retrying."
+                        );
+                    }
+                },
+
+                modal: {
+                    ondismiss: () => {
+                        setValidationError(
+                            "Payment was not completed. Your order remains pending."
+                        );
+                    },
+                },
+
+                theme: {
+                    color: "#2563eb",
+                },
+            };
+
+            const razorpay = new window.Razorpay(options);
+
+            // Display payment failure feedback.
+            razorpay.on("payment.failed", (response) => {
+                setValidationError(
+                    response.error?.description ||
+                    "Payment failed. Please try again."
+                );
+            });
+
+            razorpay.open();
         } catch (error) {
+            console.error("Checkout failed:", error);
 
-            // Redux stores the backend error.
-            console.error(
-                "Order creation failed:",
-                error
+            setValidationError(
+                typeof error === "string"
+                    ? error
+                    : error.message || "Unable to complete checkout."
             );
-
         }
     };
+    // Load Razorpay Checkout script and track loading status
+    useEffect(() => {
+        if (window.Razorpay) {
+            setRazorpayLoaded(true);
+            return;
+        }
 
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+
+        script.onload = () => setRazorpayLoaded(true);
+        script.onerror = () => {
+            setRazorpayLoaded(false);
+            setValidationError(
+                "Unable to load Razorpay. Check your internet connection and refresh."
+            );
+        };
+
+        document.body.appendChild(script);
+
+        return () => {
+            // Remove only this script element on unmount
+            script.remove();
+        };
+    }, []);
 
     // -----------------------------------
     // CART LOADING
@@ -475,11 +560,10 @@ const subtotal = cartItems.reduce((total, item) => {
 
                                         <label
                                             key={address._id}
-                                            className={`block cursor-pointer rounded-xl border p-4 transition ${
-                                                selectedAddressId === address._id
-                                                    ? "border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
-                                                    : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
-                                            }`}
+                                            className={`block cursor-pointer rounded-xl border p-4 transition ${selectedAddressId === address._id
+                                                ? "border-blue-600 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/20"
+                                                : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"
+                                                }`}
                                         >
 
                                             <div className="flex gap-3">
@@ -614,7 +698,13 @@ const subtotal = cartItems.reduce((total, item) => {
 
                                             {/* Item total */}
                                             <p className="font-medium text-gray-900 dark:text-white">
-                                                ₹{product.price * item.quantity}
+                                                {/*
+  Show the discounted product total instead of the original price.
+*/}
+                                                ₹{(
+                                                    product.price -
+                                                    (product.price * (product.discount || 0)) / 100
+                                                ) * item.quantity}
                                             </p>
 
                                         </div>
@@ -676,26 +766,63 @@ const subtotal = cartItems.reduce((total, item) => {
 
                             </div>
 
+                            {/* Choose how to pay */}
+                            <div className="mt-6 space-y-3">
+                                <h3 className="font-semibold text-gray-900 dark:text-white">
+                                    Payment Method
+                                </h3>
 
+                                <label className="flex items-center gap-3">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="online"
+                                        checked={paymentMethod === "online"}
+                                        onChange={(event) => setPaymentMethod(event.target.value)}
+                                    />
+                                    <span className="text-gray-700 dark:text-gray-200">
+                                        Pay online with Razorpay
+                                    </span>
+                                </label>
+
+                                <label className="flex items-center gap-3">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="cod"
+                                        checked={paymentMethod === "cod"}
+                                        onChange={(event) => setPaymentMethod(event.target.value)}
+                                    />
+                                    <span className="text-gray-700 dark:text-gray-200">
+                                        Cash on Delivery
+                                    </span>
+                                </label>
+                            </div>
+
+                            {paymentError && (
+                                <p className="mt-3 text-sm text-red-600">
+                                    {paymentError}
+                                </p>
+                            )}
                             {/* --------------------------------- */}
                             {/* PLACE ORDER BUTTON */}
                             {/* --------------------------------- */}
 
+
+                            {/* Place order or start online payment */}
                             <button
                                 type="button"
                                 onClick={handleSubmit}
-                                disabled={
-                                    checkoutLoading ||
-                                    addresses.length === 0
-                                }
+                                disabled={checkoutLoading || paymentLoading || !selectedAddress}
                                 className="mt-6 w-full rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                             >
-
-                                {checkoutLoading
-                                    ? "Placing Order..."
-                                    : "Place Order"}
-
+                                {checkoutLoading || paymentLoading
+                                    ? "Processing..."
+                                    : paymentMethod === "cod"
+                                        ? "Place Order"
+                                        : "Pay Online"}
                             </button>
+
 
                         </div>
 

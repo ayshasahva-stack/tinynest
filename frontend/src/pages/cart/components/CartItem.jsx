@@ -23,17 +23,32 @@ function CartItem({ item }) {
 
         const product = item.product;
 
-        // Make sure the product still exists
-        if (!product) {
-            return (
-                <article className="border-b border-gray-200 py-6 dark:border-gray-700">
-                    <p className="text-sm text-red-600">
-                        This product is no longer available.
-                    </p>
-                </article>
-            );
-        }
+        // Handle a product that was deleted or is no longer available.
+if (!product) {
+  return (
+    <article className="flex items-center justify-between gap-4 border-b border-gray-200 py-6 dark:border-gray-700">
+      <p className="text-sm text-red-600">
+        This product is no longer available.
+      </p>
 
+      <button
+        type="button"
+        onClick={() => {
+          // Remove the stale item using its original product reference.
+          dispatch(
+            removeFromCartThunk({
+              itemType: "product",
+              itemId: item.product,
+            })
+          );
+        }}
+        className="text-sm font-medium text-red-600 hover:text-red-700"
+      >
+        Remove
+      </button>
+    </article>
+  );
+}
 
         // Calculate discounted product price
         const discountAmount =

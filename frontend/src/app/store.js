@@ -17,6 +17,8 @@ import reviewReducer from "../features/reviews/reviewSlice";
 import kitReducer from "../features/kits/kitSlice";
 import couponReducer from "../features/coupons/couponSlice";
 import userReducer from "../features/users/userSlice";
+import paymentReducer from "../features/payments/paymentSlice";
+
 
 import adminReducer from "../features/admin/adminSlice";
 // Create the application's Redux store
@@ -37,6 +39,7 @@ const store = configureStore({
 
         admin: adminReducer,
         users: userReducer,
+        payments: paymentReducer,
     },
 });
 
