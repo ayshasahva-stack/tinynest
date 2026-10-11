@@ -24,6 +24,7 @@ import KitDetails from "../../pages/kitDetails/KitDetails";
 import ResetPassword from "../../pages/auth/ResetPassword";
 
 
+
 import AdminDashboard from "../../pages/admin/AdminDashboard";
 import AdminProducts from "../../pages/admin/AdminProducts";
 import AdminAddProduct from "../../pages/admin/AdminAddProduct";
@@ -31,6 +32,7 @@ import AdminEditProduct from "../../pages/admin/AddminEditProduct";
 import AdminCategories from "../../pages/admin/AdminCategories";
 import AdminOrders from "../../pages/admin/AdminOrders";
 import AdminKits from "../../pages/admin/AdminKits";
+import AdminCoupons from "../../pages/admin/AdminCoupons";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -118,6 +120,7 @@ function AppRouter() {
                     <Route path="categories" element={<AdminCategories />} />
                     <Route path="orders" element={<AdminOrders />} />
                     <Route path="kits" element={<AdminKits />} />
+                    <Route path="coupons" element={<AdminCoupons />} />
 
                 </Route>
             </Routes>
