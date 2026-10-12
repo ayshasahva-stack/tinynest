@@ -1,10 +1,8 @@
-import { useEffect } from "react";
 
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-import {
-    fetchKitsThunk,
-} from "../../features/kits/kitThunk";
+import { fetchKitsThunk } from "../../features/kits/kitThunk";
 
 import {
     selectKits,
@@ -18,149 +16,80 @@ import ErrorMessage from "../../components/ErrorMessage";
 
 import KitCard from "./components/KitCard";
 
-
+// Baby kits listing page
 function Kits() {
-
-    // Redux dispatch function
     const dispatch = useDispatch();
 
-
-    // -----------------------------------------
-    // REDUX STATE
-    // -----------------------------------------
-
-    // Get all kits
+    // Read kits and request status from Redux
     const kits = useSelector(selectKits);
-
-    // Get loading state
     const loading = useSelector(selectKitLoading);
-
-    // Get error state
     const error = useSelector(selectKitError);
 
-
-    // -----------------------------------------
-    // FETCH KITS
-    // -----------------------------------------
-
+    // Fetch available kits when the page loads
     useEffect(() => {
-
-        // Fetch all active kits
         dispatch(fetchKitsThunk());
-
     }, [dispatch]);
 
-
-    // -----------------------------------------
-    // LOADING
-    // -----------------------------------------
-
-    if (loading) {
-
-        return (
-
-            <main className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-900">
-
-                <div className="mx-auto max-w-7xl">
-
-                    <Loading />
-
-                </div>
-
-            </main>
-
-        );
-
-    }
-
-
-    // -----------------------------------------
-    // ERROR
-    // -----------------------------------------
-
-    if (error) {
-
-        return (
-
-            <main className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-900">
-
-                <div className="mx-auto max-w-7xl">
-
-                    <ErrorMessage message={error} />
-
-                </div>
-
-            </main>
-
-        );
-
-    }
-
-
-    // -----------------------------------------
-    // PAGE
-    // -----------------------------------------
+    // Reuse the same page background for all request states
+    const pageClasses =
+        "min-h-screen bg-[#FBF7F0] px-5 py-10 transition-colors duration-300 dark:bg-gray-950 sm:px-8 sm:py-14";
 
     return (
-
-        <main className="min-h-screen bg-gray-50 px-4 py-10 dark:bg-gray-900">
-
+        <main className={pageClasses}>
             <div className="mx-auto max-w-7xl">
 
-
                 {/* Page heading */}
-                <div className="mb-8">
+                <header className="mb-10">
+                    <span className="inline-block rounded-full bg-[#E4EBDD] px-4 py-2 text-sm font-semibold text-[#49634B] dark:bg-[#26372A] dark:text-[#C9DFC5]">
+                        Thoughtfully bundled
+                    </span>
 
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-
+                    <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
                         Baby Essentials Kits
-
                     </h1>
 
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">
-
-                        Carefully selected bundles for your baby's everyday needs.
-
+                    <p className="mt-3 max-w-2xl leading-7 text-gray-600 dark:text-gray-400">
+                        Carefully selected bundles for your baby's
+                        everyday needs, from feeding to bedtime.
                     </p>
+                </header>
 
-                </div>
+                {/* Loading state */}
+                {loading && <Loading />}
 
+                {/* Error state */}
+                {!loading && error && (
+                    <ErrorMessage
+                        title="Unable to load kits"
+                        message={error}
+                    />
+                )}
 
                 {/* Empty state */}
-                {kits.length === 0 ? (
-
+                {!loading && !error && kits.length === 0 && (
                     <EmptyState
                         title="No kits available"
                         message="There are currently no baby essentials kits available."
                     />
+                )}
 
-                ) : (
-
-                    /* --------------------------------- */
-                    /* KIT GRID */
-                    /* --------------------------------- */
-
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-
+                {/* Kit cards */}
+                {!loading && !error && kits.length > 0 && (
+                    <section
+                        aria-label="Available baby essentials kits"
+                        className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                    >
                         {kits.map((kit) => (
-
                             <KitCard
                                 key={kit._id}
                                 kit={kit}
                             />
-
                         ))}
-
-                    </div>
-
+                    </section>
                 )}
-
             </div>
-
         </main>
-
     );
 }
-
 
 export default Kits;
