@@ -1,74 +1,82 @@
-// Temporary category data for the home page
+
+import { Link } from "react-router-dom";
+
+// Category images should be placed in:
+// frontend/public/images/categories/
 const categories = [
     {
         id: 1,
-        name: "Baby Care",
-        description: "Everyday care essentials",
+        name: "Baby Clothing",
+      image: "/images/categories/baby-clothing.jpg",
     },
     {
         id: 2,
         name: "Feeding",
-        description: "Everything for feeding time",
+        image: "/images/categories/feeding.jpg",
     },
     {
         id: 3,
-        name: "Clothing",
-        description: "Comfortable clothes for little ones",
+        name: "Diapers",
+        image: "/images/categories/diapers.jpg",
     },
     {
         id: 4,
         name: "Toys",
-        description: "Fun and learning essentials",
+        image: "/images/categories/toys.jpg",
+    },
+    {
+        id: 5,
+        name: "Bedding",
+        image: "/images/categories/bedding.jpg",
+    },
+    {
+        id: 6,
+        name: "Accessories",
+        image: "/images/categories/accessories.jpg",
     },
 ];
 
-// Featured categories section
 function CategoriesSection() {
     return (
-        <section className="bg-white py-16 dark:bg-gray-950">
+        <section className="bg-[#FAFAF3] py-12 transition-colors duration-300 dark:bg-gray-950 sm:py-16">
 
-            {/* Section container */}
-            <div className="mx-auto max-w-7xl px-4">
+            {/* Main section container */}
+            <div className="mx-auto max-w-7xl px-4 sm:px-8">
 
                 {/* Section heading */}
-                <div className="text-center">
+                <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
+                    Shop by Category
+                </h2>
 
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Shop by Category
-                    </h2>
-
-                    <p className="mt-3 text-gray-600 dark:text-gray-400">
-                        Find everything you need for your little one.
-                    </p>
-
-                </div>
-
-                {/* Category cards */}
-                <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {/* Horizontal category row */}
+                <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-7 sm:grid-cols-6 sm:gap-x-5">
 
                     {categories.map((category) => (
-                        <div
+                        <Link
                             key={category.id}
-                            className="rounded-xl border border-gray-200 bg-gray-50 p-6 transition hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
+                            to="/products"
+                            aria-label={`Shop ${category.name}`}
+                            className="group flex min-w-0 flex-col items-center text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#718B70] focus-visible:ring-offset-4"
                         >
+                            {/* Circular category photograph */}
+                            <div className="aspect-square w-full max-w-[140px] overflow-hidden rounded-full bg-[#EEE8DC] shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md dark:bg-gray-800">
+                                <img
+                                    src={category.image}
+                                    alt={category.name}
+                                    loading="lazy"
+                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                />
+                            </div>
 
                             {/* Category name */}
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                            <span className="mt-3 text-xs font-medium text-gray-800 transition-colors group-hover:text-[#718B70] dark:text-gray-200 dark:group-hover:text-[#B5D0AC] sm:text-sm">
                                 {category.name}
-                            </h3>
-
-                            {/* Category description */}
-                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                {category.description}
-                            </p>
-
-                        </div>
+                            </span>
+                        </Link>
                     ))}
 
                 </div>
-
             </div>
-
         </section>
     );
 }

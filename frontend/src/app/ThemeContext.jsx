@@ -1,23 +1,31 @@
-// Import React tools needed to create and use Context
+
 import { createContext, useContext, useEffect, useState } from "react";
 
-// Create the Theme Context
+// Share the selected theme with components throughout TinyNest.
 const ThemeContext = createContext();
 
-// Theme Provider manages the application's theme
+// Provide the theme and toggle function to the application.
 export function ThemeProvider({ children }) {
+    // Restore the saved theme; use light mode for a first-time visitor.
+    const [theme, setTheme] = useState(() => {
+        const savedTheme = localStorage.getItem("tinynest-theme");
 
-    // Store the current theme
-    const [theme, setTheme] = useState("light");
+        return savedTheme === "dark" ? "dark" : "light";
+    });
 
-    // Apply the current theme to the HTML element
     useEffect(() => {
+        // Tailwind's custom dark variant reads this HTML attribute.
         document.documentElement.setAttribute("data-theme", theme);
+
+        // Remember the theme when the user refreshes the page.
+        localStorage.setItem("tinynest-theme", theme);
     }, [theme]);
 
-    // Toggle between light and dark themes
+    // Switch between the two supported themes.
     const toggleTheme = () => {
-        setTheme(theme === "light" ? "dark" : "light");
+        setTheme((currentTheme) =>
+            currentTheme === "light" ? "dark" : "light"
+        );
     };
 
     return (
@@ -27,7 +35,7 @@ export function ThemeProvider({ children }) {
     );
 }
 
-// Custom hook for accessing the Theme Context
+// Custom hook used by the navbar and other themed components.
 export function useTheme() {
     return useContext(ThemeContext);
 }

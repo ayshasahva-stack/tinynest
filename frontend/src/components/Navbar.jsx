@@ -1,306 +1,221 @@
-// Import React hooks
+
 import { useEffect, useState } from "react";
-
-// Import React Router navigation components
-import { Link, useNavigate } from "react-router-dom";
-
-// Import theme context
-import { useTheme } from "../app/ThemeContext";
-
-// Import Redux hooks
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import authentication selector
+import { useTheme } from "../app/ThemeContext";
 import { selectIsAuthenticated } from "../features/auth/authSelectors";
-
-// Import authentication logout action
 import { logout } from "../features/auth/authSlice";
-
-// Import cart selector
 import { selectCartItemCount } from "../features/cart/cartSelectors";
-
-// Import wishlist selector
 import { selectWishlistCount } from "../features/wishlist/wishlistSelectors";
-
-// Import wishlist thunk
 import { getMyWishlistThunk } from "../features/wishlist/wishlistThunk";
 import { getMyCartThunk } from "../features/cart/cartThunk";
 
-// Navbar component for customer-facing pages
 function Navbar() {
-    // Store whether the mobile menu is open
+    // Track whether the mobile navigation is expanded.
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    // Get current theme and theme toggle function
     const { theme, toggleTheme } = useTheme();
-
-    // Get Redux dispatch function
     const dispatch = useDispatch();
-
-    // Get navigation function
     const navigate = useNavigate();
+    const location = useLocation();
 
-    // Get authentication status
+    // Read existing authentication and shopping data from Redux.
     const isAuthenticated = useSelector(selectIsAuthenticated);
-
-    // Get number of different products in the cart
     const cartItemCount = useSelector(selectCartItemCount);
-
-    // Get number of products in the wishlist
     const wishlistCount = useSelector(selectWishlistCount);
 
-    // Fetch wishlist when an authenticated user loads the Navbar
-  useEffect(() => {
-    if (isAuthenticated) {
-        // Fetch the user's wishlist
-        dispatch(getMyWishlistThunk());
+    // Keep the cart and wishlist in sync for signed-in customers.
+    useEffect(() => {
+        if (isAuthenticated) {
+            dispatch(getMyWishlistThunk());
+            dispatch(getMyCartThunk());
+        }
+    }, [dispatch, isAuthenticated]);
 
-        // Fetch the user's cart
-        dispatch(getMyCartThunk());
-    }
-}, [dispatch, isAuthenticated]);
+    // Close the mobile menu when the user navigates to another page.
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [location.pathname]);
 
-    // Handle user logout
     const handleLogout = () => {
-        // Clear authentication data
         dispatch(logout());
-
-        // Redirect user to login page
+        setIsMenuOpen(false);
         navigate("/login");
     };
 
-    // Toggle mobile menu
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
-    };
+    // Shared styling keeps desktop and mobile links consistent.
+    const linkClass = ({ isActive }) =>
+        `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            isActive
+                ? "bg-[#E1E9DC] text-[#3F5B43] dark:bg-[#344638] dark:text-[#E2EBDD]"
+                : "text-stone-700 hover:bg-[#F5E9E7] hover:text-[#80545C] dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-[#E8BFC7]"
+        }`;
 
     return (
-        <nav className="border-b bg-white dark:bg-gray-900">
-
-            {/* Main navbar container */}
-            <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-
-                {/* TinyNest brand */}
-                <Link
-                    to="/"
-                    className="text-2xl font-bold text-gray-900 dark:text-white"
-                >
-                    TinyNest
-                </Link>
-
-                {/* Desktop navigation */}
-                <div className="hidden items-center gap-6 md:flex">
-
-                    {/* Home */}
+        <header className="sticky top-0 z-50 border-b border-[#E8E0D5] bg-[#FFFCF7]/95 shadow-sm backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95">
+            <nav
+                className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+                aria-label="Main navigation"
+            >
+                <div className="flex min-h-[76px] items-center justify-between gap-4">
+                    {/* Brand: return to the homepage. */}
                     <Link
                         to="/"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+                        className="shrink-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#789477]"
+                        aria-label="TinyNest home"
                     >
-                        Home
+                        <span className="block text-2xl font-bold tracking-tight text-[#405B43] dark:text-[#D9E6D4]">
+                            TinyNest<span className="text-[#D69BA5]">.</span>
+                        </span>
+                        <span className="hidden text-[10px] font-medium uppercase tracking-[0.19em] text-stone-500 sm:block dark:text-stone-400">
+                            Little things, lots of love
+                        </span>
                     </Link>
 
-                    {/* Products */}
-                    <Link
-                        to="/products"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                    >
-                        Products
-                    </Link>
+                    {/* Desktop navigation links. */}
+                    <div className="hidden items-center gap-1 lg:flex">
+                        <NavLink to="/" end className={linkClass}>
+                            Home
+                        </NavLink>
+                        <NavLink to="/products" className={linkClass}>
+                            Shop
+                        </NavLink>
+                        <NavLink to="/kits" className={linkClass}>
+                            Baby Kits
+                        </NavLink>
+                        <NavLink to="/wishlist" className={linkClass}>
+                            Wishlist
+                            {wishlistCount > 0 && (
+                                <span className="ml-2 rounded-full bg-[#EED5D9] px-2 py-0.5 text-xs text-[#754750] dark:bg-[#5B3941] dark:text-[#F5DDE1]">
+                                    {wishlistCount}
+                                </span>
+                            )}
+                        </NavLink>
+                        <NavLink to="/cart" className={linkClass}>
+                            Cart
+                            {cartItemCount > 0 && (
+                                <span className="ml-2 rounded-full bg-[#DCE7D6] px-2 py-0.5 text-xs text-[#405B43] dark:bg-[#344638] dark:text-[#E2EBDD]">
+                                    {cartItemCount}
+                                </span>
+                            )}
+                        </NavLink>
+                    </div>
 
-                    {/* Wishlist */}
-                    <Link
-                        to="/wishlist"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                    >
-                        Wishlist
-                        {wishlistCount > 0 && (
-                            <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
-                                {wishlistCount}
-                            </span>
-                        )}
-                    </Link>
-
-                    {/* Cart */}
-                    <Link
-                        to="/cart"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                    >
-                        Cart
-                        {cartItemCount > 0 && (
-                            <span className="ml-1">
-                                ({cartItemCount})
-                            </span>
-                        )}
-                    </Link>
-                     <Link
-                        to="/kits"
-                        className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                    >
-                        Kits
-                    </Link>
-
-                    {/* Theme toggle */}
-                    <button
-                        type="button"
-                        onClick={toggleTheme}
-                        className="rounded-md border border-gray-300 px-3 py-1 text-gray-800 dark:border-gray-600 dark:text-white"
-                        aria-label="Toggle theme"
-                    >
-                        {theme === "light" ? "🌙" : "☀️"}
-                    </button>
-
-                    {/* Authentication actions */}
-                    {isAuthenticated ? (
+                    {/* Desktop theme and account actions. */}
+                    <div className="hidden items-center gap-2 md:flex">
                         <button
                             type="button"
-                            onClick={handleLogout}
-                            className="rounded-md border border-gray-300 px-3 py-1 text-gray-800 dark:border-gray-600 dark:text-white"
+                            onClick={toggleTheme}
+                            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                            aria-pressed={theme === "dark"}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E0D5] bg-white text-lg transition hover:bg-[#F5E9E7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#789477] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
                         >
-                            Logout
+                            {theme === "light" ? "☾" : "☀"}
                         </button>
-                    ) : (
-                        <>
-                            {/* Login */}
-                            <Link
-                                to="/login"
-                                className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
+
+                        {isAuthenticated ? (
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3F5941] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#789477] dark:bg-[#DCE7D6] dark:text-stone-900 dark:hover:bg-white"
                             >
-                                Login
-                            </Link>
-
-                            {/* Register */}
-                            <Link
-                                to="/register"
-                                className="text-gray-700 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white"
-                            >
-                                Register
-                            </Link>
-                        </>
-                    )}
-                </div>
-
-                {/* Mobile menu button */}
-                <button
-                    type="button"
-                    onClick={toggleMenu}
-                    className="text-2xl md:hidden text-gray-900 dark:text-white"
-                    aria-label="Toggle menu"
-                >
-                    {isMenuOpen ? "✕" : "☰"}
-                </button>
-            </div>
-
-            {/* Mobile navigation menu */}
-            {isMenuOpen && (
-                <div className="border-t px-4 py-4 dark:border-gray-700 md:hidden">
-
-                    {/* Mobile Home */}
-                    <Link
-                        to="/"
-                        className="block py-2 text-gray-800 dark:text-gray-200"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
-                        Home
-                    </Link>
-
-                    {/* Mobile Products */}
-                    <Link
-                        to="/products"
-                        className="block py-2 text-gray-800 dark:text-gray-200"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
-                        Products
-                    </Link>
-
-                    {/* Mobile Wishlist */}
-                    <Link
-                        to="/wishlist"
-                        className="block py-2 text-gray-800 dark:text-gray-200"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
-                        Wishlist
-
-                        {wishlistCount > 0 && (
-                            <span className="ml-1 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
-                                {wishlistCount}
-                            </span>
+                                Logout
+                            </button>
+                        ) : (
+                            <>
+                                <NavLink
+                                    to="/login"
+                                    className="rounded-full px-4 py-2 text-sm font-medium text-stone-700 transition hover:text-[#405B43] dark:text-stone-200 dark:hover:text-white"
+                                >
+                                    Login
+                                </NavLink>
+                                <NavLink
+                                    to="/register"
+                                    className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3F5941] dark:bg-[#DCE7D6] dark:text-stone-900 dark:hover:bg-white"
+                                >
+                                    Sign up
+                                </NavLink>
+                            </>
                         )}
-                    </Link>
+                    </div>
 
-                    {/* Mobile Cart */}
-                    <Link
-                        to="/cart"
-                        className="block py-2 text-gray-800 dark:text-gray-200"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
-                        Cart
-
-                        {cartItemCount > 0 && (
-                            <span className="ml-1">
-                                ({cartItemCount})
-                            </span>
-                        )}
-                    </Link>
-                   <Link
-                        to="/kits"
-                        className="block py-2 text-gray-800 dark:text-gray-200"
-                        onClick={() => setIsMenuOpen(false)}
-                    >
-                        Kits
-                    </Link>
-
-
-                    {/* Mobile theme toggle */}
-                    <button
-                        type="button"
-                        onClick={toggleTheme}
-                        className="mt-2 rounded-md border px-3 py-1 dark:border-gray-600 dark:text-white"
-                        aria-label="Toggle theme"
-                    >
-                        {theme === "light"
-                            ? "🌙 Dark Mode"
-                            : "☀️ Light Mode"}
-                    </button>
-
-                    {/* Mobile authentication actions */}
-                    {isAuthenticated ? (
+                    {/* Mobile theme toggle and menu button. */}
+                    <div className="flex items-center gap-2 md:hidden">
                         <button
                             type="button"
-                            onClick={() => {
-                                // Close mobile menu
-                                setIsMenuOpen(false);
-
-                                // Logout user
-                                handleLogout();
-                            }}
-                            className="mt-3 block rounded-md border px-3 py-1 dark:border-gray-600 dark:text-white"
+                            onClick={toggleTheme}
+                            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E0D5] text-lg dark:border-stone-700"
                         >
-                            Logout
+                            {theme === "light" ? "☾" : "☀"}
                         </button>
-                    ) : (
-                        <>
-                            {/* Mobile Login */}
-                            <Link
-                                to="/login"
-                                className="mt-3 block py-2 text-gray-800 dark:text-gray-200"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Login
-                            </Link>
 
-                            {/* Mobile Register */}
-                            <Link
-                                to="/register"
-                                className="block py-2 text-gray-800 dark:text-gray-200"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Register
-                            </Link>
-                        </>
-                    )}
+                        <button
+                            type="button"
+                            onClick={() => setIsMenuOpen((open) => !open)}
+                            aria-expanded={isMenuOpen}
+                            aria-controls="mobile-navigation"
+                            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E1E9DC] text-xl text-[#405B43] dark:bg-stone-800 dark:text-white"
+                        >
+                            {isMenuOpen ? "×" : "☰"}
+                        </button>
+                    </div>
                 </div>
-            )}
-        </nav>
+
+                {/* Mobile navigation uses the same routes and Redux counts. */}
+                {isMenuOpen && (
+                    <div
+                        id="mobile-navigation"
+                        className="space-y-2 border-t border-[#E8E0D5] py-4 dark:border-stone-700 md:hidden"
+                    >
+                        <NavLink to="/" end className={linkClass}>
+                            Home
+                        </NavLink>
+                        <NavLink to="/products" className={linkClass}>
+                            Shop
+                        </NavLink>
+                        <NavLink to="/kits" className={linkClass}>
+                            Baby Kits
+                        </NavLink>
+                        <NavLink to="/wishlist" className={linkClass}>
+                            Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
+                        </NavLink>
+                        <NavLink to="/cart" className={linkClass}>
+                            Cart {cartItemCount > 0 && `(${cartItemCount})`}
+                        </NavLink>
+
+                        <div className="flex flex-wrap gap-3 border-t border-[#E8E0D5] pt-3 dark:border-stone-700">
+                            {isAuthenticated ? (
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white dark:bg-[#DCE7D6] dark:text-stone-900"
+                                >
+                                    Logout
+                                </button>
+                            ) : (
+                                <>
+                                    <Link
+                                        to="/login"
+                                        className="rounded-full border border-[#D9D0C5] px-5 py-2.5 text-sm font-medium dark:border-stone-600"
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        to="/register"
+                                        className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white dark:bg-[#DCE7D6] dark:text-stone-900"
+                                    >
+                                        Sign up
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </nav>
+        </header>
     );
 }
 
