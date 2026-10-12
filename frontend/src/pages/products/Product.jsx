@@ -1,27 +1,17 @@
-// Import React hooks
-import { useState, useEffect } from "react";
 
-// Import Redux hooks
+import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import the product fetching thunk
 import { fetchProducts } from "../../features/products/productThunk";
-
-// Import the category fetching thunk
 import { fetchCategories } from "../../features/categories/categoryThunk";
 
-// Import reusable UI components
 import Loading from "../../components/Loading";
 import EmptyState from "../../components/EmptyState";
 import ErrorMessage from "../../components/ErrorMessage";
 
-// Import the reusable product grid
 import ProductGrid from "./components/ProductGrid";
-
-// Import the product filters component
 import ProductFilters from "./components/ProductFilters";
 
-// Import product selectors
 import {
     selectProducts,
     selectProductsError,
@@ -29,49 +19,33 @@ import {
     selectProductsPagination,
 } from "../../features/products/productSelectors";
 
-// Products page component
 function Products() {
-    // Store the text entered in the search box
+    // Search input and debounced search value
     const [search, setSearch] = useState("");
-
-    // Store the search value after the user stops typing
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
-    // Store the selected category ID
+    // Selected category and current page
     const [category, setCategory] = useState("");
-
-    // Store the current product page
     const [page, setPage] = useState(1);
 
-    // Get the Redux dispatch function
     const dispatch = useDispatch();
 
-    // Get products from Redux
+    // Read product data and request status from Redux
     const products = useSelector(selectProducts);
-
-    // Get pagination information from Redux
     const pagination = useSelector(selectProductsPagination);
-
-    // Get loading state from Redux
     const loading = useSelector(selectProductsLoading);
-
-    // Get error state from Redux
     const error = useSelector(selectProductsError);
 
-    // Wait until the user stops typing before updating the search value
+    // Wait 500ms after typing before searching
     useEffect(() => {
-        // Create a timer that waits 500 milliseconds
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
         }, 500);
 
-        // Clear the previous timer when the search value changes
-        return () => {
-            clearTimeout(timer);
-        };
+        return () => clearTimeout(timer);
     }, [search]);
 
-    // Fetch products whenever search, category, or page changes
+    // Fetch products when search, category, or page changes
     useEffect(() => {
         dispatch(
             fetchProducts({
@@ -82,92 +56,139 @@ function Products() {
         );
     }, [dispatch, debouncedSearch, category, page]);
 
-    // Reset to the first page when filters change
+    // Return to page one when the search or category changes
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch, category]);
 
-    // Fetch categories when the Products page loads
+    // Load categories for the sidebar
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
 
+    // Pagination helper
+    const currentPage = pagination.currentPage || page;
+    const totalPages = pagination.totalPages || 1;
+
     return (
-        <main className="mx-auto max-w-7xl px-4 py-10">
-            {/* Page heading */}
-            <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
-                All Products
-            </h1>
+        <main className="min-h-screen bg-[#FAFAF5] px-4 py-8 transition-colors duration-300 dark:bg-gray-950 sm:px-6 lg:px-8">
 
-            {/* Product search and filters */}
-            <ProductFilters
-                search={search}
-                setSearch={setSearch}
-                category={category}
-                setCategory={setCategory}
-            />
+            <div className="mx-auto max-w-[1440px]">
 
-            {/* Show loading state while products are being fetched */}
-            {loading && <Loading />}
-
-            {/* Show error state when the API request fails */}
-            {!loading && error && (
-                <ErrorMessage
-                    title="Unable to load products"
-                    message={error}
-                />
-            )}
-
-            {/* Show empty state when no products are found */}
-            {!loading && !error && products.length === 0 && (
-                <EmptyState
-                    title="No products found"
-                    message="There are no products available right now."
-                />
-            )}
-
-            {/* Display products using the reusable ProductGrid component */}
-            {!loading && !error && products.length > 0 && (
-                <ProductGrid products={products} />
-            )}
-
-            {/* Pagination controls */}
-            {!loading && !error && pagination.totalPages > 1 && (
-                <div className="mt-10 flex items-center justify-center gap-4">
-                    {/* Previous page button */}
-                    <button
-                        type="button"
-                        disabled={pagination.currentPage === 1}
-                        onClick={() =>
-                            setPage((currentPage) => currentPage - 1)
-                        }
-                        className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                    >
-                        Previous
-                    </button>
-
-                    {/* Current page information */}
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Page {pagination.currentPage} of{" "}
-                        {pagination.totalPages}
+                {/* Page heading */}
+                <header className="mb-8">
+                    <span className="inline-block rounded-full bg-[#E4EBDD] px-3 py-1.5 text-xs font-semibold text-[#49634B] dark:bg-[#26372A] dark:text-[#C9DFC5]">
+                        TinyNest collection
                     </span>
 
-                    {/* Next page button */}
-                    <button
-                        type="button"
-                        disabled={
-                            pagination.currentPage ===
-                            pagination.totalPages
-                        }
-                        onClick={() =>
-                            setPage((currentPage) => currentPage + 1)
-                        }
-                        className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                    >
-                        Next
-                    </button>
+                    <h1 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        Shop All
+                    </h1>
+
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        Explore essentials for your little one.
+                    </p>
+                </header>
+
+                {/* Sidebar and product area */}
+                <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[220px_minmax(0,1fr)] xl:gap-10">
+
+                    {/* Left sidebar: existing search and category filters */}
+                    <aside className="min-w-0">
+                        <ProductFilters
+                            search={search}
+                            setSearch={setSearch}
+                            category={category}
+                            setCategory={setCategory}
+                        />
+                    </aside>
+
+                    {/* Right side: toolbar, products, and pagination */}
+                    <section className="min-w-0">
+
+                        {/* Results toolbar */}
+                        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E8E5DA] bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {loading
+                                    ? "Loading products..."
+                                    : `Showing ${products.length} product${products.length === 1 ? "" : "s"}`}
+                            </p>
+
+                            {/* Sorting is not added here because the existing
+                                backend sorting options have not been confirmed. */}
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                Page {currentPage} of {totalPages}
+                            </span>
+                        </div>
+
+                        {/* Loading state */}
+                        {loading && <Loading />}
+
+                        {/* Error state */}
+                        {!loading && error && (
+                            <ErrorMessage
+                                title="Unable to load products"
+                                message={error}
+                            />
+                        )}
+
+                        {/* Empty state */}
+                        {!loading && !error && products.length === 0 && (
+                            <EmptyState
+                                title="No products found"
+                                message="Try another search term or category."
+                            />
+                        )}
+
+                        {/* Existing product grid and cards remain unchanged */}
+                        {!loading && !error && products.length > 0 && (
+                            <ProductGrid products={products} />
+                        )}
+
+                        {/* Pagination */}
+                        {!loading && !error && totalPages > 1 && (
+                            <nav
+                                aria-label="Product pagination"
+                                className="mt-10 flex flex-wrap items-center justify-center gap-3"
+                            >
+                                <button
+                                    type="button"
+                                    disabled={currentPage <= 1}
+                                    onClick={() =>
+                                        setPage((value) => value - 1)
+                                    }
+                                    className="rounded-lg border border-[#D7DCCF] bg-white px-4 py-2 text-sm font-medium text-[#49634B] transition hover:bg-[#E4EBDD] disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:text-[#C9DFC5] dark:hover:bg-gray-800"
+                                >
+                                    ← Previous
+                                </button>
+
+                                <span
+                                    aria-current="page"
+                                    className="rounded-lg bg-[#496F49] px-4 py-2 text-sm font-semibold text-white"
+                                >
+                                    {currentPage}
+                                </span>
+
+                                <span className="px-1 text-sm text-gray-600 dark:text-gray-400">
+                                    of {totalPages}
+                                </span>
+
+                                <button
+                                    type="button"
+                                    disabled={currentPage >= totalPages}
+                                    onClick={() =>
+                                        setPage((value) => value + 1)
+                                    }
+                                    className="rounded-lg border border-[#D7DCCF] bg-white px-4 py-2 text-sm font-medium text-[#49634B] transition hover:bg-[#E4EBDD] disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:text-[#C9DFC5] dark:hover:bg-gray-800"
+                                >
+                                    Next →
+                                </button>
+                            </nav>
+                        )}
+                    </section>
                 </div>
-            )}
+            </div>
         </main>
     );
 }
