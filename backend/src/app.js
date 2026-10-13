@@ -18,6 +18,7 @@ import refundRoutes from "./modules/refund/refund.routes.js";
 import adminDashboardRoutes from "./modules/adminDashboard/adminDashboard.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 import kitRoutes from "./modules/kits/kit.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 
 const app = express();
@@ -64,6 +65,8 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/users", userRoutes);
 // kit api routes
 app.use("/api/kits", kitRoutes);
+// Notification API routes
+app.use("/api/notifications", notificationRoutes);
 
 // 404 handler
 app.use((req, res) => {

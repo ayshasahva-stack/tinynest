@@ -11,6 +11,8 @@ import { selectWishlistCount } from "../features/wishlist/wishlistSelectors";
 import { getMyWishlistThunk } from "../features/wishlist/wishlistThunk";
 import { getMyCartThunk } from "../features/cart/cartThunk";
 
+import NotificationBell from "./NotificationBell";
+
 function Navbar() {
     // Track whether the mobile navigation is expanded.
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -46,10 +48,9 @@ function Navbar() {
 
     // Shared styling keeps desktop and mobile links consistent.
     const linkClass = ({ isActive }) =>
-        `rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-            isActive
-                ? "bg-[#E1E9DC] text-[#3F5B43] dark:bg-[#344638] dark:text-[#E2EBDD]"
-                : "text-stone-700 hover:bg-[#F5E9E7] hover:text-[#80545C] dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-[#E8BFC7]"
+        `rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive
+            ? "bg-[#E1E9DC] text-[#3F5B43] dark:bg-[#344638] dark:text-[#E2EBDD]"
+            : "text-stone-700 hover:bg-[#F5E9E7] hover:text-[#80545C] dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-[#E8BFC7]"
         }`;
 
     return (
@@ -104,6 +105,8 @@ function Navbar() {
 
                     {/* Desktop theme and account actions. */}
                     <div className="hidden items-center gap-2 md:flex">
+                        {/* Show notifications for signed-in users. */}
+                        <NotificationBell />
                         <button
                             type="button"
                             onClick={toggleTheme}
@@ -187,6 +190,8 @@ function Navbar() {
                         </NavLink>
 
                         <div className="flex flex-wrap gap-3 border-t border-[#E8E0D5] pt-3 dark:border-stone-700">
+                            <NotificationBell />
+
                             {isAuthenticated ? (
                                 <button
                                     type="button"

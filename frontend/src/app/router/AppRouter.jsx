@@ -39,10 +39,15 @@ import AdminReviews from "../../pages/admin/AdminReviews";
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
 import AdminLayout from "../../layouts/AdminLayout";
+
+import SocketManager from "../../realtime/SocketManager";
+
 // Main router component
 function AppRouter() {
     return (
         <BrowserRouter>
+          <SocketManager />
+
             <Routes>
 
                 {/* All customer pages use the UserLayout */}
