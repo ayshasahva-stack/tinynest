@@ -919,6 +919,47 @@ export const cancelMyOrder = async (req, res, next) => {
 
         // Commit all database changes together
         await session.commitTransaction();
+        
+ // Save and send an admin notification after cancellation succeeds.
+try {
+    const User = (await import("../auth/auth.model.js")).default;
+
+    // Find admins who are not blocked.
+    const admins = await User.find({
+        role: "admin",
+        isBlocked: { $ne: true },
+    }).select("_id");
+
+    if (admins.length > 0) {
+        // Create one cancellation notification for each admin.
+        const notifications = await Notification.insertMany(
+            admins.map((admin) => ({
+                recipient: admin._id,
+                type: "order-cancelled",
+                title: "Order cancelled",
+                message: `Order #${order._id} has been cancelled.`,
+                order: order._id,
+            }))
+        );
+
+        // Notify connected admins in real time.
+        const io = getIo();
+
+        notifications.forEach((notification) => {
+            io.to("admin").emit(
+                "notification:new",
+                notification.toObject()
+            );
+        });
+    }
+} catch (notificationError) {
+    // A notification failure must not undo the cancellation.
+    console.error(
+        "Failed to create cancellation notification:",
+        notificationError.message
+    );
+}
+
 
         // Return the cancelled order
         return sendSuccessResponse(

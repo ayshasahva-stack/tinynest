@@ -28,45 +28,61 @@ export const getMyNotifications = async (req, res, next) => {
     }
 };
 
-// Mark one of the logged-in user's notifications as read.
+
 export const markNotificationAsRead = async (req, res, next) => {
     try {
         const { notificationId } = req.params;
 
-        // Validate the notification ID using the validation module.
+        // Validate the notification ID.
         const validationError = validateNotificationId(notificationId);
 
         if (validationError) {
             return next(new ApiError(400, validationError));
         }
 
-        // Update only a notification owned by the logged-in user.
+        // Accept true to mark as read and false to mark as unread.
+        // Safely read the body, even if the request body is missing.
+        const isRead = req.body?.isRead;
+
+        // Reject requests that do not contain a valid Boolean value.
+        if (typeof isRead !== "boolean") {
+            return next(
+                new ApiError(400, "Please provide isRead as true or false")
+            );
+        }
+
+        if (typeof isRead !== "boolean") {
+            return next(
+                new ApiError(400, "isRead must be true or false")
+            );
+        }
+
+        // Update only a notification belonging to the logged-in user.
         const notification = await Notification.findOneAndUpdate(
             {
                 _id: notificationId,
                 recipient: req.user._id,
             },
             {
-                $set: { isRead: true },
+                $set: { isRead },
             },
             {
-                new: true, // Return the updated notification.
+                new: true,
                 runValidators: true,
             }
         );
 
-        // The notification may not exist or may belong to another user.
         if (!notification) {
-            return next(
-                new ApiError(404, "Notification not found")
-            );
+            return next(new ApiError(404, "Notification not found"));
         }
 
         return sendSuccessResponse(
             res,
             200,
             notification,
-            "Notification marked as read"
+            isRead
+                ? "Notification marked as read"
+                : "Notification marked as unread"
         );
     } catch (error) {
         next(error);

@@ -35,6 +35,8 @@ import AdminKits from "../../pages/admin/AdminKits";
 import AdminCoupons from "../../pages/admin/AdminCoupons";
 import AdminUsers from "../../pages/admin/AdminUsers";
 import AdminReviews from "../../pages/admin/AdminReviews";
+// Shared full notifications page for customers and admins.
+import Notifications from "../../pages/notification/Notification";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -46,7 +48,7 @@ import SocketManager from "../../realtime/SocketManager";
 function AppRouter() {
     return (
         <BrowserRouter>
-          <SocketManager />
+            <SocketManager />
 
             <Routes>
 
@@ -99,7 +101,10 @@ function AppRouter() {
                     <Route
                         path="/kits/:kitId"
                         element={<KitDetails />}
+
                     />
+                    {/* Full notifications page for customers */}
+                    <Route path="/notifications" element={<Notifications />} />
                 </Route>
 
                 {/* Admin routes */}
@@ -131,6 +136,8 @@ function AppRouter() {
                     <Route path="users" element={<AdminUsers />} />
                     {/* Review and rating management */}
                     <Route path="reviews" element={<AdminReviews />} />
+                    {/* Full notifications page for admins */}
+                    <Route path="notifications" element={<Notifications />} />
                 </Route>
             </Routes>
         </BrowserRouter>

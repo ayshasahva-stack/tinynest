@@ -1,12 +1,10 @@
 
 import mongoose from "mongoose";
 
-// Store each notification separately so it survives page refreshes.
+// Define the structure of notifications stored in MongoDB.
 const notificationSchema = new mongoose.Schema(
     {
-        // The user who should receive this notification.
-        // For a new order, this can be an admin.
-        // For an order status update, this is the customer.
+        // The user who receives this notification (admin or customer).
         recipient: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
@@ -14,10 +12,15 @@ const notificationSchema = new mongoose.Schema(
             index: true,
         },
 
-        // Identify which event created the notification.
+        // The event that triggered the notification.
         type: {
             type: String,
-            enum: ["new-order", "status-updated"],
+            enum: [
+                "new-order",
+                "status-updated",
+                "order-cancelled",
+                "new-user",
+            ],
             required: true,
         },
 
@@ -28,39 +31,36 @@ const notificationSchema = new mongoose.Schema(
             trim: true,
         },
 
-        // Notification message displayed to the recipient.
+        // Description of the event.
         message: {
             type: String,
             required: true,
             trim: true,
         },
 
-        // Link the notification to its related order.
+        // Optional: only order-related notifications need an order reference.
         order: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",
-            required: true,
+            required: false,
+            default: null,
         },
 
-        // Track whether the recipient has read the notification.
+        // Whether the recipient has read the notification.
         isRead: {
             type: Boolean,
             default: false,
         },
     },
     {
-        // Automatically record when each notification was created
-        // and last updated.
+        // Automatically save createdAt and updatedAt timestamps.
         timestamps: true,
     }
 );
 
-// Helps retrieve a user's latest notifications efficiently.
+// Optimize notification retrieval for each recipient.
 notificationSchema.index({ recipient: 1, createdAt: -1 });
 
-const Notification = mongoose.model(
-    "Notification",
-    notificationSchema
-);
+const Notification = mongoose.model("Notification", notificationSchema);
 
 export default Notification;

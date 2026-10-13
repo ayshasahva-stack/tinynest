@@ -6,6 +6,11 @@ import User from './auth.model.js'
 import transporter from '../../integrations/email/mail.js'
 import ApiError from '../../utils/Apierror.js'
 import sendSuccessResponse from '../../utils/ApiResponse.js'
+// Save admin notifications.
+import Notification from "../notifications/notification.model.js";
+
+// Access the Socket.IO server for real-time updates.
+import { getIo } from "../../realtime/io.js";
 import {
     validateRegistration,
     validateVerifyOtp,
@@ -130,6 +135,44 @@ export const verifyOtp = async (req, res, next) => {
 
         // Save the updated user
         await user.save();
+
+        // Notify admins after the user's email is verified.
+        try {
+            // Find admins who are not blocked.
+            const admins = await User.find({
+                role: "admin",
+                isBlocked: { $ne: true },
+            }).select("_id");
+
+            if (admins.length > 0) {
+                // Save a notification for each admin.
+                const notifications = await Notification.insertMany(
+                    admins.map((admin) => ({
+                        recipient: admin._id,
+                        type: "new-user",
+                        title: "New user registered",
+                        message: `A new user (${user.email}) has registered successfully.`,
+                    }))
+                );
+
+                // Notify connected admin clients immediately.
+                const io = getIo();
+
+                notifications.forEach((notification) => {
+                    io.to("admin").emit(
+                        "notification:new",
+                        notification.toObject()
+                    );
+                });
+            }
+        } catch (notificationError) {
+            // Don't turn successful email verification into a failure
+            // if notification creation or delivery fails.
+            console.error(
+                "Failed to create new-user notification:",
+                notificationError.message
+            );
+        }
 
         // Send a successful response
         sendSuccessResponse(
