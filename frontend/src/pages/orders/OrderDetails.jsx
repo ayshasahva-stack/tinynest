@@ -23,6 +23,8 @@ import ErrorMessage from "../../components/ErrorMessage";
 
 // Import order status timeline
 import OrderStatusTimeline from "./components/OrderStatusTimeline";
+// Reuse TinyNest's existing Socket.IO connection
+import socket from "../../realtime/Socket";
 
 
 // Order details page
@@ -59,7 +61,24 @@ function OrderDetails() {
 
     }, [dispatch, orderId]);
 
+    // Listen for real-time order status changes
+    useEffect(() => {
+        // Handle status updates received from the backend
+        const handleOrderStatusUpdate = (data) => {
+            // Refresh only if this event belongs to the open order
+            if (data.orderId === orderId) {
+                dispatch(getMyOrderByIdThunk(orderId));
+            }
+        };
 
+        // Subscribe to the existing Socket.IO event
+        socket.on("order:statusUpdated", handleOrderStatusUpdate);
+
+        // Remove the listener when the component unmounts
+        return () => {
+            socket.off("order:statusUpdated", handleOrderStatusUpdate);
+        };
+    }, [dispatch, orderId]);
     // ================================================
     // LOADING STATE
     // ================================================
