@@ -103,19 +103,25 @@ function AdminRefunds() {
     };
 
     // Mark a processing refund as completed.
-    const handleComplete = async (refundId) => {
-        const confirmed = window.confirm(
-            "Mark this refund as completed? Verify the actual refund transaction first."
-        );
+   
+  // Check/process the refund, then reload the latest refund details.
+  const handleComplete = async (refundId) => {
+    const confirmed = window.confirm(
+      "Check the Razorpay refund status? Only mark it completed after Razorpay confirms completion."
+    );
 
-        if (!confirmed) return;
+    if (!confirmed) return;
 
-        try {
-            await dispatch(completeRefundThunk(refundId)).unwrap();
-        } catch {
-            // The Redux slice stores the API error for display.
-        }
-    };
+    try {
+      await dispatch(completeRefundThunk(refundId)).unwrap();
+
+      // Reload populated order, customer, and payment details.
+      await dispatch(getAllRefundsThunk()).unwrap();
+    } catch {
+      // Redux stores the error for display.
+    }
+  };
+
 
     return (
         <section className="min-h-screen bg-gray-50 px-4 py-8 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
