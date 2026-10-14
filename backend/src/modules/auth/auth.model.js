@@ -51,6 +51,24 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        
+        isBlocked: {
+            type: Boolean,
+            default: false
+        },
+
+        // Hashed refresh token; never store the raw token in MongoDB.
+        refreshTokenHash: {
+            type: String,
+            default: null
+        },
+
+        // Expiry date for the 7-day refresh session.
+        refreshTokenExpire: {
+            type: Date,
+            default: null
+        },
+
     },
     {
         timestamps: true

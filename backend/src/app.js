@@ -1,9 +1,10 @@
 import express from "express";
 import cors from 'cors'
+import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/error.middleware.js";
-import authRoutes from "./modules/auth/auth.routes.js";
 import logger from "./middleware/logger.middleware.js";
-import productRoutes  from "./modules/products/product.routes.js"
+import authRoutes from "./modules/auth/auth.routes.js";
+import productRoutes from "./modules/products/product.routes.js"
 import categoryRoutes from "./modules/categories/category.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
 import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
@@ -23,8 +24,21 @@ import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 const app = express();
 
+// Allow requests from the TinyNest frontend and accept cookies.
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    })
+);
+
+// Parse JSON request bodies.
 app.use(express.json());
-app.use(cors())
+
+// Make cookies available through req.cookies.
+app.use(cookieParser());
+
+// Log incoming requests.
 app.use(logger);
 
 

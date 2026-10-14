@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto, { randomBytes, createHash } from 'crypto'
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken";
 
@@ -189,66 +189,195 @@ export const verifyOtp = async (req, res, next) => {
 };
 
 // Login an existing user
+
 export const login = async (req, res, next) => {
     try {
-        // Validate the login data
+        // Validate the login data.
         const error = validateLogin(req.body);
 
-        // Stop if validation fails
         if (error) {
             return next(new ApiError(400, error));
         }
 
-        // Get email and password from the request
         const { email, password } = req.body;
-
-        // Convert email to lowercase and remove extra spaces
         const normalizedEmail = email.trim().toLowerCase();
 
-        // Find the user by email
+        // Find the user by email.
         const user = await User.findOne({ email: normalizedEmail });
 
-        // Check whether the email exists
         if (!user) {
             return next(new ApiError(401, "Invalid email or password"));
         }
 
-        // User must verify their email before logging in
+        // Only verified users can log in.
         if (!user.isVerified) {
             return next(new ApiError(403, "Please verify your email first"));
         }
 
-        // Compare the entered password with the stored password hash
+        // Reject blocked accounts.
+        if (user.isBlocked) {
+            return next(new ApiError(403, "Your account has been blocked"));
+        }
+
+        // Check the entered password.
         const passwordMatch = await user.isPasswordCorrect(password);
 
-        // Stop if the password is incorrect
         if (!passwordMatch) {
             return next(new ApiError(401, "Invalid email or password"));
         }
 
-        // Create a JWT containing the user's ID
+        // Create a short-lived access token.
         const token = jwt.sign(
-            {
-                userId: user._id
-            },
+            { userId: user._id },
             process.env.JWT_SECRET,
-            {
-                expiresIn: "1h"
-            }
+            { expiresIn: "15m" }
         );
 
-        // Send successful login response with the JWT
-        sendSuccessResponse(
+        // Generate a cryptographically random refresh token.
+        const refreshToken = randomBytes(64).toString("hex");
+
+        // Store only a SHA-256 hash of the refresh token.
+        user.refreshTokenHash = createHash("sha256")
+            .update(refreshToken)
+            .digest("hex");
+
+        // Set the refresh session expiry to 7 days from now.
+        user.refreshTokenExpire = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
+
+        await user.save();
+
+        // Use Secure cookies in production (HTTPS).
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: "/api/auth"
+        });
+
+        // Keep the existing response shape for the frontend.
+        return sendSuccessResponse(
             res,
             200,
-            {
-                token
-            },
+            { token },
             "Login successful"
         );
-
     } catch (error) {
-        // Pass unexpected errors to the central error handler
+        next(error);
+    }
+};
+
+
+/**
+ * Refresh an expired access token using the refresh-token cookie.
+ */
+export const refreshAccessToken = async (req, res, next) => {
+    try {
+        // Read the refresh token from the HttpOnly cookie.
+        const refreshToken = req.cookies?.refreshToken;
+
+        if (!refreshToken) {
+            return next(new ApiError(401, "Refresh session not found. Please log in again."));
+        }
+
+        // Hash the supplied token to compare it with the stored hash.
+        const refreshTokenHash = createHash("sha256")
+            .update(refreshToken)
+            .digest("hex");
+
+        // Find the user whose refresh session matches.
+        const user = await User.findOne({
+            refreshTokenHash,
+            refreshTokenExpire: { $gt: new Date() }
+        });
+
+        // Reject missing, expired, or invalid sessions.
+        if (!user) {
+            res.clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/api/auth"
+            });
+
+            return next(new ApiError(401, "Refresh session expired. Please log in again."));
+        }
+
+        // Do not renew sessions for unverified or blocked accounts.
+        if (!user.isVerified || user.isBlocked) {
+            user.refreshTokenHash = null;
+            user.refreshTokenExpire = null;
+            await user.save();
+
+            res.clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/api/auth"
+            });
+
+            return next(new ApiError(401, "Your session is no longer valid. Please log in again."));
+        }
+
+        // Issue a fresh 15-minute access token.
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: "15m" }
+        );
+
+        return sendSuccessResponse(
+            res,
+            200,
+            { token },
+            "Access token refreshed successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Log out by invalidating the refresh session and clearing its cookie.
+ */
+export const logout = async (req, res, next) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken;
+
+        // Invalidate the stored session only if the supplied token matches.
+        if (refreshToken) {
+            const refreshTokenHash = createHash("sha256")
+                .update(refreshToken)
+                .digest("hex");
+
+            await User.updateOne(
+                { refreshTokenHash },
+                {
+                    $set: {
+                        refreshTokenHash: null,
+                        refreshTokenExpire: null
+                    }
+                }
+            );
+        }
+
+        // Remove the browser's refresh-token cookie.
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/api/auth"
+        });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            null,
+            "Logout successful"
+        );
+    } catch (error) {
         next(error);
     }
 };

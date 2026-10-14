@@ -8,6 +8,8 @@ import {
   forgotPassword,
   verifyResetOtp,
   resetPassword,
+  refreshAccessToken,
+  logout,
 
 } from "./auth.controller.js";
 import protect from "../../middleware/auth.middleware.js";
@@ -21,13 +23,18 @@ router.post("/register", register);
 router.post("/verify-otp", verifyOtp);
 
 // Resend verification OTP
-router.post('/resend-otp',resendOtp)
+router.post('/resend-otp', resendOtp)
 
 // Login an existing user
-router.post("/login",login)
+router.post("/login", login)
+// Renew an expired access token using the refresh-token cookie.
+router.post("/refresh", refreshAccessToken);
+
+// Log out and invalidate the refresh session.
+router.post("/logout", logout);
 
 // Get logged-in user's profile
-router.get('/profile',protect,getProfile)
+router.get('/profile', protect, getProfile)
 
 // Send a password-reset OTP
 router.post("/forgot-password", forgotPassword);
