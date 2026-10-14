@@ -44,6 +44,19 @@ const refundSchema = new mongoose.Schema(
             min: 0
         },
 
+        // Razorpay's unique ID for the refund transaction
+        razorpayRefundId: {
+            type: String,
+            trim: true,
+            default: null
+        },
+
+        // Status reported by Razorpay
+        razorpayRefundStatus: {
+            type: String,
+            enum: ["pending", "processed", "failed"],
+            default: null
+        },
         // Current status of the refund
         status: {
             type: String,

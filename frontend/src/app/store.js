@@ -18,6 +18,8 @@ import kitReducer from "../features/kits/kitSlice";
 import couponReducer from "../features/coupons/couponSlice";
 import userReducer from "../features/users/userSlice";
 import paymentReducer from "../features/payments/paymentSlice";
+// Import the refund reducer.
+import refundReducer from "../features/refund/refundSlice";
 
 
 import adminReducer from "../features/admin/adminSlice";
@@ -31,7 +33,7 @@ const store = configureStore({
         cart: cartReducer,
         wishlist: wishlistReducer,
         checkout: checkoutReducer,
-        orders:orderReducer,
+        orders: orderReducer,
         addresses: addressReducer,
         reviews: reviewReducer,
         kits: kitReducer,
@@ -40,6 +42,7 @@ const store = configureStore({
         admin: adminReducer,
         users: userReducer,
         payments: paymentReducer,
+        refunds: refundReducer,
     },
 });
 

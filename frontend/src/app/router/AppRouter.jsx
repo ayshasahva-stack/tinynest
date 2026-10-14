@@ -22,6 +22,8 @@ import Kits from "../../pages/kits/Kits";
 import KitDetails from "../../pages/kitDetails/KitDetails";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
+import MyRefunds from "../../pages/refund/MyRefunds";
+
 
 
 
@@ -37,6 +39,7 @@ import AdminUsers from "../../pages/admin/AdminUsers";
 import AdminReviews from "../../pages/admin/AdminReviews";
 // Shared full notifications page for customers and admins.
 import Notifications from "../../pages/notification/Notification";
+import AdminRefunds from "../../pages/admin/AdminRefunds";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -105,6 +108,7 @@ function AppRouter() {
                     />
                     {/* Full notifications page for customers */}
                     <Route path="/notifications" element={<Notifications />} />
+                    <Route path="/refunds" element={<MyRefunds />} />
                 </Route>
 
                 {/* Admin routes */}
@@ -138,6 +142,7 @@ function AppRouter() {
                     <Route path="reviews" element={<AdminReviews />} />
                     {/* Full notifications page for admins */}
                     <Route path="notifications" element={<Notifications />} />
+                    <Route path="refunds" element={<AdminRefunds />} />
                 </Route>
             </Routes>
         </BrowserRouter>

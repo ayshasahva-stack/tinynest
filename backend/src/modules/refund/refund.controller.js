@@ -6,6 +6,7 @@ import Payment from "../payments/payment.model.js";
 
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import razorpay from "../../config/razorpay.js";
 
 import {
     validateRefundOrder,
@@ -119,6 +120,37 @@ export const requestRefund = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Customer: get refund requests belonging to the logged-in user.
+ * Never return other customers' refund records.
+ */
+export const getMyRefunds = async (req, res, next) => {
+    try {
+        const refunds = await Refund.find({
+            user: req.user._id,
+        })
+            // Include useful order details for the customer.
+            .populate("order", "totalAmount status")
+            // Include payment details needed for refund history.
+            .populate(
+                "payment",
+                "paymentMethod transactionId amount status paidAt"
+            )
+            // Show the latest requests first.
+            .sort({ requestedAt: -1 });
+
+        return sendSuccessResponse(
+            res,
+            200,
+            refunds,
+            "Your refund requests fetched successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
 
 // Admin: get all refund requests
 export const getAllRefunds = async (req, res, next) => {
@@ -351,112 +383,209 @@ export const processRefund = async (req, res, next) => {
     }
 };
 // Admin: complete a refund that is being processed
+
+// Admin: initiate or reconcile a Razorpay refund.
 export const completeRefund = async (req, res, next) => {
-    // Start a MongoDB session for the transaction
-    const session = await mongoose.startSession();
+    let session;
 
     try {
         const { refundId } = req.params;
 
-        // Check whether the refund ID is a valid MongoDB ObjectId
+        // Validate the MongoDB refund ID.
         if (!mongoose.Types.ObjectId.isValid(refundId)) {
+            return next(
+                new ApiError(400, "Refund ID must be valid")
+            );
+        }
+
+        // Load the refund and its associated payment.
+        const refund = await Refund.findById(refundId);
+
+        if (!refund) {
+            return next(new ApiError(404, "Refund not found"));
+        }
+
+        const payment = await Payment.findById(refund.payment);
+
+        if (!payment) {
+            return next(new ApiError(404, "Related payment not found"));
+        }
+
+        // Only online payments that were successfully paid are eligible.
+        if (
+            payment.paymentMethod !== "online" ||
+            !payment.transactionId
+        ) {
             return next(
                 new ApiError(
                     400,
-                    "Refund ID must be a valid refund ID"
+                    "A valid Razorpay payment ID is required"
                 )
             );
         }
 
-        // Start the transaction
-        session.startTransaction();
+        // If Razorpay has already processed this refund, synchronize
+        // TinyNest's database instead of creating another refund.
+        if (refund.razorpayRefundId) {
+            const existingRazorpayRefund =
+                await razorpay.refunds.fetch(
+                    refund.razorpayRefundId
+                );
 
-        // Find the refund inside the transaction
-        const refund = await Refund.findById(refundId).session(session);
+            refund.razorpayRefundStatus =
+                existingRazorpayRefund.status;
 
-        // Check whether the refund exists
-        if (!refund) {
-            throw new ApiError(
-                404,
-                "Refund request not found"
-            );
-        }
+            if (existingRazorpayRefund.status === "processed") {
+                session = await mongoose.startSession();
+                session.startTransaction();
 
-        // Only processing refunds can be completed
-        if (refund.status !== "processing") {
-            throw new ApiError(
-                400,
-                "Only processing refunds can be completed"
-            );
-        }
+                const currentRefund = await Refund.findById(refundId)
+                    .session(session);
+                const currentPayment = await Payment.findById(
+                    refund.payment
+                ).session(session);
 
-        // Find the payment connected to this refund
-        const payment = await Payment.findById(refund.payment).session(session);
+                if (!currentRefund || !currentPayment) {
+                    throw new ApiError(
+                        404,
+                        "Refund or payment record not found"
+                    );
+                }
 
-        // Make sure the related payment exists
-        if (!payment) {
-            throw new ApiError(
-                404,
-                "Related payment not found"
-            );
-        }
+                currentRefund.razorpayRefundStatus = "processed";
+                currentRefund.status = "completed";
+                currentRefund.processedAt = new Date();
 
-        // The payment must still be paid before it can be refunded
-        // Refunds are only allowed for paid online payments
-        if (
-            payment.paymentMethod !== "online" ||
-            payment.status !== "paid"
-        ) {
-            throw new ApiError(
-                400,
-                "Only paid online payments can be refunded"
-            );
-        }
+                currentPayment.status = "refunded";
 
-        // Mark the refund as completed
-        refund.status = "completed";
-        refund.processedAt = new Date();
+                await currentRefund.save({ session });
+                await currentPayment.save({ session });
 
-        // Mark the payment as refunded
-        payment.status = "refunded";
+                await session.commitTransaction();
 
-        // Save both documents inside the same transaction
-        await refund.save({ session });
-        await payment.save({ session });
-
-        // Commit both changes together
-        await session.commitTransaction();
-
-        // Populate related information after the transaction succeeds
-        await refund.populate([
-            {
-                path: "order",
-                select: "totalAmount status"
-            },
-            {
-                path: "payment",
-                select: "paymentMethod transactionId amount status paidAt"
-            },
-            {
-                path: "user",
-                select: "email phone"
+                return sendSuccessResponse(
+                    res,
+                    200,
+                    currentRefund,
+                    "Razorpay refund verified and completed"
+                );
             }
-        ]);
+
+            // Razorpay may still be processing the refund.
+            await refund.save();
+
+            return sendSuccessResponse(
+                res,
+                200,
+                refund,
+                "Existing Razorpay refund checked; it is not yet processed"
+            );
+        }
+
+        // A new refund can only be initiated from processing status.
+        if (refund.status !== "processing") {
+            return next(
+                new ApiError(
+                    400,
+                    "Only processing refunds can be submitted to Razorpay"
+                )
+            );
+        }
+
+        if (payment.status !== "paid") {
+            return next(
+                new ApiError(
+                    400,
+                    "Only paid payments can be refunded"
+                )
+            );
+        }
+
+        // Razorpay expects the refund amount in paise, not rupees.
+        const amountInPaise = Math.round(refund.amount * 100);
+
+        if (!Number.isSafeInteger(amountInPaise) || amountInPaise <= 0) {
+            return next(
+                new ApiError(400, "Refund amount must be greater than zero")
+            );
+        }
+
+        // Request the refund from Razorpay.
+        // Do not mark TinyNest's payment as refunded yet.
+        const razorpayRefund = await razorpay.payments.refund(
+            payment.transactionId,
+            {
+                amount: amountInPaise,
+                notes: {
+                    tinyNestRefundId: refund._id.toString(),
+                    tinyNestOrderId: refund.order.toString()
+                }
+            }
+        );
+
+        // Save Razorpay's response for later reconciliation.
+        refund.razorpayRefundId = razorpayRefund.id;
+        refund.razorpayRefundStatus = razorpayRefund.status;
+
+        if (razorpayRefund.status === "processed") {
+            // Update both database records together after confirmation.
+            session = await mongoose.startSession();
+            session.startTransaction();
+
+            const currentRefund = await Refund.findById(refundId)
+                .session(session);
+            const currentPayment = await Payment.findById(payment._id)
+                .session(session);
+
+            if (!currentRefund || !currentPayment) {
+                throw new ApiError(
+                    404,
+                    "Refund or payment record not found"
+                );
+            }
+
+            currentRefund.razorpayRefundId = razorpayRefund.id;
+            currentRefund.razorpayRefundStatus = "processed";
+            currentRefund.status = "completed";
+            currentRefund.processedAt = new Date();
+
+            currentPayment.status = "refunded";
+
+            await currentRefund.save({ session });
+            await currentPayment.save({ session });
+
+            await session.commitTransaction();
+
+            return sendSuccessResponse(
+                res,
+                200,
+                currentRefund,
+                "Razorpay refund processed successfully"
+            );
+        }
+
+        // Razorpay accepted the request but has not confirmed processing.
+        // Keep TinyNest's payment status as paid until confirmation.
+        await refund.save();
 
         return sendSuccessResponse(
             res,
             200,
             refund,
-            "Refund completed successfully"
+            "Razorpay accepted the refund request; awaiting processing"
         );
     } catch (error) {
-        // Roll back all changes if anything fails
-        await session.abortTransaction();
+        // Roll back any active MongoDB transaction.
+        if (session?.inTransaction()) {
+            await session.abortTransaction();
+        }
 
         next(error);
     } finally {
-        // Always close the MongoDB session
-        session.endSession();
+        // Always close the session when one was created.
+        if (session) {
+            await session.endSession();
+        }
     }
 };
 // Create a refund record for a cancelled paid online order

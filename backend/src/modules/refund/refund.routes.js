@@ -4,6 +4,7 @@ import protect from "../../middleware/auth.middleware.js";
 import authorizeAdmin from "../../middleware/admin.middleware.js";
 import {
     requestRefund,
+    getMyRefunds,
     getAllRefunds,
     updateRefundStatus,
     processRefund,
@@ -12,7 +13,8 @@ import {
 } from "./refund.controller.js";
 
 const router = express.Router();
-
+// Customer: view their own refund history.
+router.get("/my", protect, getMyRefunds);
 // Customer: request a refund
 router.post("/:orderId", protect, requestRefund);
 // Customer: create a refund for a cancelled paid online order
