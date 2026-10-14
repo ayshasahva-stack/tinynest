@@ -6,22 +6,29 @@ import {
     getMyOrderByIdThunk,
     getAllOrdersForAdminThunk,
     updateOrderStatusThunk,
+    cancelMyOrderThunk,
 } from "./orderThunk";
 
+// Initial state for customer orders, admin orders, and cancellation.
 const initialState = {
-    // Existing customer order state.
+    // Customer order state
     orders: [],
     selectedOrder: null,
     loading: false,
     error: null,
 
-    // Admin order state.
+    // Admin order state
     adminOrders: [],
     adminLoading: false,
     adminError: null,
     updatingOrderId: null,
     updateError: null,
     updateSuccess: false,
+
+    // Customer cancellation state
+    cancellingOrder: false,
+    cancelError: null,
+    cancelSuccess: false,
 };
 
 const orderSlice = createSlice({
@@ -29,15 +36,23 @@ const orderSlice = createSlice({
     initialState,
 
     reducers: {
+        // Clear the currently selected order.
         clearSelectedOrder: (state) => {
             state.selectedOrder = null;
         },
 
+        // Clear customer order errors.
         clearOrderError: (state) => {
             state.error = null;
         },
 
-        // Clear errors and feedback when the admin starts a new action.
+        // Clear cancellation feedback when needed.
+        clearCancelOrderFeedback: (state) => {
+            state.cancelError = null;
+            state.cancelSuccess = false;
+        },
+
+        // Clear admin order feedback before a new action.
         clearAdminOrderFeedback: (state) => {
             state.adminError = null;
             state.updateError = null;
@@ -90,8 +105,6 @@ const orderSlice = createSlice({
             })
             .addCase(getAllOrdersForAdminThunk.fulfilled, (state, action) => {
                 state.adminLoading = false;
-
-                // The existing API convention returns data in response.data.
                 state.adminOrders = action.payload.data || [];
                 state.adminError = null;
             })
@@ -114,8 +127,7 @@ const orderSlice = createSlice({
 
                 const { orderId, status } = action.payload;
 
-                // Update the matching order in Redux without
-                // needing to reload the entire list.
+                // Update only the matching order in the admin list.
                 state.adminOrders = state.adminOrders.map((order) =>
                     order._id === orderId
                         ? { ...order, status }
@@ -126,13 +138,52 @@ const orderSlice = createSlice({
                 state.updatingOrderId = null;
                 state.updateError = action.payload;
                 state.updateSuccess = false;
+            })
+
+            // =====================================
+            // CUSTOMER: CANCEL ORDER
+            // =====================================
+            .addCase(cancelMyOrderThunk.pending, (state) => {
+                state.cancellingOrder = true;
+                state.cancelError = null;
+                state.cancelSuccess = false;
+            })
+            .addCase(cancelMyOrderThunk.fulfilled, (state, action) => {
+                state.cancellingOrder = false;
+                state.cancelSuccess = true;
+                state.cancelError = null;
+
+                // The backend response contains the updated order in data.
+                const updatedOrder = action.payload?.data;
+
+                if (updatedOrder?._id) {
+                    // Update the selected order with the backend response.
+                    if (state.selectedOrder?._id === updatedOrder._id) {
+                        state.selectedOrder = updatedOrder;
+                    }
+
+                    // Update the matching order in the customer's order list.
+                    state.orders = state.orders.map((order) =>
+                        order._id === updatedOrder._id
+                            ? updatedOrder
+                            : order
+                    );
+                }
+            })
+            .addCase(cancelMyOrderThunk.rejected, (state, action) => {
+                state.cancellingOrder = false;
+                state.cancelError =
+                    action.payload || "Failed to cancel order";
+                state.cancelSuccess = false;
             });
     },
 });
 
+// Export actions for use in components.
 export const {
     clearSelectedOrder,
     clearOrderError,
+    clearCancelOrderFeedback,
     clearAdminOrderFeedback,
 } = orderSlice.actions;
 

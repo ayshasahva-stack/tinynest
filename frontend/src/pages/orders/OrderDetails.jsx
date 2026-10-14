@@ -1,5 +1,5 @@
 // Import React's useEffect hook
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 
 // Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
@@ -8,7 +8,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Import order thunk
-import { getMyOrderByIdThunk } from "../../features/orders/orderThunk";
+import { getMyOrderByIdThunk,
+    cancelMyOrderThunk
+ } from "../../features/orders/orderThunk";
 
 // Import order selectors
 import {
@@ -29,7 +31,10 @@ import socket from "../../realtime/Socket";
 
 // Order details page
 function OrderDetails() {
-
+// Track the customer's cancellation confirmation and feedback.
+const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+const [cancelMessage, setCancelMessage] = useState("");
+const [cancelMessageType, setCancelMessageType] = useState("");
     // Get order ID from the URL
     const { orderId } = useParams();
 
@@ -48,11 +53,39 @@ function OrderDetails() {
     // Get error state
     const error = useSelector(selectOrdersError);
 
-
+// Read cancellation status from Redux.
+const cancellingOrder = useSelector(
+    (state) => state.orders.cancellingOrder
+);
     // ================================================
     // FETCH ORDER
     // ================================================
+// Cancel the order after the customer confirms.
+const handleCancelOrder = async () => {
+    // Prevent cancellation for statuses not supported by the backend.
+    if (!["pending", "confirmed"].includes(order?.status)) {
+        return;
+    }
 
+    try {
+        setCancelMessage("");
+        setShowCancelConfirm(false);
+
+        // Dispatch the thunk and wait for the API request to finish.
+        await dispatch(cancelMyOrderThunk(orderId)).unwrap();
+
+        setCancelMessage("Your order has been cancelled successfully.");
+        setCancelMessageType("success");
+    } catch (error) {
+        // Display the backend's cancellation error when available.
+        setCancelMessage(
+            typeof error === "string"
+                ? error
+                : "Unable to cancel this order. Please try again."
+        );
+        setCancelMessageType("error");
+    }
+};
     useEffect(() => {
 
         if (orderId) {
@@ -220,6 +253,72 @@ function OrderDetails() {
 
                 </section>
 
+
+{/* Customer order cancellation */}
+{["pending", "confirmed"].includes(order.status) && (
+    <section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Cancel Order
+        </h2>
+
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            You can cancel this order while it is pending or confirmed.
+        </p>
+
+        {/* Show success or error feedback */}
+        {cancelMessage && (
+            <p
+                role="status"
+                className={`mt-4 text-sm ${
+                    cancelMessageType === "success"
+                        ? "text-green-600"
+                        : "text-red-600"
+                }`}
+            >
+                {cancelMessage}
+            </p>
+        )}
+
+        {!showCancelConfirm ? (
+            <button
+                type="button"
+                disabled={cancellingOrder}
+                onClick={() => setShowCancelConfirm(true)}
+                className="mt-4 rounded-lg border border-red-500 px-4 py-2 font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20"
+            >
+                Cancel Order
+            </button>
+        ) : (
+            <div className="mt-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Are you sure you want to cancel this order?
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-3">
+                    <button
+                        type="button"
+                        disabled={cancellingOrder}
+                        onClick={handleCancelOrder}
+                        className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                        {cancellingOrder
+                            ? "Cancelling..."
+                            : "Yes, Cancel Order"}
+                    </button>
+
+                    <button
+                        type="button"
+                        disabled={cancellingOrder}
+                        onClick={() => setShowCancelConfirm(false)}
+                        className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 dark:border-gray-600 dark:text-gray-200"
+                    >
+                        Keep Order
+                    </button>
+                </div>
+            </div>
+        )}
+    </section>
+)}
 
                 {/* ======================================== */}
                 {/* ORDER STATUS TIMELINE */}

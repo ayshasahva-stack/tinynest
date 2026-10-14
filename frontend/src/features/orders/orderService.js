@@ -28,3 +28,13 @@ export const updateOrderStatus = async (orderId, status) => {
 
     return response.data;
 };
+
+
+ // Customer: cancel an order that is eligible for cancellation.
+export const cancelMyOrder = async (orderId) => {
+    const response = await api.patch(
+        `/orders/${orderId}/cancel`
+    );
+
+    return response.data;
+};

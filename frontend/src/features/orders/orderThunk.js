@@ -5,6 +5,7 @@ import {
     getMyOrderById,
      getAllOrdersForAdmin,
     updateOrderStatus,
+    cancelMyOrder
 } from "./orderService";
 
 // Fetch all orders belonging to the logged-in user
@@ -77,5 +78,20 @@ export const updateOrderStatusThunk = createAsyncThunk(
     }
 );
 
+
+ // Customer: cancel an order and return the updated order response.
+export const cancelMyOrderThunk = createAsyncThunk(
+    "orders/cancelMyOrder",
+    async (orderId, thunkAPI) => {
+        try {
+            return await cancelMyOrder(orderId);
+        } catch (error) {
+            return thunkAPI.rejectWithValue(
+                error.response?.data?.message ||
+                "Failed to cancel order"
+            );
+        }
+    }
+);
 
 
