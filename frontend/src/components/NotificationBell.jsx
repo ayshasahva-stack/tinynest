@@ -11,7 +11,7 @@ import {
     selectIsAuthenticated,
 } from "../features/auth/authSelectors";
 
-function NotificationBell() {
+function NotificationBell({ badgeOnly = false }) {
     // Get the current authentication state and logged-in user.
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectAuthUser);
@@ -247,9 +247,26 @@ function NotificationBell() {
         return parsedDate.toLocaleString();
     };
 
-    // Do not show the bell to signed-out visitors.
+    // Do not show notifications to signed-out visitors.
     if (!isAuthenticated) {
         return null;
+    }
+
+    // Render only the unread-count badge when used in the Navbar menu.
+    // The normal bell and notification popup remain unchanged elsewhere.
+    if (badgeOnly) {
+        if (unreadCount === 0) {
+            return null;
+        }
+
+        return (
+            <span
+                aria-label={`${unreadCount} unread notifications`}
+                className="ml-auto flex h-6 min-w-6 items-center justify-center rounded-full bg-[#EED5D9] px-2 text-xs font-medium text-[#754750] dark:bg-[#5B3941] dark:text-[#F5DDE1]"
+            >
+                {unreadCount}
+            </span>
+        );
     }
 
     return (
