@@ -1,6 +1,6 @@
 // Import the components required for routing
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import ProtectedRoute from "../../components/ProtectedRoute";
 // Import the pages
 import Home from "../../pages/home/Home";
 import Products from "../../pages/products/Product";
@@ -88,17 +88,8 @@ function AppRouter() {
                     <Route
                         path="/products/:id"
                         element={<ProductDetails />}
-                    />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/wishlist" element={<Wishlist />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/orders" element={<Order />} />
-                    <Route
-                        path="/orders/:orderId"
-                        element={<OrderDetails />}
 
                     />
-                    <Route path="/addresses" element={<Addresses />} />
                     <Route path="/kits" element={<Kits />} />
 
                     <Route
@@ -106,43 +97,40 @@ function AppRouter() {
                         element={<KitDetails />}
 
                     />
-                    {/* Full notifications page for customers */}
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/refunds" element={<MyRefunds />} />
+                    {/* Customer pages that require login */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/cart" element={<Cart />} />
+                        <Route path="/wishlist" element={<Wishlist />} />
+                        <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/orders" element={<Order />} />
+                        <Route path="/orders/:orderId" element={<OrderDetails />} />
+                        <Route path="/addresses" element={<Addresses />} />
+                        <Route path="/notifications" element={<Notifications />} />
+                        <Route path="/refunds" element={<MyRefunds />} />
+                    </Route>
                 </Route>
 
                 {/* Admin routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-
-                    {/* Admin dashboard */}
-                    <Route index element={<AdminDashboard />} />
-
-                    {/* Admin product management */}
-                    <Route
-                        path="products"
-                        element={<AdminProducts />}
-                    />
-                    <Route
-                        path="products/new"
-                        element={<AdminAddProduct />}
-                    />
-                    <Route
-                        path="products/edit/:id"
-                        element={<AdminEditProduct />}
-                    />
-
-
-                    {/* Category management */}
-                    <Route path="categories" element={<AdminCategories />} />
-                    <Route path="orders" element={<AdminOrders />} />
-                    <Route path="kits" element={<AdminKits />} />
-                    <Route path="coupons" element={<AdminCoupons />} />
-                    <Route path="users" element={<AdminUsers />} />
-                    {/* Review and rating management */}
-                    <Route path="reviews" element={<AdminReviews />} />
-                    {/* Full notifications page for admins */}
-                    <Route path="notifications" element={<Notifications />} />
-                    <Route path="refunds" element={<AdminRefunds />} />
+                <Route
+                    path="/admin"
+                    element={
+                        <ProtectedRoute allowedRoles={["admin"]} />
+                    }
+                >
+                    <Route element={<AdminLayout />}>
+                        <Route index element={<AdminDashboard />} />
+                        <Route path="products" element={<AdminProducts />} />
+                        <Route path="products/new" element={<AdminAddProduct />} />
+                        <Route path="products/edit/:id" element={<AdminEditProduct />} />
+                        <Route path="categories" element={<AdminCategories />} />
+                        <Route path="orders" element={<AdminOrders />} />
+                        <Route path="kits" element={<AdminKits />} />
+                        <Route path="coupons" element={<AdminCoupons />} />
+                        <Route path="users" element={<AdminUsers />} />
+                        <Route path="reviews" element={<AdminReviews />} />
+                        <Route path="notifications" element={<Notifications />} />
+                        <Route path="refunds" element={<AdminRefunds />} />
+                    </Route>
                 </Route>
             </Routes>
         </BrowserRouter>

@@ -8,16 +8,19 @@ import Button from "../../components/Button";
 import { selectAuthLoading } from "../../features/auth/authSelectors";
 
 // Import Redux's dispatch hook
-import { useDispatch } from "react-redux";
+import { useDispatch,useSelector } from "react-redux";
 // Import React Router's navigation hook
-import { useNavigate } from "react-router-dom";
+import { useNavigate,useLocation } from "react-router-dom";
 // Import Redux's selector hook
-import { useSelector } from "react-redux";
 
 // Import the authentication error selector
 import { selectAuthError } from "../../features/auth/authSelectors";
 // Import the login thunk
-import { loginUserThunk } from "../../features/auth/authThunk";
+import { 
+    loginUserThunk,
+    getProfileThunk
+
+ } from "../../features/auth/authThunk";
 
 // Login page component
 function Login() {
@@ -29,33 +32,34 @@ function Login() {
     // Get the function used to navigate between pages
     const navigate = useNavigate();
     // Get the Redux dispatch function
-
+const location = useLocation();
     const dispatch = useDispatch();
     // Get the current authentication error from Redux
     const error = useSelector(selectAuthError);
     // Get the authentication loading state from Redux
     const loading = useSelector(selectAuthLoading);
     // Handle login form submission
-    const handleSubmit = async (event) => {
-        // Prevent the browser from refreshing the page
-        event.preventDefault();
+   const handleSubmit = async (event) => {
+    event.preventDefault();
 
-        try {
-            // Send login details to the backend
-            await dispatch(
-                loginUserThunk({
-                    email,
-                    password,
-                })
-            ).unwrap();
+    try {
+        // Authenticate the user and save the access token.
+        await dispatch(
+            loginUserThunk({ email, password })
+        ).unwrap();
 
-            // Navigate to the home page after successful login
-            navigate("/");
-        } catch (error) {
-            // Log the login error for now
-            console.error(error);
-        }
-    };
+        // Fetch the user's profile and role before navigating.
+        await dispatch(getProfileThunk()).unwrap();
+
+        // Return to the requested page, or go home by default.
+        const destination = location.state?.from?.pathname || "/";
+
+        navigate(destination, { replace: true });
+    } catch (error) {
+        // The existing Redux error state displays login/profile errors.
+        console.error("Authentication failed:", error);
+    }
+};
 
     return (
         <main>

@@ -23,6 +23,8 @@ const initialState = {
     loading: false,
     error: null,
     isAuthenticated: false,
+    // Tracks whether the initial authentication check has finished.
+    sessionChecked: false,
 };
 
 // Create the authentication Redux slice
@@ -34,20 +36,18 @@ const authSlice = createSlice({
     reducers: {
         // Clear all authentication data when the user logs out
         logout: (state) => {
-            // Remove the user information from Redux
             state.user = null;
-
-            // Remove the JWT token from Redux
             state.token = null;
-
-            // Mark the user as logged out
+            state.resetToken = null;
             state.isAuthenticated = false;
-
-            // Clear any previous authentication error
             state.error = null;
+            state.sessionChecked = true;
 
-            // Remove the JWT token from browser storage
             localStorage.removeItem("token");
+        },
+        // Mark the initial session check as complete.
+        setSessionChecked: (state) => {
+            state.sessionChecked = true;
         },
     },
 
@@ -115,34 +115,31 @@ const authSlice = createSlice({
             state.loading = false;
             state.error = action.payload || "Login failed";
         });
-        // Profile request started
+        // Profile request started.
         builder.addCase(getProfileThunk.pending, (state) => {
             state.loading = true;
             state.error = null;
+            state.sessionChecked = false;
         });
 
-        // Profile request completed successfully
+        // Profile request completed successfully.
         builder.addCase(getProfileThunk.fulfilled, (state, action) => {
             state.loading = false;
-
-            // Store the authenticated user's profile
             state.user = action.payload.data;
-
-            // Mark the user as authenticated
             state.isAuthenticated = true;
+            state.sessionChecked = true;
         });
 
-        // Profile request failed
+        // Profile request failed.
         builder.addCase(getProfileThunk.rejected, (state, action) => {
             state.loading = false;
             state.error = action.payload || "Failed to fetch profile";
 
-            // The token is no longer considered valid
             state.token = null;
             state.user = null;
             state.isAuthenticated = false;
+            state.sessionChecked = true;
 
-            // Remove the invalid token from browser storage
             localStorage.removeItem("token");
         });
         // Forgot password request started
@@ -164,40 +161,40 @@ const authSlice = createSlice({
                 action.payload || "Failed to request password reset";
         });
         // Reset OTP verification completed successfully
-builder.addCase(verifyResetOtpThunk.fulfilled, (state, action) => {
-    state.loading = false;
-    state.error = null;
+        builder.addCase(verifyResetOtpThunk.fulfilled, (state, action) => {
+            state.loading = false;
+            state.error = null;
 
-    // Store the temporary password reset token
-    state.resetToken = action.payload.data.resetToken;
-});
-// Password reset request started
-builder.addCase(resetPasswordThunk.pending, (state) => {
-    state.loading = true;
-    state.error = null;
-});
+            // Store the temporary password reset token
+            state.resetToken = action.payload.data.resetToken;
+        });
+        // Password reset request started
+        builder.addCase(resetPasswordThunk.pending, (state) => {
+            state.loading = true;
+            state.error = null;
+        });
 
-// Password reset completed successfully
-builder.addCase(resetPasswordThunk.fulfilled, (state) => {
-    state.loading = false;
-    state.error = null;
+        // Password reset completed successfully
+        builder.addCase(resetPasswordThunk.fulfilled, (state) => {
+            state.loading = false;
+            state.error = null;
 
-    // The temporary reset token is no longer needed
-    state.resetToken = null;
-});
+            // The temporary reset token is no longer needed
+            state.resetToken = null;
+        });
 
-// Password reset failed
-builder.addCase(resetPasswordThunk.rejected, (state, action) => {
-    state.loading = false;
-    state.error =
-        action.payload || "Failed to reset password";
-});
+        // Password reset failed
+        builder.addCase(resetPasswordThunk.rejected, (state, action) => {
+            state.loading = false;
+            state.error =
+                action.payload || "Failed to reset password";
+        });
     },
 
 });
 
 // Export the logout action
-export const { logout } = authSlice.actions;
+export const { logout, setSessionChecked } = authSlice.actions;
 
 // Export the authentication reducer
 export default authSlice.reducer;

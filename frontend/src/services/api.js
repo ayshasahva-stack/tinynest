@@ -112,9 +112,13 @@ api.interceptors.response.use(
             // Retry the original API request.
             return api(originalRequest);
         } catch (refreshError) {
-            // The refresh session may have expired or become invalid.
-            // Remove the stale access token so it is not reused.
+            // Remove the expired access token.
             localStorage.removeItem("token");
+
+            // Notify App.jsx to clear the Redux authentication state.
+            window.dispatchEvent(
+                new Event("tinynest:session-expired")
+            );
 
             return Promise.reject(refreshError);
         }

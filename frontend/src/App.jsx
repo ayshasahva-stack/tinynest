@@ -1,29 +1,46 @@
-// Import React's useEffect hook
-import { useEffect } from "react";
 
-// Import Redux's dispatch hook
+import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
-// Import the application's router
 import AppRouter from "./app/router/AppRouter";
-
-// Import the profile thunk
 import { getProfileThunk } from "./features/auth/authThunk";
+import {
+    logout,
+    setSessionChecked,
+} from "./features/auth/authSlice";
 
-// Main application component
 function App() {
-    // Get the Redux dispatch function
     const dispatch = useDispatch();
 
-    // Restore authentication when the application starts
     useEffect(() => {
-        // Check whether a JWT token exists in localStorage
+        // Restore the session when a saved access token exists.
         const token = localStorage.getItem("token");
 
-        // Only request the profile when a token exists
         if (token) {
             dispatch(getProfileThunk());
+        } else {
+            // No saved token: the initial session check is complete.
+            dispatch(setSessionChecked());
         }
+    }, [dispatch]);
+
+    useEffect(() => {
+        // Clear Redux authentication if automatic token refresh fails.
+        const handleSessionExpired = () => {
+            dispatch(logout());
+        };
+
+        window.addEventListener(
+            "tinynest:session-expired",
+            handleSessionExpired
+        );
+
+        return () => {
+            window.removeEventListener(
+                "tinynest:session-expired",
+                handleSessionExpired
+            );
+        };
     }, [dispatch]);
 
     return <AppRouter />;
