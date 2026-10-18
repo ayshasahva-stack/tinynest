@@ -1,5 +1,4 @@
 
-// Link is used for navigation between admin pages.
 import { Link, NavLink } from "react-router-dom";
 
 // Existing notification component.
@@ -7,6 +6,14 @@ import NotificationBell from "./NotificationBell";
 
 // Sidebar used by all admin pages.
 function AdminSidebar() {
+    // Reusable styling keeps all navigation links consistent.
+    const navLinkClass = ({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-4 py-3 transition ${
+            isActive
+                ? "bg-blue-600 text-white"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+        }`;
+
     return (
         <aside
             className="
@@ -17,129 +24,120 @@ function AdminSidebar() {
                 dark:border-gray-700 dark:bg-gray-800
             "
         >
-            {/* Admin logo/title */}
+            {/* Admin logo and panel title */}
             <div className="mb-6">
-                <h2 className="
-                    text-2xl font-bold
-                    text-gray-900 dark:text-white
-                ">
+                <h2
+                    className="
+                        text-2xl font-bold
+                        text-gray-900 dark:text-white
+                    "
+                >
                     TinyNest
                 </h2>
 
-                <p className="
-                    text-sm text-gray-500
-                    dark:text-gray-400
-                ">
+                <p
+                    className="
+                        text-sm text-gray-500
+                        dark:text-gray-400
+                    "
+                >
                     Admin Panel
                 </p>
             </div>
 
-            {/* Admin notifications */}
-            <div className="
-                mb-6 flex items-center justify-between
-                rounded-lg border border-gray-200
-                p-3 dark:border-gray-700
-            ">
-                <span className="
-                    text-sm font-medium
-                    text-gray-700 dark:text-gray-200
-                ">
+            {/* Admin notifications remain in the sidebar. */}
+            <div
+                className="
+                    mb-6 flex items-center justify-between
+                    rounded-lg border border-gray-200
+                    p-3 dark:border-gray-700
+                "
+            >
+                <span
+                    className="
+                        text-sm font-medium
+                        text-gray-700 dark:text-gray-200
+                    "
+                >
                     Notifications
                 </span>
 
-                {/* Bell opens the notification list */}
                 <NotificationBell />
             </div>
 
-            {/* Admin navigation */}
+            {/* Admin navigation links */}
             <nav className="flex-1 space-y-2 overflow-y-auto">
-
-                <Link
+                {/* Dashboard */}
+                <NavLink
                     to="/admin"
-                    className="
-                        block rounded-lg px-4 py-3
-                        text-gray-700 transition
-                        hover:bg-gray-100
-                        dark:text-gray-200 dark:hover:bg-gray-700
-                    "
+                    end
+                    className={navLinkClass}
                 >
-                    Dashboard
-                </Link>
+                    <span aria-hidden="true">📊</span>
+                    <span>Dashboard</span>
+                </NavLink>
 
-                <Link
+                {/* Products */}
+                <NavLink
                     to="/admin/products"
-                    className="
-                        block rounded-lg px-4 py-3
-                        text-gray-700 transition
-                        hover:bg-gray-100
-                        dark:text-gray-200 dark:hover:bg-gray-700
-                    "
+                    className={navLinkClass}
                 >
-                    Products
-                </Link>
+                    <span aria-hidden="true">📦</span>
+                    <span>Products</span>
+                </NavLink>
 
-                <Link
+                {/* Orders */}
+                <NavLink
                     to="/admin/orders"
-                    className="
-                        block rounded-lg px-4 py-3
-                        text-gray-700 transition
-                        hover:bg-gray-100
-                        dark:text-gray-200 dark:hover:bg-gray-700
-                    "
+                    className={navLinkClass}
                 >
-                    Orders
-                </Link>
+                    <span aria-hidden="true">🛒</span>
+                    <span>Orders</span>
+                </NavLink>
 
-                <Link
+                {/* Baby kits */}
+                <NavLink
                     to="/admin/kits"
-                    className="
-                        block rounded-lg px-4 py-3
-                        text-gray-700 transition
-                        hover:bg-gray-100
-                        dark:text-gray-200 dark:hover:bg-gray-700
-                    "
+                    className={navLinkClass}
                 >
-                    Kits
-                </Link>
+                    <span aria-hidden="true">🧸</span>
+                    <span>Kits</span>
+                </NavLink>
 
+                {/* Coupons */}
                 <NavLink
                     to="/admin/coupons"
-                    className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-4 py-3 transition ${
-                            isActive
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        }`
-                    }
+                    className={navLinkClass}
                 >
-                    <span>🎟️</span>
+                    <span aria-hidden="true">🎟️</span>
                     <span>Coupons</span>
                 </NavLink>
 
+                {/* Users */}
                 <NavLink
                     to="/admin/users"
-                    className={({ isActive }) =>
-                        `block rounded-lg px-4 py-3 transition ${
-                            isActive
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        }`
-                    }
+                    className={navLinkClass}
                 >
-                    Users
+                    <span aria-hidden="true">👥</span>
+                    <span>Users</span>
                 </NavLink>
 
+                {/* Reviews and ratings */}
                 <NavLink
                     to="/admin/reviews"
-                    className={({ isActive }) =>
-                        `block rounded-lg px-4 py-3 transition ${
-                            isActive
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
-                        }`
-                    }
+                    className={navLinkClass}
                 >
-                    Reviews & Ratings
+                    <span aria-hidden="true">⭐</span>
+                    <span>Reviews &amp; Ratings</span>
+                </NavLink>
+
+                {/* Shared admin profile management page */}
+                <NavLink
+                    to="/admin/profile"
+                    className={navLinkClass}
+                >
+                    <span aria-hidden="true">👤</span>
+                    <span>My Profile</span>
                 </NavLink>
             </nav>
         </aside>
