@@ -7,6 +7,7 @@ import {
     verifyOtpThunk,
     loginUserThunk,
     getProfileThunk,
+    updateProfileThunk,
     forgotPasswordThunk,
     verifyResetOtpThunk,
     resetPasswordThunk
@@ -25,6 +26,9 @@ const initialState = {
     isAuthenticated: false,
     // Tracks whether the initial authentication check has finished.
     sessionChecked: false,
+    // Track profile saving independently from login and OTP requests.
+    profileSaving: false,
+    profileError: null,
 };
 
 // Create the authentication Redux slice
@@ -141,6 +145,27 @@ const authSlice = createSlice({
             state.sessionChecked = true;
 
             localStorage.removeItem("token");
+        });
+        // Profile update started.
+        builder.addCase(updateProfileThunk.pending, (state) => {
+            state.profileSaving = true;
+            state.profileError = null;
+        });
+
+        // Profile update completed successfully.
+        builder.addCase(updateProfileThunk.fulfilled, (state, action) => {
+            state.profileSaving = false;
+            state.profileError = null;
+
+            // Keep the Redux user data in sync with the backend.
+            state.user = action.payload.data;
+        });
+
+        // Profile update failed.
+        builder.addCase(updateProfileThunk.rejected, (state, action) => {
+            state.profileSaving = false;
+            state.profileError =
+                action.payload || "Failed to update profile";
         });
         // Forgot password request started
         builder.addCase(forgotPasswordThunk.pending, (state) => {

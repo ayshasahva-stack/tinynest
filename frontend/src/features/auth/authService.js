@@ -33,6 +33,15 @@ export const getProfile = async () => {
     // Return the backend response
     return response.data;
 };
+// Update the current user's profile using the existing Axios instance.
+export const updateProfile = async (profileData) => {
+    // The backend identifies the user from the access token.
+    // Only fullName and phone should be sent from the profile form.
+    const response = await api.patch("/auth/profile", profileData);
+
+    // Return the backend response in the same format as getProfile().
+    return response.data;
+};
 // Request a password reset OTP
 export const forgotPassword = async (email) => {
     // Send the email to the backend

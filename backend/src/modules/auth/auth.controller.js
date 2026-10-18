@@ -383,16 +383,18 @@ export const logout = async (req, res, next) => {
 };
 
 // Get the currently logged-in user's profile
+// Get the currently logged-in user's profile.
 export const getProfile = async (req, res, next) => {
     try {
-        // req.user was added by the protect middleware
+        // The protect middleware identifies the signed-in user.
         const user = req.user;
 
-        // Send the user's basic profile information
-        sendSuccessResponse(
+        // Return only information that the frontend needs.
+        return sendSuccessResponse(
             res,
             200,
             {
+                fullName: user.fullName || "",
                 email: user.email,
                 phone: user.phone,
                 role: user.role,
@@ -400,13 +402,86 @@ export const getProfile = async (req, res, next) => {
             },
             "Profile fetched successfully"
         );
-
     } catch (error) {
-        // Pass unexpected errors to the error handler
         next(error);
     }
 };
+// Update permitted details for the currently logged-in user.
+export const updateProfile = async (req, res, next) => {
+    try {
+        const { fullName, phone } = req.body;
 
+        // Do not allow email, role, verification, or other
+        // account fields to be modified through this endpoint.
+        const allowedFields = ["fullName", "phone"];
+
+        const unexpectedFields = Object.keys(req.body).filter(
+            (field) => !allowedFields.includes(field)
+        );
+
+        if (unexpectedFields.length > 0) {
+            return next(
+                new ApiError(
+                    400,
+                    "Only full name and phone can be updated"
+                )
+            );
+        }
+
+        // Validate the full name.
+        if (
+            typeof fullName !== "string" ||
+            !fullName.trim() ||
+            fullName.trim().length > 100
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Full name is required and must be at most 100 characters"
+                )
+            );
+        }
+
+        // Validate the phone number without assuming one
+        // specific country's phone-number format.
+        if (
+            typeof phone !== "string" ||
+            !phone.trim() ||
+            phone.trim().length > 20
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "A valid phone number is required"
+                )
+            );
+        }
+
+        // req.user comes from protect middleware, not from the request body.
+        const user = req.user;
+
+        user.fullName = fullName.trim();
+        user.phone = phone.trim();
+
+        await user.save();
+
+        // Return the updated profile without sensitive fields.
+        return sendSuccessResponse(
+            res,
+            200,
+            {
+                fullName: user.fullName,
+                email: user.email,
+                phone: user.phone,
+                role: user.role,
+                isVerified: user.isVerified
+            },
+            "Profile updated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
 // Resend a new OTP to the user's email
 export const resendOtp = async (req, res, next) => {
     try {

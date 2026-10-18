@@ -6,6 +6,7 @@ import {
     verifyOtp,
     loginUser,
     getProfile,
+    updateProfile,
     forgotPassword,
     verifyResetOtp,
     resetPassword
@@ -98,6 +99,29 @@ export const getProfileThunk = createAsyncThunk(
                 "Failed to fetch profile";
 
             // Send the error to Redux
+            return thunkAPI.rejectWithValue(message);
+        }
+    }
+);
+// Update the current user's profile.
+export const updateProfileThunk = createAsyncThunk(
+    "auth/updateProfile",
+
+    async (profileData, thunkAPI) => {
+        try {
+            // Send the new name and phone to the backend.
+            const response = await updateProfile(profileData);
+
+            // Pass the successful response to the Redux slice.
+            return response;
+        } catch (error) {
+            // Prefer the backend validation message when available.
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update profile";
+
+            // Make the error available to the rejected reducer.
             return thunkAPI.rejectWithValue(message);
         }
     }

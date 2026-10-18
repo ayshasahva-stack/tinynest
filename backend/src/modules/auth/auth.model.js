@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema(
             required: true,
             trim: true
         },
+        // Store the user's full name.
+        // Optional in the schema so existing registration continues to work.
+        fullName: {
+            type: String,
+            trim: true,
+            maxlength: 100,
+            default: ""
+        },
         isVerified: {
             type: Boolean,
             default: false,
@@ -51,7 +59,7 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-        
+
         isBlocked: {
             type: Boolean,
             default: false

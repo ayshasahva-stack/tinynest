@@ -5,6 +5,7 @@ import {
   resendOtp,
   login,
   getProfile,
+  updateProfile,
   forgotPassword,
   verifyResetOtp,
   resetPassword,
@@ -33,9 +34,9 @@ router.post("/refresh", refreshAccessToken);
 // Log out and invalidate the refresh session.
 router.post("/logout", logout);
 
-// Get logged-in user's profile
-router.get('/profile', protect, getProfile)
-
+// Fetch and update the signed-in user's profile.
+router.get("/profile", protect, getProfile);
+router.patch("/profile", protect, updateProfile);
 // Send a password-reset OTP
 router.post("/forgot-password", forgotPassword);
 

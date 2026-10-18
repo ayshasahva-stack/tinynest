@@ -40,6 +40,7 @@ import AdminReviews from "../../pages/admin/AdminReviews";
 // Shared full notifications page for customers and admins.
 import Notifications from "../../pages/notification/Notification";
 import AdminRefunds from "../../pages/admin/AdminRefunds";
+import Profile from "../../pages/profile/Profile";
 
 // Import the user layout
 import UserLayout from "../../layouts/UserLayout";
@@ -107,6 +108,8 @@ function AppRouter() {
                         <Route path="/addresses" element={<Addresses />} />
                         <Route path="/notifications" element={<Notifications />} />
                         <Route path="/refunds" element={<MyRefunds />} />
+                        {/* Customer profile — login required. */}
+                        <Route path="/profile" element={<Profile />} />
                     </Route>
                 </Route>
 
@@ -130,6 +133,8 @@ function AppRouter() {
                         <Route path="reviews" element={<AdminReviews />} />
                         <Route path="notifications" element={<Notifications />} />
                         <Route path="refunds" element={<AdminRefunds />} />
+                        {/* Admin profile — admin role required by the parent route. */}
+                        <Route path="profile" element={<Profile />} />
                     </Route>
                 </Route>
             </Routes>
