@@ -4,6 +4,7 @@ import Product from "../products/product.model.js";
 import Kit from "../kits/kit.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { getProductOfferPrice } from "../offers/offer.service.js";
 import {
     validateCartItem,
     validateCartQuantity,
@@ -268,47 +269,100 @@ export const addToCart = async (req, res, next) => {
 };
 // Get the logged-in user's cart
 // Get the logged-in user's cart
+
 export const getMyCart = async (req, res, next) => {
     try {
-        // Find the cart belonging to the logged-in user
+        // Find the logged-in user's cart and populate products and kits.
         const cart = await Cart.findOne({
             user: req.user._id
         }).populate([
-            // Populate product information
-            {
-                path: "items.product"
-            },
-
-            // Populate kit information
-            {
-                path: "items.kit"
-            }
+            { path: "items.product" },
+            { path: "items.kit" }
         ]);
 
-        // Return an empty cart if the user has not added anything yet
+        // Return an empty cart if the user has no cart yet.
         if (!cart) {
             return sendSuccessResponse(
                 res,
                 200,
-                {
-                    items: []
-                },
+                { items: [] },
                 "Cart fetched successfully"
             );
         }
 
-        // Return the user's cart
+        // Convert the Mongoose document into a plain object.
+        // This lets us add calculated pricing without saving it to MongoDB.
+        const cartData = cart.toObject();
+
+        // Calculate pricing for each cart item.
+        cartData.items = await Promise.all(
+            cartData.items.map(async (item) => {
+                // Handle regular products using the active-offer helper.
+                if (item.itemType === "product" && item.product) {
+                    const offerPricing = await getProductOfferPrice(
+                        item.product
+                    );
+
+                    const unitPrice = offerPricing.offerPrice;
+
+                    return {
+                        ...item,
+                        pricing: {
+                            originalPrice: offerPricing.originalPrice,
+                            unitPrice,
+                            discount: offerPricing.discount,
+                            lineTotal: Math.round(
+                                unitPrice * item.quantity * 100
+                            ) / 100
+                        }
+                    };
+                }
+
+                // Handle kits using their existing price and discount.
+                if (item.itemType === "kit" && item.kit) {
+                    const originalPrice = item.kit.price;
+                    const discountPercent = item.kit.discount || 0;
+
+                    const discount = Math.round(
+                        originalPrice * discountPercent / 100 * 100
+                    ) / 100;
+
+                    const unitPrice = Math.round(
+                        (originalPrice - discount) * 100
+                    ) / 100;
+
+                    return {
+                        ...item,
+                        pricing: {
+                            originalPrice,
+                            unitPrice,
+                            discount,
+                            lineTotal: Math.round(
+                                unitPrice * item.quantity * 100
+                            ) / 100
+                        }
+                    };
+                }
+
+                // Keep any unexpected or incomplete item unchanged.
+                return item;
+            })
+        );
+
+        // Return the cart with calculated pricing for the frontend.
         return sendSuccessResponse(
             res,
             200,
-            cart,
+            cartData,
             "Cart fetched successfully"
         );
     } catch (error) {
-        // Pass unexpected errors to the global error handler
+        // Pass errors to the global error handler.
         next(error);
     }
 };
+
+
 // Update the quantity of a product already in the cart
 // Update the quantity of a product or kit in the cart
 export const updateCartQuantity = async (req, res, next) => {

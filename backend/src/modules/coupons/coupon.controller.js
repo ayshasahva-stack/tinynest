@@ -3,6 +3,7 @@ import Coupon from "./coupon.model.js";
 import Cart from "../cart/cart.model.js";
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
+import { getProductOfferPrice } from "../offers/offer.service.js";
 import {
     validateCoupon,
     validateCouponUpdate,
@@ -221,22 +222,20 @@ export const deactivateCoupon = async (req, res, next) => {
     }
 };
 // Apply and calculate a coupon discount
+
 export const applyCoupon = async (req, res, next) => {
     try {
-        // Validate the coupon code sent by the user
+        // Validate the coupon code sent by the customer.
         const validationError = validateApplyCoupon(req.body);
 
         if (validationError) {
             return next(new ApiError(400, validationError));
         }
 
-        // Get only the coupon code from the request
-        const { code } = req.body;
+        // Normalize the code so uppercase/lowercase input works.
+        const normalizedCode = req.body.code.trim().toUpperCase();
 
-        // Normalize the coupon code
-        const normalizedCode = code.trim().toUpperCase();
-
-        // Find the logged-in user's cart
+        // Load the customer's cart and its referenced items.
         const cart = await Cart.findOne({
             user: req.user._id
         }).populate("items.product items.kit");
@@ -245,20 +244,36 @@ export const applyCoupon = async (req, res, next) => {
             return next(new ApiError(400, "Cart is empty"));
         }
 
-        // Calculate the real subtotal from the cart
+        // Calculate subtotal using the same pricing rules as orders.
         let subtotal = 0;
 
         for (const item of cart.items) {
-            if (item.itemType === "product") {
-                subtotal += item.product.price * item.quantity;
-            }
+            const itemType = item.itemType || "product";
 
-            if (item.itemType === "kit") {
+            if (itemType === "product") {
+                if (!item.product) {
+                    return next(
+                        new ApiError(400, "A product in your cart is unavailable")
+                    );
+                }
+
+                // Include the active offer price, if applicable.
+                const pricing = await getProductOfferPrice(item.product);
+
+                subtotal += pricing.offerPrice * item.quantity;
+            } else if (itemType === "kit") {
+                if (!item.kit || !item.kit.isActive) {
+                    return next(
+                        new ApiError(400, "A kit in your cart is unavailable")
+                    );
+                }
+
+                // Match the current order controller's kit pricing.
                 subtotal += item.kit.price * item.quantity;
             }
         }
 
-        // Find the coupon
+        // Find the requested coupon.
         const coupon = await Coupon.findOne({
             code: normalizedCode
         });
@@ -269,46 +284,50 @@ export const applyCoupon = async (req, res, next) => {
 
         const now = new Date();
 
-        // Check whether the coupon is active
+        // Check whether the coupon is enabled.
         if (!coupon.isActive) {
             return next(new ApiError(400, "Coupon is inactive"));
         }
 
-        // Check start date
+        // Check the coupon's validity period.
         if (now < coupon.startDate) {
             return next(new ApiError(400, "Coupon is not active yet"));
         }
 
-        // Check expiry date
         if (now > coupon.expiryDate) {
             return next(new ApiError(400, "Coupon has expired"));
         }
 
-        // Check usage limit
+        // Check the usage limit.
         if (
             coupon.usageLimit !== null &&
             coupon.usedCount >= coupon.usageLimit
         ) {
-            return next(new ApiError(400, "Coupon usage limit reached"));
+            return next(
+                new ApiError(400, "Coupon usage limit reached")
+            );
         }
-
-        // Check minimum order amount
+// Debug the amount used for coupon validation.
+console.log("Coupon code:", normalizedCode);
+console.log("Calculated cart subtotal:", subtotal);
+console.log("Coupon minimum order amount:", coupon.minOrderAmount);
+        // Check the minimum eligible subtotal.
         if (subtotal < coupon.minOrderAmount) {
             return next(
                 new ApiError(
                     400,
-                    `Minimum order amount is ${coupon.minOrderAmount}`
+                    `Minimum order amount is ₹${coupon.minOrderAmount}`
                 )
             );
         }
 
-        // Calculate the discount
+        // Calculate the coupon discount.
         let discount = 0;
 
         if (coupon.discountType === "percentage") {
             discount = (subtotal * coupon.discountValue) / 100;
 
-            // Apply maximum discount if configured
+            // Respect the configured maximum discount.
             if (
                 coupon.maxDiscount !== null &&
                 discount > coupon.maxDiscount
@@ -316,22 +335,27 @@ export const applyCoupon = async (req, res, next) => {
                 discount = coupon.maxDiscount;
             }
         } else {
-            // Fixed discount
-            discount = coupon.discountValue;
-
-            // Discount cannot be greater than the subtotal
-            if (discount > subtotal) {
-                discount = subtotal;
-            }
+            // A fixed discount cannot exceed the subtotal.
+            discount = Math.min(coupon.discountValue, subtotal);
         }
 
-        // Round discount to two decimal places
+        // Round currency calculations to two decimal places.
+        subtotal = Math.round(subtotal * 100) / 100;
         discount = Math.round(discount * 100) / 100;
 
-        // Calculate final subtotal
-        const finalSubtotal =
-            Math.round((subtotal - discount) * 100) / 100;
+        const finalSubtotal = Math.round(
+            (subtotal - discount) * 100
+        ) / 100;
 
+        // Keep shipping consistent with the current order rules.
+        const shippingFee = subtotal >= 1000 ? 0 : 50;
+
+        const totalAmount = Math.round(
+            (finalSubtotal + shippingFee) * 100
+        ) / 100;
+
+        // Return the preview without creating an order or
+        // incrementing the coupon usage count.
         return sendSuccessResponse(
             res,
             200,
@@ -341,7 +365,9 @@ export const applyCoupon = async (req, res, next) => {
                 discountType: coupon.discountType,
                 subtotal,
                 discount,
-                finalSubtotal
+                finalSubtotal,
+                shippingFee,
+                totalAmount
             },
             "Coupon applied successfully"
         );

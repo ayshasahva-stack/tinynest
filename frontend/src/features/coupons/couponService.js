@@ -36,3 +36,16 @@ export const getActiveCoupons = async () => {
     const response = await api.get("/coupons");
     return response.data;
 };
+
+/**
+ * Validate a coupon against the logged-in user's cart.
+ * The backend calculates the discount and updated total.
+ */
+export const applyCoupon = async (couponCode) => {
+    const response = await api.post("/coupons/apply", {
+        code: couponCode,
+    });
+
+    // Return the backend response to the thunk.
+    return response.data;
+};

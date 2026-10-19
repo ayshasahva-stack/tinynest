@@ -7,6 +7,7 @@ import {
     updateCoupon,
     deactivateCoupon,
     getActiveCoupons,
+    applyCoupon,
     
 } from "./couponService";
 
@@ -96,6 +97,27 @@ export const fetchActiveCouponsThunk = createAsyncThunk(
                 error.response?.data?.message ||
                 error.message ||
                 "Failed to fetch available coupons"
+            );
+        }
+    }
+);
+
+/**
+ * Apply a coupon and retrieve the server-calculated totals.
+ */
+export const applyCouponThunk = createAsyncThunk(
+    "coupons/applyCoupon",
+    async (couponCode, { rejectWithValue }) => {
+        try {
+            const response = await applyCoupon(couponCode);
+
+            // API responses may wrap the result in "data".
+            return response?.data ?? response;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to apply coupon"
             );
         }
     }
