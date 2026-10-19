@@ -1,5 +1,5 @@
 // Import React's useEffect hook
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 // Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
@@ -8,9 +8,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
 // Import order thunk
-import { getMyOrderByIdThunk,
+import {
+    getMyOrderByIdThunk,
     cancelMyOrderThunk
- } from "../../features/orders/orderThunk";
+} from "../../features/orders/orderThunk";
 
 // Import order selectors
 import {
@@ -31,10 +32,10 @@ import socket from "../../realtime/Socket";
 
 // Order details page
 function OrderDetails() {
-// Track the customer's cancellation confirmation and feedback.
-const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-const [cancelMessage, setCancelMessage] = useState("");
-const [cancelMessageType, setCancelMessageType] = useState("");
+    // Track the customer's cancellation confirmation and feedback.
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+    const [cancelMessage, setCancelMessage] = useState("");
+    const [cancelMessageType, setCancelMessageType] = useState("");
     // Get order ID from the URL
     const { orderId } = useParams();
 
@@ -53,39 +54,39 @@ const [cancelMessageType, setCancelMessageType] = useState("");
     // Get error state
     const error = useSelector(selectOrdersError);
 
-// Read cancellation status from Redux.
-const cancellingOrder = useSelector(
-    (state) => state.orders.cancellingOrder
-);
+    // Read cancellation status from Redux.
+    const cancellingOrder = useSelector(
+        (state) => state.orders.cancellingOrder
+    );
     // ================================================
     // FETCH ORDER
     // ================================================
-// Cancel the order after the customer confirms.
-const handleCancelOrder = async () => {
-    // Prevent cancellation for statuses not supported by the backend.
-    if (!["pending", "confirmed"].includes(order?.status)) {
-        return;
-    }
+    // Cancel the order after the customer confirms.
+    const handleCancelOrder = async () => {
+        // Prevent cancellation for statuses not supported by the backend.
+        if (!["pending", "confirmed"].includes(order?.status)) {
+            return;
+        }
 
-    try {
-        setCancelMessage("");
-        setShowCancelConfirm(false);
+        try {
+            setCancelMessage("");
+            setShowCancelConfirm(false);
 
-        // Dispatch the thunk and wait for the API request to finish.
-        await dispatch(cancelMyOrderThunk(orderId)).unwrap();
+            // Dispatch the thunk and wait for the API request to finish.
+            await dispatch(cancelMyOrderThunk(orderId)).unwrap();
 
-        setCancelMessage("Your order has been cancelled successfully.");
-        setCancelMessageType("success");
-    } catch (error) {
-        // Display the backend's cancellation error when available.
-        setCancelMessage(
-            typeof error === "string"
-                ? error
-                : "Unable to cancel this order. Please try again."
-        );
-        setCancelMessageType("error");
-    }
-};
+            setCancelMessage("Your order has been cancelled successfully.");
+            setCancelMessageType("success");
+        } catch (error) {
+            // Display the backend's cancellation error when available.
+            setCancelMessage(
+                typeof error === "string"
+                    ? error
+                    : "Unable to cancel this order. Please try again."
+            );
+            setCancelMessageType("error");
+        }
+    };
     useEffect(() => {
 
         if (orderId) {
@@ -253,142 +254,140 @@ const handleCancelOrder = async () => {
 
                 </section>
 
-{/* PAYMENT DETAILS */}
-<section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-        Payment Details
-    </h2>
+                {/* PAYMENT DETAILS */}
+                <section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        Payment Details
+                    </h2>
 
-    <div className="mt-4 space-y-4">
-        {/* Display the saved payment method. */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-                Payment Method
-            </span>
+                    <div className="mt-4 space-y-4">
+                        {/* Display the saved payment method. */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Payment Method
+                            </span>
 
-            <span className="font-medium text-gray-900 dark:text-white">
-                {order.paymentDetails?.paymentMethod === "cod"
-                    ? "Cash on Delivery"
-                    : order.paymentDetails?.paymentMethod === "online"
-                    ? "Razorpay"
-                    : "Not available"}
-            </span>
-        </div>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                                {order.paymentDetails?.paymentMethod === "cod"
+                                    ? "Cash on Delivery"
+                                    : order.paymentDetails?.paymentMethod === "online"
+                                        ? "Razorpay"
+                                        : "Not available"}
+                            </span>
+                        </div>
 
-        {/* Display the actual saved payment status. */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-                Payment Status
-            </span>
+                        {/* Display the actual saved payment status. */}
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                Payment Status
+                            </span>
 
-            {order.paymentDetails ? (
-                <span
-                    className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${
-                        order.paymentDetails.status === "paid"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                            : order.paymentDetails.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-                            : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
-                    }`}
-                >
-                    {order.paymentDetails.status}
-                </span>
-            ) : (
-                <span className="text-sm text-gray-500">
-                    Payment record not found
-                </span>
-            )}
-        </div>
+                            {order.paymentDetails ? (
+                                <span
+                                    className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${order.paymentDetails.status === "paid"
+                                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                            : order.paymentDetails.status === "pending"
+                                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                                : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                                        }`}
+                                >
+                                    {order.paymentDetails.status}
+                                </span>
+                            ) : (
+                                <span className="text-sm text-gray-500">
+                                    Payment record not found
+                                </span>
+                            )}
+                        </div>
 
-        {/* Show a transaction ID when one exists. */}
-        {order.paymentDetails?.transactionId && (
-            <div className="flex flex-col gap-1">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                    Transaction ID
-                </span>
+                        {/* Show a transaction ID when one exists. */}
+                        {order.paymentDetails?.transactionId && (
+                            <div className="flex flex-col gap-1">
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    Transaction ID
+                                </span>
 
-                <span className="break-all text-sm font-medium text-gray-900 dark:text-white">
-                    {order.paymentDetails.transactionId}
-                </span>
-            </div>
-        )}
+                                <span className="break-all text-sm font-medium text-gray-900 dark:text-white">
+                                    {order.paymentDetails.transactionId}
+                                </span>
+                            </div>
+                        )}
 
-        {/* Explain COD status to the customer. */}
-        {order.paymentDetails?.paymentMethod === "cod" &&
-            order.paymentDetails.status === "pending" && (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Payment is due when your order is delivered.
-                </p>
-            )}
-    </div>
-</section>
+                        {/* Explain COD status to the customer. */}
+                        {order.paymentDetails?.paymentMethod === "cod" &&
+                            order.paymentDetails.status === "pending" && (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    Payment is due when your order is delivered.
+                                </p>
+                            )}
+                    </div>
+                </section>
 
 
-{/* Customer order cancellation */}
-{["pending", "confirmed"].includes(order.status) && (
-    <section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Cancel Order
-        </h2>
+                {/* Customer order cancellation */}
+                {["pending", "confirmed"].includes(order.status) && (
+                    <section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            Cancel Order
+                        </h2>
 
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            You can cancel this order while it is pending or confirmed.
-        </p>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            You can cancel this order while it is pending or confirmed.
+                        </p>
 
-        {/* Show success or error feedback */}
-        {cancelMessage && (
-            <p
-                role="status"
-                className={`mt-4 text-sm ${
-                    cancelMessageType === "success"
-                        ? "text-green-600"
-                        : "text-red-600"
-                }`}
-            >
-                {cancelMessage}
-            </p>
-        )}
+                        {/* Show success or error feedback */}
+                        {cancelMessage && (
+                            <p
+                                role="status"
+                                className={`mt-4 text-sm ${cancelMessageType === "success"
+                                        ? "text-green-600"
+                                        : "text-red-600"
+                                    }`}
+                            >
+                                {cancelMessage}
+                            </p>
+                        )}
 
-        {!showCancelConfirm ? (
-            <button
-                type="button"
-                disabled={cancellingOrder}
-                onClick={() => setShowCancelConfirm(true)}
-                className="mt-4 rounded-lg border border-red-500 px-4 py-2 font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20"
-            >
-                Cancel Order
-            </button>
-        ) : (
-            <div className="mt-4">
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Are you sure you want to cancel this order?
-                </p>
+                        {!showCancelConfirm ? (
+                            <button
+                                type="button"
+                                disabled={cancellingOrder}
+                                onClick={() => setShowCancelConfirm(true)}
+                                className="mt-4 rounded-lg border border-red-500 px-4 py-2 font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-900/20"
+                            >
+                                Cancel Order
+                            </button>
+                        ) : (
+                            <div className="mt-4">
+                                <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    Are you sure you want to cancel this order?
+                                </p>
 
-                <div className="mt-3 flex flex-wrap gap-3">
-                    <button
-                        type="button"
-                        disabled={cancellingOrder}
-                        onClick={handleCancelOrder}
-                        className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
-                    >
-                        {cancellingOrder
-                            ? "Cancelling..."
-                            : "Yes, Cancel Order"}
-                    </button>
+                                <div className="mt-3 flex flex-wrap gap-3">
+                                    <button
+                                        type="button"
+                                        disabled={cancellingOrder}
+                                        onClick={handleCancelOrder}
+                                        className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                    >
+                                        {cancellingOrder
+                                            ? "Cancelling..."
+                                            : "Yes, Cancel Order"}
+                                    </button>
 
-                    <button
-                        type="button"
-                        disabled={cancellingOrder}
-                        onClick={() => setShowCancelConfirm(false)}
-                        className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 dark:border-gray-600 dark:text-gray-200"
-                    >
-                        Keep Order
-                    </button>
-                </div>
-            </div>
-        )}
-    </section>
-)}
+                                    <button
+                                        type="button"
+                                        disabled={cancellingOrder}
+                                        onClick={() => setShowCancelConfirm(false)}
+                                        className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 dark:border-gray-600 dark:text-gray-200"
+                                    >
+                                        Keep Order
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+                )}
 
                 {/* ======================================== */}
                 {/* ORDER STATUS TIMELINE */}
