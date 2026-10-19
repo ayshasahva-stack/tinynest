@@ -347,7 +347,9 @@ function Checkout() {
             if (!orderId) {
                 throw new Error("The created order ID was not returned.");
             }
-
+            // The backend clears the cart when the order is created.
+            // Fetch the latest cart so the Redux navbar badge updates.
+            dispatch(getMyCartThunk());
             // Step 2: Handle Cash on Delivery separately.
             if (paymentMethod === "cod") {
                 await dispatch(
