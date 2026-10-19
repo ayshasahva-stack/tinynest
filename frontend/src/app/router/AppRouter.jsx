@@ -23,6 +23,7 @@ import KitDetails from "../../pages/kitDetails/KitDetails";
 // Import the Reset Password page
 import ResetPassword from "../../pages/auth/ResetPassword";
 import MyRefunds from "../../pages/refund/MyRefunds";
+import Coupons from "../../pages/coupons/Coupons";
 
 
 
@@ -110,6 +111,7 @@ function AppRouter() {
                         <Route path="/refunds" element={<MyRefunds />} />
                         {/* Customer profile — login required. */}
                         <Route path="/profile" element={<Profile />} />
+                        <Route path="/coupons" element={<Coupons />} />
                     </Route>
                 </Route>
 

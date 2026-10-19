@@ -6,6 +6,8 @@ import {
     createCoupon,
     updateCoupon,
     deactivateCoupon,
+    getActiveCoupons,
+    
 } from "./couponService";
 
 // Extract the payload from the API response.
@@ -76,6 +78,24 @@ export const deactivateCouponThunk = createAsyncThunk(
                 error.response?.data?.message ||
                 error.message ||
                 "Failed to deactivate coupon"
+            );
+        }
+    }
+);
+// Fetch valid coupons for the customer-facing page.
+export const fetchActiveCouponsThunk = createAsyncThunk(
+    "coupons/fetchActiveCoupons",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await getActiveCoupons();
+
+            // Handle both direct data and { data: ... } responses.
+            return response?.data ?? response;
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch available coupons"
             );
         }
     }

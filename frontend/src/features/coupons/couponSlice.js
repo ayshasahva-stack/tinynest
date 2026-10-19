@@ -6,6 +6,7 @@ import {
     createCouponThunk,
     updateCouponThunk,
     deactivateCouponThunk,
+    fetchActiveCouponsThunk,
 } from "./couponThunk";
 
 const initialState = {
@@ -17,6 +18,10 @@ const initialState = {
     saving: false,
     saveError: null,
     saveSuccess: null,
+    // Customer-facing active coupons.
+    activeCoupons: [],
+    activeLoading: false,
+    activeError: null,
 };
 
 const couponSlice = createSlice({
@@ -135,7 +140,28 @@ const couponSlice = createSlice({
             .addCase(deactivateCouponThunk.rejected, (state, action) => {
                 state.saving = false;
                 state.saveError = action.payload || action.error.message;
-            });
+            })
+
+            .addCase(fetchActiveCouponsThunk.pending, (state) => {
+                state.activeLoading = true;
+                state.activeError = null;
+            })
+            .addCase(fetchActiveCouponsThunk.fulfilled, (state, action) => {
+                state.activeLoading = false;
+
+                // Support an array or an object containing coupons.
+                const payload = action.payload;
+                state.activeCoupons = Array.isArray(payload)
+                    ? payload
+                    : payload?.coupons ?? [];
+            })
+            .addCase(fetchActiveCouponsThunk.rejected, (state, action) => {
+                state.activeLoading = false;
+                state.activeError =
+                    action.payload || action.error.message;
+            })
+
+
     },
 });
 

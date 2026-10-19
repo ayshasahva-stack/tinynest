@@ -123,6 +123,13 @@ function Navbar() {
                     </span>
                 )}
             </Link>
+            
+{/* Customer coupons page */}
+<Link to="/coupons" className={accountLinkClass}>
+    <span aria-hidden="true">🎟️</span>
+    <span>My Coupons</span>
+</Link>
+
 
             <Link
                 to="/notifications"
@@ -234,6 +241,7 @@ function Navbar() {
                                     </div>
 
                                     {renderAccountLinks()}
+                                    
 
                                     <div className="border-t border-[#E8E0D5] pt-1 dark:border-stone-700">
                                         {renderThemeToggle()}

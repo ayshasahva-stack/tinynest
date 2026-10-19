@@ -30,3 +30,9 @@ export const deactivateCoupon = async (couponId) => {
     );
     return response.data;
 };
+// Fetch currently active coupons for the customer page.
+// The backend uses GET /coupons to filter valid coupons.
+export const getActiveCoupons = async () => {
+    const response = await api.get("/coupons");
+    return response.data;
+};
