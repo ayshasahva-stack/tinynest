@@ -253,6 +253,76 @@ const handleCancelOrder = async () => {
 
                 </section>
 
+{/* PAYMENT DETAILS */}
+<section className="mb-6 rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800">
+    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        Payment Details
+    </h2>
+
+    <div className="mt-4 space-y-4">
+        {/* Display the saved payment method. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+                Payment Method
+            </span>
+
+            <span className="font-medium text-gray-900 dark:text-white">
+                {order.paymentDetails?.paymentMethod === "cod"
+                    ? "Cash on Delivery"
+                    : order.paymentDetails?.paymentMethod === "online"
+                    ? "Razorpay"
+                    : "Not available"}
+            </span>
+        </div>
+
+        {/* Display the actual saved payment status. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+                Payment Status
+            </span>
+
+            {order.paymentDetails ? (
+                <span
+                    className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${
+                        order.paymentDetails.status === "paid"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                            : order.paymentDetails.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
+                            : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                    }`}
+                >
+                    {order.paymentDetails.status}
+                </span>
+            ) : (
+                <span className="text-sm text-gray-500">
+                    Payment record not found
+                </span>
+            )}
+        </div>
+
+        {/* Show a transaction ID when one exists. */}
+        {order.paymentDetails?.transactionId && (
+            <div className="flex flex-col gap-1">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Transaction ID
+                </span>
+
+                <span className="break-all text-sm font-medium text-gray-900 dark:text-white">
+                    {order.paymentDetails.transactionId}
+                </span>
+            </div>
+        )}
+
+        {/* Explain COD status to the customer. */}
+        {order.paymentDetails?.paymentMethod === "cod" &&
+            order.paymentDetails.status === "pending" && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Payment is due when your order is delivered.
+                </p>
+            )}
+    </div>
+</section>
+
 
 {/* Customer order cancellation */}
 {["pending", "confirmed"].includes(order.status) && (

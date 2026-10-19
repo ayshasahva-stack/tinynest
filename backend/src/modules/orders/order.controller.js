@@ -686,21 +686,12 @@ export const getMyOrders = async (req, res, next) => {
 
 // Get one order belonging to the logged-in user
 // Get one order belonging to the logged-in user
+
 export const getMyOrderById = async (req, res, next) => {
     try {
         const { orderId } = req.params;
 
-        // Check whether the order ID is a valid MongoDB ObjectId
-        if (!mongoose.Types.ObjectId.isValid(orderId)) {
-            return next(
-                new ApiError(
-                    400,
-                    "Order ID must be a valid order ID"
-                )
-            );
-        }
-
-        // Find the order belonging to the logged-in user
+        // Find the order belonging to the logged-in user.
         const order = await Order.findOne({
             _id: orderId,
             user: req.user._id
@@ -708,21 +699,44 @@ export const getMyOrderById = async (req, res, next) => {
             .populate("items.product")
             .populate("items.kit");
 
-        // Make sure the order exists
         if (!order) {
             return next(new ApiError(404, "Order not found"));
         }
 
+        // Find the payment record linked to this order.
+        const payment = await Payment.findOne({
+            order: order._id,
+            user: req.user._id
+        }).select(
+            "paymentMethod status amount transactionId paidAt razorpayOrderId"
+        );
+
+        // Convert the order to a plain object before adding payment details.
+        const orderData = order.toObject();
+
+        // Return payment details alongside the existing order data.
+        orderData.paymentDetails = payment
+            ? {
+                paymentMethod: payment.paymentMethod,
+                status: payment.status,
+                amount: payment.amount,
+                transactionId: payment.transactionId,
+                paidAt: payment.paidAt,
+                razorpayOrderId: payment.razorpayOrderId
+            }
+            : null;
+
         return sendSuccessResponse(
             res,
             200,
-            order,
+            orderData,
             "Order fetched successfully"
         );
     } catch (error) {
         next(error);
     }
 };
+
 // Cancel an order belonging to the logged-in user
 export const cancelMyOrder = async (req, res, next) => {
     // Start a MongoDB session for the transaction
