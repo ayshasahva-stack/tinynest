@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
     getAllOrdersForAdminThunk,
     updateOrderStatusThunk,
+    confirmCodPaymentThunk
 } from "../../features/orders/orderThunk";
 
 import {
@@ -14,6 +15,9 @@ import {
     selectUpdatingOrderId,
     selectOrderUpdateError,
     selectOrderUpdateSuccess,
+    selectConfirmingCodOrderId,
+    selectCodPaymentError,
+    selectCodPaymentSuccess,
 } from "../../features/orders/orderSelectors";
 
 import {
@@ -67,7 +71,9 @@ function AdminOrders() {
     const updatingOrderId = useSelector(selectUpdatingOrderId);
     const updateError = useSelector(selectOrderUpdateError);
     const updateSuccess = useSelector(selectOrderUpdateSuccess);
-
+    const confirmingCodOrderId = useSelector(selectConfirmingCodOrderId);
+    const codPaymentError = useSelector(selectCodPaymentError);
+    const codPaymentSuccess = useSelector(selectCodPaymentSuccess);
     // Local UI state for searching, filtering, and the details modal.
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -125,6 +131,26 @@ function AdminOrders() {
             return matchesSearch && matchesStatus;
         });
     }, [orders, search, statusFilter]);
+
+ // Confirm COD collection after delivery.
+const handleConfirmCodPayment = async (order) => {
+    const confirmed = window.confirm(
+        `Confirm that ₹${Number(order.paymentDetails?.amount ?? order.totalAmount).toFixed(2)} has been collected for this delivered COD order?`
+    );
+
+    if (!confirmed) return;
+
+    dispatch(clearAdminOrderFeedback());
+
+    try {
+        // The thunk updates the matching order in Redux on success.
+        await dispatch(
+            confirmCodPaymentThunk(order._id)
+        ).unwrap();
+    } catch {
+        // Redux stores the error for display on the page.
+    }
+};
 
     // Send the status update to the backend.
     const handleStatusChange = async (orderId, status) => {
@@ -275,6 +301,18 @@ function AdminOrders() {
                 </div>
             )}
 
+            {codPaymentError && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                    COD payment confirmation failed: {codPaymentError}
+                </div>
+            )}
+
+            {codPaymentSuccess && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
+                    COD payment confirmed successfully.
+                </div>
+            )}
+
             {/* Orders table */}
             <div className="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
                 {loading ? (
@@ -306,6 +344,7 @@ function AdminOrders() {
                                         "Date",
                                         "Total",
                                         "Status",
+                                        "Payment",
                                         "Actions",
                                     ].map((heading) => (
                                         <th
@@ -369,6 +408,46 @@ function AdminOrders() {
                                                 </span>
                                             </td>
 
+                                            {/* Payment method and payment status are separate from order status. */}
+                                            <td className="min-w-52 px-5 py-4">
+                                                <div className="flex flex-col items-start gap-2">
+                                                    {order.paymentDetails ? (
+                                                        <>
+                                                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                                                                {order.paymentDetails.paymentMethod === "cod"
+                                                                    ? "Cash on Delivery"
+                                                                    : "Online Payment"}
+                                                            </span>
+
+                                                            <span
+                                                                className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${
+                                                                    order.paymentDetails.status === "paid"
+                                                                        ? "bg-green-100 text-green-800"
+                                                                        : order.paymentDetails.status === "pending"
+                                                                          ? "bg-yellow-100 text-yellow-800"
+                                                                          : order.paymentDetails.status === "failed"
+                                                                            ? "bg-red-100 text-red-800"
+                                                                            : "bg-gray-100 text-gray-700"
+                                                                }`}
+                                                            >
+                                                                {order.paymentDetails.status || "unknown"}
+                                                            </span>
+
+                                                            {order.paymentDetails.status === "paid" &&
+                                                                order.paymentDetails.paidAt && (
+                                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                        Paid: {formatDate(order.paymentDetails.paidAt)}
+                                                                    </span>
+                                                                )}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                            No payment record
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
                                             <td className="min-w-52 px-5 py-4">
                                                 <div className="flex flex-col items-start gap-2">
                                                     <button
@@ -378,6 +457,22 @@ function AdminOrders() {
                                                     >
                                                         View Details
                                                     </button>
+
+                                                    {/* Only allow COD payment confirmation for delivered, unpaid COD orders. */}
+                                                    {order.status === "delivered" &&
+                                                        order.paymentDetails?.paymentMethod === "cod" &&
+                                                        order.paymentDetails?.status === "pending" && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleConfirmCodPayment(order)}
+                                                                disabled={confirmingCodOrderId === order._id}
+                                                                className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            >
+                                                                {confirmingCodOrderId === order._id
+                                                                    ? "Confirming..."
+                                                                    : "Confirm COD Payment"}
+                                                            </button>
+                                                        )}
 
                                                     {nextStatuses.length > 0 && (
                                                         <select
@@ -414,7 +509,9 @@ function AdminOrders() {
                                                     )}
                                                 </div>
                                             </td>
+                                            
                                         </tr>
+                                        
                                     );
                                 })}
                             </tbody>
@@ -510,6 +607,60 @@ function AdminOrders() {
                                             {line}
                                         </p>
                                     ))}
+                            </div>
+                        </div>
+
+                        {/* Payment details */}
+                        <div className="mb-6 rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                            <h3 className="mb-3 font-semibold text-gray-900 dark:text-white">
+                                Payment Details
+                            </h3>
+
+                            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    Method:{" "}
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {selectedOrder.paymentDetails?.paymentMethod === "cod"
+                                            ? "Cash on Delivery"
+                                            : selectedOrder.paymentDetails?.paymentMethod === "online"
+                                              ? "Online Payment"
+                                              : "N/A"}
+                                    </span>
+                                </p>
+
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    Payment status:{" "}
+                                    <span className="font-medium capitalize text-gray-900 dark:text-white">
+                                        {selectedOrder.paymentDetails?.status || "N/A"}
+                                    </span>
+                                </p>
+
+                                <p className="text-gray-600 dark:text-gray-300">
+                                    Payment amount:{" "}
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                        {selectedOrder.paymentDetails
+                                            ? formatPrice(selectedOrder.paymentDetails.amount)
+                                            : "N/A"}
+                                    </span>
+                                </p>
+
+                                {selectedOrder.paymentDetails?.paidAt && (
+                                    <p className="text-gray-600 dark:text-gray-300">
+                                        Paid on:{" "}
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {formatDate(selectedOrder.paymentDetails.paidAt)}
+                                        </span>
+                                    </p>
+                                )}
+
+                                {selectedOrder.paymentDetails?.transactionId && (
+                                    <p className="break-all text-gray-600 dark:text-gray-300 sm:col-span-2">
+                                        Transaction ID:{" "}
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                            {selectedOrder.paymentDetails.transactionId}
+                                        </span>
+                                    </p>
+                                )}
                             </div>
                         </div>
 

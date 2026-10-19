@@ -31,7 +31,7 @@ import Coupons from "../../pages/coupons/Coupons";
 import AdminDashboard from "../../pages/admin/AdminDashboard";
 import AdminProducts from "../../pages/admin/AdminProducts";
 import AdminAddProduct from "../../pages/admin/AdminAddProduct";
-import AdminEditProduct from "../../pages/admin/AddminEditProduct";
+import AdminEditProduct from "../../pages/admin/AdminEditProduct";
 import AdminCategories from "../../pages/admin/AdminCategories";
 import AdminOrders from "../../pages/admin/AdminOrders";
 import AdminKits from "../../pages/admin/AdminKits";

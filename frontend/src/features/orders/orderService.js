@@ -38,3 +38,12 @@ export const cancelMyOrder = async (orderId) => {
 
     return response.data;
 };
+
+ // Admin: confirm that COD money has been collected.
+export const confirmCodPayment = async (orderId) => {
+    const response = await api.patch(
+        `/orders/${orderId}/confirm-cod-payment`
+    );
+
+    return response.data;
+};

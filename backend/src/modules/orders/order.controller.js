@@ -994,37 +994,63 @@ try {
 };
 // Get all orders for the admin
 // Get all orders - Admin only
+
 export const getAllOrders = async (req, res, next) => {
     try {
-        // Get all orders from the database
+        // Fetch orders with the same details as before.
         const orders = await Order.find()
-            // Include basic user information
             .populate("user", "email phone")
-
-            // Populate both product and kit details
             .populate([
-                {
-                    path: "items.product"
-                },
-                {
-                    path: "items.kit"
-                }
+                { path: "items.product" },
+                { path: "items.kit" }
             ])
-
-            // Show newest orders first
             .sort({ createdAt: -1 });
 
-        // Send all orders to the admin
+        // Fetch payment records for all returned orders in one query.
+        const payments = await Payment.find({
+            order: { $in: orders.map((order) => order._id) }
+        }).select(
+            "order paymentMethod status amount transactionId paidAt razorpayOrderId"
+        );
+
+        // Match each payment to its order.
+        const paymentByOrderId = new Map(
+            payments.map((payment) => [
+                payment.order.toString(),
+                payment
+            ])
+        );
+
+        // Attach payment details without changing the Order schema.
+        const ordersWithPayments = orders.map((order) => {
+            const orderData = order.toObject();
+            const payment = paymentByOrderId.get(order._id.toString());
+
+            orderData.paymentDetails = payment
+                ? {
+                    paymentMethod: payment.paymentMethod,
+                    status: payment.status,
+                    amount: payment.amount,
+                    transactionId: payment.transactionId,
+                    paidAt: payment.paidAt,
+                    razorpayOrderId: payment.razorpayOrderId
+                }
+                : null;
+
+            return orderData;
+        });
+
         return sendSuccessResponse(
             res,
             200,
-            orders,
+            ordersWithPayments,
             "All orders fetched successfully"
         );
     } catch (error) {
         next(error);
     }
 };
+
 // Update the status of an order - Admin only
 export const updateOrderStatus = async (req, res, next) => {
     try {
@@ -1125,6 +1151,92 @@ export const updateOrderStatus = async (req, res, next) => {
             200,
             order,
             "Order status updated successfully"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Confirm that COD payment has actually been collected.
+ * Admin only.
+ */
+export const confirmCodPayment = async (req, res, next) => {
+    try {
+        const { orderId } = req.params;
+
+        // Find the order first.
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return next(new ApiError(404, "Order not found"));
+        }
+
+        // COD can be confirmed only after delivery.
+        if (order.status !== "delivered") {
+            return next(
+                new ApiError(
+                    400,
+                    "COD payment can be confirmed only after delivery"
+                )
+            );
+        }
+
+        // Find the payment linked to this order.
+        const payment = await Payment.findOne({
+            order: order._id,
+            user: order.user
+        });
+
+        if (!payment) {
+            return next(new ApiError(404, "Payment record not found"));
+        }
+
+        // This action is specifically for Cash on Delivery.
+        if (payment.paymentMethod !== "cod") {
+            return next(
+                new ApiError(
+                    400,
+                    "This order does not use Cash on Delivery"
+                )
+            );
+        }
+
+        // Avoid confirming a payment that is already paid.
+        if (payment.status === "paid") {
+            return next(
+                new ApiError(400, "COD payment is already confirmed")
+            );
+        }
+
+        // Do not mark failed or refunded payments as collected.
+        if (payment.status !== "pending") {
+            return next(
+                new ApiError(
+                    400,
+                    `Cannot confirm payment with status: ${payment.status}`
+                )
+            );
+        }
+
+        // Record that the COD money was collected.
+        payment.status = "paid";
+        payment.paidAt = new Date();
+
+        await payment.save();
+
+        return sendSuccessResponse(
+            res,
+            200,
+            {
+                orderId: order._id,
+                orderStatus: order.status,
+                paymentMethod: payment.paymentMethod,
+                paymentStatus: payment.status,
+                amount: payment.amount,
+                paidAt: payment.paidAt
+            },
+            "COD payment confirmed successfully"
         );
     } catch (error) {
         next(error);

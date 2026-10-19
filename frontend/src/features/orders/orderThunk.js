@@ -5,7 +5,9 @@ import {
     getMyOrderById,
      getAllOrdersForAdmin,
     updateOrderStatus,
-    cancelMyOrder
+    cancelMyOrder,
+    confirmCodPayment,
+
 } from "./orderService";
 
 // Fetch all orders belonging to the logged-in user
@@ -95,3 +97,21 @@ export const cancelMyOrderThunk = createAsyncThunk(
 );
 
 
+
+ // Admin: confirm COD payment for a delivered order.
+export const confirmCodPaymentThunk = createAsyncThunk(
+    "orders/confirmCodPayment",
+    async (orderId, thunkAPI) => {
+        try {
+            return {
+                orderId,
+                response: await confirmCodPayment(orderId),
+            };
+        } catch (error) {
+            return thunkAPI.rejectWithValue(
+                error.response?.data?.message ||
+                "Failed to confirm COD payment"
+            );
+        }
+    }
+);

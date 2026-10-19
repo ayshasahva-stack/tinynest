@@ -7,6 +7,7 @@ import {
     getAllOrdersForAdminThunk,
     updateOrderStatusThunk,
     cancelMyOrderThunk,
+    confirmCodPaymentThunk
 } from "./orderThunk";
 
 // Initial state for customer orders, admin orders, and cancellation.
@@ -29,6 +30,10 @@ const initialState = {
     cancellingOrder: false,
     cancelError: null,
     cancelSuccess: false,
+    // COD payment confirmation state
+    confirmingCodOrderId: null,
+    codPaymentError: null,
+    codPaymentSuccess: false,
 };
 
 const orderSlice = createSlice({
@@ -57,6 +62,10 @@ const orderSlice = createSlice({
             state.adminError = null;
             state.updateError = null;
             state.updateSuccess = false;
+
+            // Clear COD confirmation feedback too.
+            state.codPaymentError = null;
+            state.codPaymentSuccess = false;
         },
     },
 
@@ -138,6 +147,44 @@ const orderSlice = createSlice({
                 state.updatingOrderId = null;
                 state.updateError = action.payload;
                 state.updateSuccess = false;
+            })
+
+            // =====================================
+            // ADMIN: CONFIRM COD PAYMENT
+            // =====================================
+            .addCase(confirmCodPaymentThunk.pending, (state, action) => {
+                state.confirmingCodOrderId = action.meta.arg;
+                state.codPaymentError = null;
+                state.codPaymentSuccess = false;
+            })
+            .addCase(confirmCodPaymentThunk.fulfilled, (state, action) => {
+                state.confirmingCodOrderId = null;
+                state.codPaymentSuccess = true;
+
+                const { orderId, response } = action.payload;
+                const payment = response.data;
+
+                // Update the matching order with confirmed payment details.
+                state.adminOrders = state.adminOrders.map((order) =>
+                    order._id === orderId
+                        ? {
+                            ...order,
+                            paymentDetails: {
+                                ...order.paymentDetails,
+                                paymentMethod: payment.paymentMethod,
+                                status: payment.paymentStatus,
+                                amount: payment.amount,
+                                paidAt: payment.paidAt,
+                            },
+                        }
+                        : order
+                );
+            })
+            .addCase(confirmCodPaymentThunk.rejected, (state, action) => {
+                state.confirmingCodOrderId = null;
+                state.codPaymentError =
+                    action.payload || "Failed to confirm COD payment";
+                state.codPaymentSuccess = false;
             })
 
             // =====================================
