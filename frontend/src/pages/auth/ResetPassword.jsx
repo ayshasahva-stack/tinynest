@@ -1,67 +1,74 @@
-// Import React's useState hook
-// Import React's useState hook
+
 import { useState } from "react";
-
-// Import React Router's navigation hook
-import { useNavigate } from "react-router-dom";
-
-// Import Redux hooks
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import reusable form components
 import Input from "../../components/Input";
 import Button from "../../components/Button";
+import AuthLayout from "../../components/AuthLayout";
 
-// Import reset password thunk
 import { resetPasswordThunk } from "../../features/auth/authThunk";
-
-// Import authentication selectors
 import {
     selectAuthLoading,
     selectAuthError,
 } from "../../features/auth/authSelectors";
-// Reset Password page component
+
 function ResetPassword() {
-    // Store the new password
+    // Store the new password and its confirmation.
     const [newPassword, setNewPassword] = useState("");
-
-    // Store the password confirmation
     const [confirmPassword, setConfirmPassword] = useState("");
-    // Get Redux dispatch
-    const dispatch = useDispatch();
 
-    // Get navigation function
+    // Keep client-side validation messages separate from API errors.
+    const [validationError, setValidationError] = useState("");
+    const [apiError, setApiError] = useState("");
+
+    const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Get authentication loading state
+    // Read the authentication request state from Redux.
     const loading = useSelector(selectAuthLoading);
-
-    // Get authentication error
     const error = useSelector(selectAuthError);
 
-    // Get the temporary reset token from Redux
+    // The reset token is created after successful reset OTP verification.
     const resetToken = useSelector((state) => state.auth.resetToken);
 
-    // Handle the reset password form submission
-    // Handle the reset password form submission
+    // Validate the form and submit the new password.
     const handleSubmit = async (event) => {
-        // Prevent the browser from refreshing the page
         event.preventDefault();
 
-        // Stop if the reset token is missing
+        setValidationError("");
+        setApiError("");
+
+        // A reset token is required to authorize this operation.
         if (!resetToken) {
-            console.error("Reset token is missing");
+            setValidationError(
+                "Your password reset session has expired. Please request a new reset OTP."
+            );
             return;
         }
 
-        // Check that both passwords match
+        // Require both password fields.
+        if (!newPassword || !confirmPassword) {
+            setValidationError("Please fill in both password fields.");
+            return;
+        }
+
+        // Keep the password confirmation consistent.
         if (newPassword !== confirmPassword) {
-            console.error("Passwords do not match");
+            setValidationError("Passwords do not match.");
+            return;
+        }
+
+        // Enforce a minimum password length.
+        if (newPassword.length < 8) {
+            setValidationError(
+                "Your password must contain at least 8 characters."
+            );
             return;
         }
 
         try {
-            // Send the reset token and new password to the backend
+            // Send the reset token and new password to the backend.
             await dispatch(
                 resetPasswordThunk({
                     resetToken,
@@ -69,50 +76,101 @@ function ResetPassword() {
                 })
             ).unwrap();
 
-            // Password reset succeeded, so return to login
-            navigate("/login");
+            // Return to login after a successful password reset.
+            navigate("/login", {
+                replace: true,
+                state: {
+                    message: "Password reset successfully. Please sign in with your new password.",
+                },
+            });
         } catch (error) {
-            // Log the reset error for now
-            console.error(error);
+            // Show the rejected thunk message on the page.
+            const message =
+                typeof error === "string"
+                    ? error
+                    : error?.message ||
+                      "We couldn't reset your password. Please try again.";
+
+            setApiError(message);
         }
     };
+
+    // Prefer local validation and submission errors.
+    const displayedError = validationError || apiError || error;
+
     return (
-        <main>
-            <h1>Reset Password</h1>
-            {/* Show the reset error when one exists */}
-            {error && (
-                <p className="mb-4 text-sm text-red-600">
-                    {error}
+        <AuthLayout
+            eyebrow="ACCOUNT RECOVERY"
+            title="Create a new password"
+            description="Choose a strong password for your TinyNest account. You'll use it the next time you sign in."
+            footer={
+                <p>
+                    Remember your password?{" "}
+                    <Link
+                        to="/login"
+                        className="font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                    >
+                        Sign in
+                    </Link>
+                </p>
+            }
+        >
+            {/* Display validation and server errors accessibly. */}
+            {displayedError && (
+                <p
+                    role="alert"
+                    className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                >
+                    {typeof displayedError === "string"
+                        ? displayedError
+                        : "We couldn't reset your password. Please try again."}
                 </p>
             )}
-            <form onSubmit={handleSubmit}>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
                 <Input
-                    label="New Password"
+                    label="New password"
                     type="password"
                     name="newPassword"
                     value={newPassword}
-                    onChange={(event) =>
-                        setNewPassword(event.target.value)
-                    }
+                    onChange={(event) => {
+                        setNewPassword(event.target.value);
+                        setValidationError("");
+                        setApiError("");
+                    }}
                     placeholder="Enter your new password"
+                    disabled={loading}
                 />
 
                 <Input
-                    label="Confirm Password"
+                    label="Confirm new password"
                     type="password"
                     name="confirmPassword"
                     value={confirmPassword}
-                    onChange={(event) =>
-                        setConfirmPassword(event.target.value)
-                    }
-                    placeholder="Confirm your new password"
+                    onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        setValidationError("");
+                        setApiError("");
+                    }}
+                    placeholder="Re-enter your new password"
+                    disabled={loading}
                 />
 
-                <Button type="submit" disabled={loading}>
-                    {loading ? "Resetting Password..." : "Reset Password"}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Use at least 8 characters. Avoid using a password you
+                    already use elsewhere.
+                </p>
+
+                <Button
+                    type="submit"
+                    variant="auth"
+                    fullWidth
+                    disabled={loading}
+                >
+                    {loading ? "Resetting password..." : "Save new password"}
                 </Button>
             </form>
-        </main>
+        </AuthLayout>
     );
 }
 
