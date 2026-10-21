@@ -1,94 +1,103 @@
 
 import { Link } from "react-router-dom";
 
-// Premium hero section for the TinyNest home page
+// Hero section for the TinyNest homepage.
+// This follows the layout and visual style of your Stitch reference.
 function HeroSection() {
+    // Product photograph used in the original Stitch reference.
+    const heroImage =
+        "https://lh3.googleusercontent.com/aida-public/AB6AXuBl3Twu__khBAZgQeiKd2tgXndWxfBbYuprtW_RR4S9xXEsJOx-qhMz9DXR0oihKbJm-2bTKma6_u_6HdEhzTmCc0yQQ73Akud_i5P3tBEOlAWS2VFyRrS4gr4CYMgxwjIafhG2pLxA7o75oRBjaVVCAT01ig1uRH7vOwMgjgPmbWOlJOJDJAc78bHLe8VrFXG2Sj3D1OAXFf0RdVdwka0TiZoDspkq6PtmUBztwDMKJ5Fdl-BW4hAbLA";
+
     return (
-        <section className="overflow-hidden bg-[#FBF7F0] text-gray-900 transition-colors duration-300 dark:bg-gray-950 dark:text-white">
+        <section className="overflow-hidden bg-[#F7F9FF] text-[#252A28] transition-colors duration-300 dark:bg-gray-950 dark:text-white">
 
-            {/* Main hero container: text on the left, visual on the right */}
-            <div className="mx-auto grid min-h-[560px] max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
+            {/* Two-column hero: introduction on the left, photograph on the right. */}
+            <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-2 lg:gap-14 lg:px-10 lg:py-20">
 
-                {/* Left side: heading, description, and CTA */}
-                <div className="max-w-xl">
+                {/* Left column: brand message and shopping actions. */}
+                <div className="relative z-10">
 
-                    {/* Small introductory label */}
-                    <span className="inline-block rounded-full bg-[#E4EBDD] px-4 py-2 text-sm font-semibold text-[#49634B] dark:bg-[#26372A] dark:text-[#C9DFC5]">
-                        Little essentials, lots of love
-                    </span>
+                    {/* Small introductory badge. */}
+                    <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-xs font-medium text-[#53615A] shadow-sm dark:bg-gray-800 dark:text-gray-200 sm:text-sm">
+                        <span className="h-2 w-2 rounded-full bg-[#789E8D]" />
+                        Thoughtfully chosen for little beginnings
+                    </div>
 
-                    {/* Main heading */}
-                    <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                        Everything your{" "}
-                        <span className="text-[#718B70] dark:text-[#B5D0AC]">
-                            little one
-                        </span>{" "}
-                        needs
+                    {/* Main heading inspired by the reference's editorial typography. */}
+                    <h1 className="mt-7 max-w-xl font-serif text-4xl font-normal leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                        Gentle essentials for your{" "}
+                        <span className="italic text-[#668875] dark:text-[#B5D0AC]">
+                            little one.
+                        </span>
                     </h1>
 
-                    {/* Supporting description */}
-                    <p className="mt-6 max-w-lg text-base leading-8 text-gray-600 sm:text-lg dark:text-gray-300">
-                        Discover thoughtfully selected baby essentials
-                        designed to bring comfort, care, and happiness
-                        to your little one’s everyday moments.
+                    {/* Explain what customers can discover at TinyNest. */}
+                    <p className="mt-6 max-w-xl text-base leading-7 text-[#68716D] dark:text-gray-300 sm:text-lg sm:leading-8">
+                        Discover thoughtfully selected baby clothing,
+                        feeding essentials, gentle care, and everyday
+                        comforts for your little one's journey.
                     </p>
 
-                    {/* CTA: navigate to the existing products page */}
-                    <div className="mt-8 flex flex-wrap items-center gap-4">
+                    {/* Shopping buttons use existing application routes. */}
+                    <div className="mt-8 flex flex-wrap gap-3">
                         <Link
                             to="/products"
-                            className="inline-flex items-center gap-2 rounded-xl bg-[#718B70] px-7 py-3.5 font-semibold text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-[#5D765C] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#718B70] focus:ring-offset-2 dark:focus:ring-offset-gray-950"
+                            className="inline-flex items-center justify-center gap-3 rounded-full bg-[#426758] px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[#345446] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#789E8D] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950"
                         >
                             Shop Now
                             <span aria-hidden="true">→</span>
                         </Link>
 
-                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                            Made for little beginnings
+                        <Link
+                            to="/kits"
+                            className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-[#35443C] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#EDF2EC] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#789E8D] focus-visible:ring-offset-2 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-950"
+                        >
+                            <span aria-hidden="true">♡</span>
+                            Explore Baby Kits
+                        </Link>
+                    </div>
+
+                    {/* Simple supporting message without inventing customer statistics. */}
+                    <div className="mt-8 flex items-center gap-3 text-sm text-[#68716D] dark:text-gray-400">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCE9DE] text-lg text-[#426758] dark:bg-[#26372A] dark:text-[#C9DFC5]">
+                            ♡
                         </span>
+                        <p>Little details, thoughtfully chosen with care.</p>
                     </div>
                 </div>
 
-                {/* Right side: decorative showcase, no external images required */}
-                <div className="relative mx-auto flex min-h-[340px] w-full max-w-lg items-center justify-center sm:min-h-[420px]">
+                {/* Right column: product photography and floating labels. */}
+                <div className="relative mx-auto w-full max-w-xl">
 
-                    {/* Soft pastel background shape */}
-                    <div className="absolute inset-4 rounded-[45%] bg-[#F3DFD9] rotate-[-5deg] dark:bg-[#352B30]" />
+                    {/* Soft decorative background shape. */}
+                    <div
+                        aria-hidden="true"
+                        className="absolute -inset-3 -rotate-2 rounded-[2rem] bg-[#E5EDE5] dark:bg-[#26372A]"
+                    />
 
-                    {/* Main showcase card */}
-                    <div className="relative z-10 flex min-h-[300px] w-full max-w-sm flex-col items-center justify-center rounded-[2rem] border border-white/70 bg-white/75 p-8 text-center shadow-xl shadow-[#8A7560]/10 backdrop-blur-sm sm:min-h-[350px] dark:border-white/10 dark:bg-gray-900/80">
+                    {/* Main photograph. */}
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-[1.5rem] bg-[#E9E6DE] shadow-xl shadow-[#4C554B]/10 sm:rounded-[2rem]">
+                        <img
+                            src={heroImage}
+                            alt="Soft sage baby clothing, a wooden baby rattle, and a terracotta feeding bowl arranged on a warm neutral surface"
+                            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                        />
+                    </div>
 
-                        {/* Decorative baby essentials illustration */}
-                        <div className="flex h-36 w-36 items-center justify-center rounded-full bg-[#E4EBDD] text-7xl dark:bg-[#26372A]">
-                            🧸
+                    {/* Floating information card at the bottom of the image. */}
+                    <div className="absolute -bottom-5 left-3 right-3 flex items-center gap-3 rounded-2xl border border-white/80 bg-white/95 p-3 shadow-lg backdrop-blur sm:bottom-5 sm:left-5 sm:right-5 sm:p-4 dark:border-gray-700 dark:bg-gray-900/95">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#DCE9DE] text-xl text-[#426758] dark:bg-[#26372A] dark:text-[#C9DFC5]">
+                            ♡
                         </div>
 
-                        <p className="mt-6 text-2xl font-bold tracking-tight">
-                            Tiny things,
-                            <br />
-                            <span className="text-[#718B70] dark:text-[#B5D0AC]">
-                                endless love.
-                            </span>
-                        </p>
-
-                        <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600 dark:text-gray-300">
-                            Everyday essentials for your baby's
-                            special little moments.
-                        </p>
-                    </div>
-
-                    {/* Floating decorative badge */}
-                    <div className="absolute right-0 top-8 z-20 rounded-2xl bg-white px-4 py-3 shadow-lg sm:right-2 dark:bg-gray-800">
-                        <p className="text-sm font-semibold text-[#718B70] dark:text-[#B5D0AC]">
-                            Made with care ♡
-                        </p>
-                    </div>
-
-                    {/* Floating decorative accent */}
-                    <div className="absolute bottom-8 left-0 z-20 rounded-2xl bg-[#E4EBDD] px-4 py-3 shadow-md sm:left-2 dark:bg-[#26372A]">
-                        <p className="text-sm font-semibold text-[#49634B] dark:text-[#C9DFC5]">
-                            For little ones ✨
-                        </p>
+                        <div>
+                            <p className="text-sm font-semibold text-[#35443C] dark:text-white">
+                                Everyday comfort, made thoughtful
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-[#68716D] dark:text-gray-400">
+                                Explore essentials for every little milestone.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

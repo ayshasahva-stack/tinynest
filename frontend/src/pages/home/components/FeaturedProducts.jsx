@@ -1,101 +1,84 @@
-// Import useSelector to read data from Redux
+
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-// Import the product selector
+
+// Read the existing TinyNest product data and request status from Redux.
 import {
     selectProducts,
     selectProductsLoading,
     selectProductsError,
-} from '../../../features/products/productSelectors'
-// Import the loading selector
+} from "../../../features/products/productSelectors";
+
+// Reuse existing loading, error, and empty-state components.
 import Loading from "../../../components/Loading";
 import EmptyState from "../../../components/EmptyState";
 import ErrorMessage from "../../../components/ErrorMessage";
 
-// Import the reusable ProductCard component
-import ProductCard from "../../../features/products/components/ProductCard";
+// Keep using TinyNest's existing product card and its functionality.
+import ProductCard from "../../products/components/ProductCard";
 
-// Featured products section
 function FeaturedProducts() {
-    // Get the products stored in Redux
+    // Get the real products from the Redux store.
     const products = useSelector(selectProducts);
-    // Get the product loading state from Redux
     const loading = useSelector(selectProductsLoading);
-    // Get the product error message from Redux
     const error = useSelector(selectProductsError);
 
-    
-return (
-    <section className="bg-[#FBF7F0] py-14 transition-colors duration-300 dark:bg-gray-950 sm:py-20">
+    return (
+        <section className="w-full bg-[#F7F9FF] px-5 py-14 transition-colors duration-300 dark:bg-gray-950 sm:px-8 sm:py-16 lg:px-10 lg:py-20">
+            <div className="mx-auto max-w-7xl">
 
-        {/* Main section container */}
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                {/* Reference-style heading and catalogue link. */}
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#52745C] dark:text-[#B5D0AC]">
+                            Parent Favorites
+                        </span>
 
-            {/* Section heading */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                        <h2 className="mt-1 font-serif text-3xl font-normal tracking-tight text-[#292D29] dark:text-white sm:text-4xl">
+                            Featured Essentials
+                        </h2>
+                    </div>
 
-                <div>
-                    {/* Small decorative label */}
-                    <span className="inline-block rounded-full bg-[#E4EBDD] px-4 py-2 text-sm font-semibold text-[#49634B] dark:bg-[#26372A] dark:text-[#C9DFC5]">
-                        Little favourites
-                    </span>
-
-                    <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-                        Featured Products
-                    </h2>
-
-                    <p className="mt-3 max-w-xl leading-7 text-gray-600 dark:text-gray-400">
-                        Discover thoughtfully selected essentials
-                        for your little one's everyday moments.
-                    </p>
+                    {/* Navigate to the existing product catalogue. */}
+                    <Link
+                        to="/products"
+                        className="inline-flex w-fit items-center gap-2 text-sm font-medium text-[#52745C] transition-colors hover:text-[#344E3A] dark:text-[#B5D0AC] dark:hover:text-white"
+                    >
+                        <span>View all products</span>
+                        <span aria-hidden="true">→</span>
+                    </Link>
                 </div>
 
-                {/* Link to the existing products page */}
-                <Link
-                    to="/products"
-                    className="inline-flex w-fit items-center gap-2 font-semibold text-[#607D5F] transition-colors hover:text-[#49634B] dark:text-[#B5D0AC] dark:hover:text-white"
-                >
-                    View all products
-                    <span aria-hidden="true">→</span>
-                </Link>
-            </div>
-
-            {/* Product content: preserve existing states */}
-            <div className="mt-10 sm:mt-12">
-
+                {/* Preserve the existing API request states. */}
                 {loading ? (
-                    // Display the existing loading component
                     <Loading />
                 ) : error ? (
-                    // Display the existing error component
                     <ErrorMessage
                         title="Unable to load products"
                         message={error}
                     />
                 ) : products.length === 0 ? (
-                    // Display the existing empty state
                     <EmptyState
                         title="No products found"
                         message="There are no products available right now."
                     />
                 ) : (
-                    // Keep using your existing Redux product data and card
+                    /*
+                     * Show up to four real products, matching the
+                     * four-column desktop layout in the reference.
+                     */
                     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-
-                        {products.map((product) => (
+                        {products.slice(0, 4).map((product) => (
                             <ProductCard
                                 key={product._id}
                                 product={product}
                             />
                         ))}
-
                     </div>
                 )}
             </div>
-        </div>
-    </section>
-);
-
+        </section>
+    );
 }
 
 export default FeaturedProducts;

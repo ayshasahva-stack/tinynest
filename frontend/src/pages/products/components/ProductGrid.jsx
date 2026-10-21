@@ -1,6 +1,5 @@
 // Import the reusable ProductCard component
-import ProductCard from "../../../features/products/components/ProductCard";
-
+import ProductCard from "./ProductCard";
 // ProductGrid component
 function ProductGrid({ products }) {
     return (

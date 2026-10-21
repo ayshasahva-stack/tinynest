@@ -4,6 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { useTheme } from "../app/ThemeContext";
+
 import {
     selectIsAuthenticated,
     selectAuthUser,
@@ -12,13 +13,14 @@ import { logout } from "../features/auth/authSlice";
 
 import { selectCartItemCount } from "../features/cart/cartSelectors";
 import { selectWishlistCount } from "../features/wishlist/wishlistSelectors";
+
 import { getMyWishlistThunk } from "../features/wishlist/wishlistThunk";
 import { getMyCartThunk } from "../features/cart/cartThunk";
 
 import NotificationBell from "./NotificationBell";
 
 function Navbar() {
-    // Controls the mobile navigation and account dropdown.
+    // Control the mobile menu and desktop account dropdown.
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
@@ -28,13 +30,13 @@ function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Read existing authentication and shopping state from Redux.
+    // Read existing authentication and shopping information from Redux.
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectAuthUser);
     const cartItemCount = useSelector(selectCartItemCount);
     const wishlistCount = useSelector(selectWishlistCount);
 
-    // Fetch cart and wishlist data for signed-in customers.
+    // Load the customer's cart and wishlist after authentication.
     useEffect(() => {
         if (isAuthenticated) {
             dispatch(getMyWishlistThunk());
@@ -42,13 +44,13 @@ function Navbar() {
         }
     }, [dispatch, isAuthenticated]);
 
-    // Close menus after navigating to another page.
+    // Close both menus when the user changes pages.
     useEffect(() => {
         setIsMenuOpen(false);
         setIsAccountMenuOpen(false);
     }, [location.pathname]);
 
-    // Use the existing Redux logout action.
+    // Keep the existing logout functionality.
     const handleLogout = () => {
         dispatch(logout());
         setIsMenuOpen(false);
@@ -56,32 +58,42 @@ function Navbar() {
         navigate("/login");
     };
 
-    // Shared styling for active navigation links.
+    // Desktop navigation link styling.
     const linkClass = ({ isActive }) =>
-        `rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive
-            ? "bg-[#E1E9DC] text-[#3F5B43] dark:bg-[#344638] dark:text-[#E2EBDD]"
-            : "text-stone-700 hover:bg-[#F5E9E7] hover:text-[#80545C] dark:text-stone-200 dark:hover:bg-stone-800 dark:hover:text-[#E8BFC7]"
+        `rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${
+            isActive
+                ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
+                : "text-[#414845] hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
         }`;
 
-    // Shared styling for account dropdown links.
-    const accountLinkClass =
-        "flex w-full items-center gap-3 px-5 py-3 text-sm text-stone-700 transition hover:bg-[#E1E9DC] hover:text-[#405B43] dark:text-stone-200 dark:hover:bg-stone-800";
+    // Mobile links occupy the full width to prevent horizontal wrapping.
+    const mobileLinkClass = ({ isActive }) =>
+        `block w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
+            isActive
+                ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
+                : "text-[#414845] hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
+        }`;
 
-    // Display the customer's name when available.
+    // Shared styling for account menu links.
+    const accountLinkClass =
+        "flex w-full items-center gap-3 px-5 py-3 text-sm text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white";
+
+    // Display a friendly account name.
     const accountName =
         user?.fullName ||
         user?.email?.split("@")[0] ||
         "My Account";
 
-    // Theme toggle reused in the desktop and mobile account menus.
+    // Reuse the theme toggle in the desktop and mobile account menus.
     const renderThemeToggle = () => (
         <button
             type="button"
             onClick={toggleTheme}
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"
-                } mode`}
+            aria-label={`Switch to ${
+                theme === "light" ? "dark" : "light"
+            } mode`}
             aria-pressed={theme === "dark"}
-            className="flex w-full items-center justify-between px-5 py-3 text-sm text-stone-700 transition hover:bg-[#E1E9DC] dark:text-stone-200 dark:hover:bg-stone-800"
+            className="flex w-full items-center justify-between px-5 py-3 text-sm text-[#414845] transition-colors hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
         >
             <span className="flex items-center gap-3">
                 <span aria-hidden="true">
@@ -90,13 +102,13 @@ function Navbar() {
                 Theme
             </span>
 
-            <span className="text-xs text-stone-500 dark:text-stone-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
                 {theme === "light" ? "Light mode" : "Dark mode"}
             </span>
         </button>
     );
 
-    // Account links shared by desktop and mobile menus.
+    // Keep existing customer account routes and notification badge.
     const renderAccountLinks = () => (
         <>
             <Link to="/profile" className={accountLinkClass}>
@@ -117,29 +129,22 @@ function Navbar() {
             <Link to="/wishlist" className={accountLinkClass}>
                 <span aria-hidden="true">♡</span>
                 Wishlist
+
                 {wishlistCount > 0 && (
-                    <span className="ml-auto rounded-full bg-[#EED5D9] px-2 py-0.5 text-xs text-[#754750] dark:bg-[#5B3941] dark:text-[#F5DDE1]">
+                    <span className="ml-auto rounded-full bg-[#DCE8E1] px-2 py-0.5 text-xs font-semibold text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
                         {wishlistCount}
                     </span>
                 )}
             </Link>
 
-            {/* Customer coupons page */}
             <Link to="/coupons" className={accountLinkClass}>
                 <span aria-hidden="true">🎟️</span>
-                <span>My Coupons</span>
+                My Coupons
             </Link>
 
-
-            <Link
-                to="/notifications"
-                className={accountLinkClass}
-            >
+            <Link to="/notifications" className={accountLinkClass}>
                 <span aria-hidden="true">🔔</span>
-
                 <span>Notifications</span>
-
-                {/* Show the unread count like the Wishlist badge. */}
                 <NotificationBell badgeOnly />
             </Link>
 
@@ -151,23 +156,29 @@ function Navbar() {
     );
 
     return (
-        <header className="sticky top-0 z-50 border-b border-[#E8E0D5] bg-[#FFFCF7]/95 shadow-sm backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95">
+        <header className="sticky top-0 z-50 border-b border-[#E0E4E8] bg-[#F7F9FF]/95 shadow-[0_2px_12px_rgba(35,50,45,0.04)] backdrop-blur-xl transition-colors duration-300 dark:border-gray-800 dark:bg-gray-950/95">
+
             <nav
-                className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+                className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10"
                 aria-label="Main navigation"
             >
-                <div className="flex min-h-[76px] items-center justify-between gap-4">
-                    {/* Brand and homepage link. */}
+                {/* Main navbar row. */}
+                <div className="flex min-h-[76px] items-center justify-between gap-3 sm:gap-5">
+
+                    {/* Brand logo. */}
                     <Link
                         to="/"
                         aria-label="TinyNest home"
-                        className="shrink-0 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#789477]"
+                        className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#668875]"
                     >
-                        <span className="block text-2xl font-bold tracking-tight text-[#405B43] dark:text-[#D9E6D4]">
-                            TinyNest<span className="text-[#D69BA5]">.</span>
+                        <span className="block font-serif text-2xl font-medium tracking-tight text-[#252A28] dark:text-white sm:text-3xl">
+                            TinyNest
+                            <span className="text-[#668875] dark:text-[#B5D0AC]">
+                                .
+                            </span>
                         </span>
 
-                        <span className="hidden text-[10px] font-medium uppercase tracking-[0.19em] text-stone-500 sm:block dark:text-stone-400">
+                        <span className="hidden text-[9px] font-medium uppercase tracking-[0.18em] text-[#68716D] dark:text-gray-400 sm:block">
                             Little things, lots of love
                         </span>
                     </Link>
@@ -186,19 +197,28 @@ function Navbar() {
                             Baby Kits
                         </NavLink>
 
+                        <NavLink to="/wishlist" className={linkClass}>
+                            Wishlist
 
+                            {wishlistCount > 0 && (
+                                <span className="ml-2 rounded-full bg-[#DCE8E1] px-2 py-0.5 text-xs font-semibold text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
+                                    {wishlistCount}
+                                </span>
+                            )}
+                        </NavLink>
 
                         <NavLink to="/cart" className={linkClass}>
                             Cart
+
                             {cartItemCount > 0 && (
-                                <span className="ml-2 rounded-full bg-[#DCE7D6] px-2 py-0.5 text-xs text-[#405B43] dark:bg-[#344638] dark:text-[#E2EBDD]">
+                                <span className="ml-2 rounded-full bg-[#436558] px-2 py-0.5 text-xs font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
                                     {cartItemCount}
                                 </span>
                             )}
                         </NavLink>
                     </div>
 
-                    {/* Desktop account actions: no standalone bell or theme button. */}
+                    {/* Desktop account actions. */}
                     <div className="hidden items-center gap-2 md:flex">
                         {isAuthenticated ? (
                             <div className="relative">
@@ -209,9 +229,9 @@ function Navbar() {
                                     }
                                     aria-expanded={isAccountMenuOpen}
                                     aria-haspopup="true"
-                                    className="flex max-w-56 items-center gap-2 rounded-full px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-[#F5E9E7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#789477] dark:text-stone-200 dark:hover:bg-stone-800"
+                                    className="flex max-w-56 items-center gap-2 rounded-full px-3 py-2.5 text-sm font-semibold text-[#414845] transition-colors hover:bg-[#EBEEF3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#668875] dark:text-gray-200 dark:hover:bg-gray-800"
                                 >
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E1E9DC] text-lg text-[#405B43] dark:bg-[#344638] dark:text-[#E2EBDD]">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCE8E1] text-lg text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
                                         👤
                                     </span>
 
@@ -224,52 +244,50 @@ function Navbar() {
                                     </span>
                                 </button>
 
-                                {/* Keep the dropdown mounted so notifications load in advance. */}
+                                {/* Desktop account dropdown. */}
                                 <div
-                                    className={`absolute right-0 top-full z-50 mt-3 w-72 overflow-hidden rounded-2xl border border-[#E8E0D5] bg-[#FFFCF7] py-2 shadow-xl dark:border-stone-700 dark:bg-stone-900 ${isAccountMenuOpen ? "block" : "hidden"
-                                        }`}
+                                    className={`absolute right-0 top-full z-50 mt-3 w-72 overflow-hidden rounded-2xl border border-[#E0E4E8] bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-gray-900 ${
+                                        isAccountMenuOpen ? "block" : "hidden"
+                                    }`}
                                 >
-                                    {/* Account heading. */}
-                                    <div className="border-b border-[#E8E0D5] px-5 py-3 dark:border-stone-700">
-                                        <p className="font-semibold text-stone-900 dark:text-white">
+                                    <div className="border-b border-[#E0E4E8] px-5 py-3 dark:border-gray-700">
+                                        <p className="font-semibold text-[#252A28] dark:text-white">
                                             Your Account
                                         </p>
 
-                                        <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+                                        <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
                                             {user?.email || "Manage your account"}
                                         </p>
                                     </div>
 
                                     {renderAccountLinks()}
 
-
-                                    <div className="border-t border-[#E8E0D5] pt-1 dark:border-stone-700">
+                                    <div className="border-t border-[#E0E4E8] pt-1 dark:border-gray-700">
                                         {renderThemeToggle()}
 
                                         <button
                                             type="button"
                                             onClick={handleLogout}
-                                            className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-stone-800"
+                                            className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800"
                                         >
                                             <span aria-hidden="true">↪</span>
                                             Logout
                                         </button>
                                     </div>
                                 </div>
-
                             </div>
                         ) : (
                             <>
                                 <NavLink
                                     to="/login"
-                                    className="rounded-full px-4 py-2 text-sm font-medium text-stone-700 transition hover:text-[#405B43] dark:text-stone-200 dark:hover:text-white"
+                                    className="rounded-full px-4 py-2 text-sm font-medium text-[#414845] transition-colors hover:text-[#436558] dark:text-gray-300 dark:hover:text-white"
                                 >
                                     Login
                                 </NavLink>
 
                                 <NavLink
                                     to="/register"
-                                    className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3F5941] dark:bg-[#DCE7D6] dark:text-stone-900 dark:hover:bg-white"
+                                    className="rounded-full bg-[#436558] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#345347] dark:bg-[#B5D0AC] dark:text-gray-900 dark:hover:bg-[#C5EBDA]"
                                 >
                                     Sign up
                                 </NavLink>
@@ -277,7 +295,7 @@ function Navbar() {
                         )}
                     </div>
 
-                    {/* Mobile menu button only; no separate bell or theme button. */}
+                    {/* Mobile menu toggle. */}
                     <div className="flex items-center gap-2 md:hidden">
                         <button
                             type="button"
@@ -285,69 +303,92 @@ function Navbar() {
                             aria-expanded={isMenuOpen}
                             aria-controls="mobile-navigation"
                             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-                            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E1E9DC] text-xl text-[#405B43] dark:bg-stone-800 dark:text-white"
+                            className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DCE8E1] text-xl text-[#2B4D41] transition-colors hover:bg-[#C5D9CE] dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
                         >
                             {isMenuOpen ? "×" : "☰"}
                         </button>
                     </div>
                 </div>
 
-                {/* Responsive mobile navigation. */}
+                {/* Mobile dropdown: overlays the page and scrolls independently. */}
                 {isMenuOpen && (
                     <div
                         id="mobile-navigation"
-                        className="space-y-2 border-t border-[#E8E0D5] py-4 dark:border-stone-700 md:hidden"
+                        className="absolute left-0 right-0 top-[76px] z-50 max-h-[calc(100dvh-108px)] space-y-2 overflow-y-auto overscroll-contain rounded-b-2xl border-t border-[#E0E4E8] bg-[#F7F9FF] px-4 py-4 shadow-xl dark:border-gray-800 dark:bg-gray-950 md:hidden"
                     >
-                        <NavLink to="/" end className={linkClass}>
+                        {/* Each main navigation link uses its own row. */}
+                        <NavLink
+                            to="/"
+                            end
+                            className={mobileLinkClass}
+                        >
                             Home
                         </NavLink>
 
-                        <NavLink to="/products" className={linkClass}>
+                        <NavLink
+                            to="/products"
+                            className={mobileLinkClass}
+                        >
                             Shop
                         </NavLink>
 
-                        <NavLink to="/kits" className={linkClass}>
+                        <NavLink
+                            to="/kits"
+                            className={mobileLinkClass}
+                        >
                             Baby Kits
                         </NavLink>
 
-                        <NavLink to="/wishlist" className={linkClass}>
-                            Wishlist
-                            {wishlistCount > 0 && ` (${wishlistCount})`}
+                        <NavLink
+                            to="/wishlist"
+                            className={mobileLinkClass}
+                        >
+                            <span className="flex items-center justify-between">
+                                Wishlist
+                                {wishlistCount > 0 && (
+                                    <span className="rounded-full bg-[#DCE8E1] px-2 py-0.5 text-xs font-semibold text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
+                                        {wishlistCount}
+                                    </span>
+                                )}
+                            </span>
                         </NavLink>
 
-                        <NavLink to="/cart" className={linkClass}>
-                            Cart
-                            {cartItemCount > 0 && ` (${cartItemCount})`}
+                        <NavLink
+                            to="/cart"
+                            className={mobileLinkClass}
+                        >
+                            <span className="flex items-center justify-between">
+                                Cart
+                                {cartItemCount > 0 && (
+                                    <span className="rounded-full bg-[#436558] px-2 py-0.5 text-xs font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
+                                        {cartItemCount}
+                                    </span>
+                                )}
+                            </span>
                         </NavLink>
 
                         {isAuthenticated ? (
-                            <div className="border-t border-[#E8E0D5] pt-3 dark:border-stone-700">
-                                <div className="px-4 py-2">
-                                    <p className="font-semibold text-stone-900 dark:text-white">
+                            <div className="mt-3 border-t border-[#E0E4E8] pt-3 dark:border-gray-800">
+                                {/* Account details. */}
+                                <div className="px-4 py-3">
+                                    <p className="font-semibold text-[#252A28] dark:text-white">
                                         Your Account
                                     </p>
-                                    <p className="mt-1 truncate text-xs text-stone-500 dark:text-stone-400">
+
+                                    <p className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
                                         {user?.email}
                                     </p>
                                 </div>
 
-                                {/* Notification control lives in the account section. */}
-                                <div className="flex items-center justify-between px-5 py-2">
-                                    <span className="text-sm text-stone-700 dark:text-stone-200">
-                                        Notification alerts
-                                    </span>
-                                    <NotificationBell />
-                                </div>
-
                                 {renderAccountLinks()}
 
-                                <div className="mt-2 border-t border-[#E8E0D5] pt-1 dark:border-stone-700">
+                                <div className="mt-2 border-t border-[#E0E4E8] pt-1 dark:border-gray-800">
                                     {renderThemeToggle()}
 
                                     <button
                                         type="button"
                                         onClick={handleLogout}
-                                        className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 dark:text-red-400"
+                                        className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800"
                                     >
                                         <span aria-hidden="true">↪</span>
                                         Logout
@@ -355,20 +396,22 @@ function Navbar() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-wrap gap-3 border-t border-[#E8E0D5] pt-3 dark:border-stone-700">
+                            <div className="mt-3 flex gap-3 border-t border-[#E0E4E8] pt-4 dark:border-gray-800">
                                 <Link
                                     to="/login"
-                                    className="rounded-full border border-[#D9D0C5] px-5 py-2.5 text-sm font-medium dark:border-stone-600"
+                                    className="flex-1 rounded-full border border-[#D5DDE0] px-4 py-3 text-center text-sm font-medium text-[#414845] transition-colors hover:bg-[#EBEEF3] dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                                 >
                                     Login
                                 </Link>
 
                                 <Link
                                     to="/register"
-                                    className="rounded-full bg-[#506B52] px-5 py-2.5 text-sm font-semibold text-white dark:bg-[#DCE7D6] dark:text-stone-900"
+                                    className="flex-1 rounded-full bg-[#436558] px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#345347] dark:bg-[#B5D0AC] dark:text-gray-900"
                                 >
                                     Sign up
                                 </Link>
+
+                                {renderThemeToggle()}
                             </div>
                         )}
                     </div>

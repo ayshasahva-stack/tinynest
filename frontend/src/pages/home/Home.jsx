@@ -11,7 +11,9 @@ import { fetchProducts } from "../../features/products/productThunk";
 import HeroSection from "./components/HeroSection";
 import CategoriesSection from "./components/CategoriesSection";
 import FeaturedProducts from "./components/FeaturedProducts";
-import PromoSection from "./components/PromoSection";
+import BabyKitSection from "./components/BabyKitSection";
+import NewArrivalsSection from "./components/NewArrivalsSection";
+import BenefitsSection from "./components/BenefitsSection";
 
 // Home page component
 function Home() {
@@ -33,9 +35,12 @@ function Home() {
 
             {/* Featured products section */}
             <FeaturedProducts />
+            {/* Baby essentials kits section */}
+            <BabyKitSection />
 
-            {/* Promotional section */}
-            <PromoSection />
+            <NewArrivalsSection />
+            <BenefitsSection />
+
         </main>
     );
 }

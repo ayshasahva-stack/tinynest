@@ -1,81 +1,115 @@
 
 import { Link } from "react-router-dom";
 
-// Category images should be placed in:
-// frontend/public/images/categories/
+// Six image-based categories matching the visual reference.
+// These image URLs come from your Stitch reference design.
+
 const categories = [
     {
         id: 1,
         name: "Baby Clothing",
-      image: "/images/categories/baby-clothing.jpg",
+        description: "Organic onesies & sets",
+        image: "/images/categories/baby-clothing.jpg",
     },
     {
         id: 2,
-        name: "Feeding",
+        name: "Feeding & Weaning",
+        description: "Bowls, bottles & feeding sets",
         image: "/images/categories/feeding.jpg",
     },
     {
         id: 3,
-        name: "Diapers",
-        image: "/images/categories/diapers.jpg",
+        name: "Baby Care",
+        description: "Gentle everyday essentials",
+        image: "/images/categories/baby-care.jpg",
     },
     {
         id: 4,
-        name: "Toys",
-        image: "/images/categories/toys.jpg",
+        name: "Diapers & Wipes",
+        description: "Soft, everyday changing care",
+        image: "/images/categories/diapers.jpg",
     },
     {
         id: 5,
-        name: "Bedding",
-        image: "/images/categories/bedding.jpg",
+        name: "Wooden Toys",
+        description: "Playful little discoveries",
+        image: "/images/categories/toys.jpg",
     },
     {
         id: 6,
+        name: "Baby Bedding",
+        description: "Comfort for sweeter dreams",
+        image: "/images/categories/bedding.jpg",
+    },
+    {
+        id: 7,
         name: "Accessories",
+        description: "Little extras for every day",
         image: "/images/categories/accessories.jpg",
+    },
+    {
+        id: 8,
+        name: "Newborn Kits",
+        description: "Thoughtful essentials in one bundle",
+        image: "/images/categories/newborn-kits.jpg",
     },
 ];
 
+
 function CategoriesSection() {
     return (
-        <section className="bg-[#FAFAF3] py-12 transition-colors duration-300 dark:bg-gray-950 sm:py-16">
+       <section className="bg-[#F7F9FF] px-5 py-12 transition-colors duration-300 dark:bg-gray-950 sm:px-8 sm:py-16 lg:px-10">
 
-            {/* Main section container */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-8">
+            {/* Keep the content aligned with the hero section. */}
+            <div className="mx-auto max-w-7xl">
 
-                {/* Section heading */}
-                <h2 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
-                    Shop by Category
-                </h2>
+                {/* Heading and supporting description. */}
+               <header className="mx-auto mb-10 max-w-2xl text-center">
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#668875] dark:text-[#B5D0AC]">
+                      Thoughtfully Curated
+                    </p>
 
-                {/* Horizontal category row */}
-                <div className="mt-8 grid grid-cols-3 gap-x-4 gap-y-7 sm:grid-cols-6 sm:gap-x-5">
+                    <h2 className="mt-2 font-serif text-3xl font-normal tracking-tight text-[#252A28] dark:text-white sm:text-4xl">
+                       Shop by Category
+                    </h2>
 
-                    {categories.map((category) => (
-                        <Link
-                            key={category.id}
-                            to="/products"
-                            aria-label={`Shop ${category.name}`}
-                            className="group flex min-w-0 flex-col items-center text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#718B70] focus-visible:ring-offset-4"
-                        >
-                            {/* Circular category photograph */}
-                            <div className="aspect-square w-full max-w-[140px] overflow-hidden rounded-full bg-[#EEE8DC] shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md dark:bg-gray-800">
-                                <img
-                                    src={category.image}
-                                    alt={category.name}
-                                    loading="lazy"
-                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                />
-                            </div>
+                    <p className="mt-3 text-sm leading-6 text-[#68716D] dark:text-gray-400 sm:text-base">
+                       Everyday essentials created with non-toxic botanical materials and timeless Nordic simplicity
+                    </p>
+                 
+                </header>
+                {/* Circular image cards. */}
+                
+<div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
+    {categories.map((category) => (
+        <Link
+            key={category.id}
+            to="/products"
+            aria-label={`Explore ${category.name}`}
+            className="group flex flex-col items-center text-center"
+        >
+            {/* Circular category image */}
+            <div className="aspect-square w-full max-w-[180px] overflow-hidden rounded-full bg-[#EAE6DC]">
+                <img
+                    src={category.image}
+                    alt={category.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+            </div>
 
-                            {/* Category name */}
-                            <span className="mt-3 text-xs font-medium text-gray-800 transition-colors group-hover:text-[#718B70] dark:text-gray-200 dark:group-hover:text-[#B5D0AC] sm:text-sm">
-                                {category.name}
-                            </span>
-                        </Link>
-                    ))}
+            {/* Category name and description */}
+            <h3 className="mt-4 text-sm font-medium text-[#252A28] group-hover:text-[#668875] dark:text-white sm:text-base">
+                {category.name}
+            </h3>
 
-                </div>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 sm:text-sm">
+                {category.description}
+            </p>
+        </Link>
+    ))}
+</div>
+
             </div>
         </section>
     );
