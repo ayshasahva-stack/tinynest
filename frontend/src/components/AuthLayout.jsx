@@ -10,10 +10,14 @@ function AuthLayout({
     footer,
 }) {
     return (
-        <section className="bg-[#FAF8F5] px-4 py-8 transition-colors duration-300 dark:bg-[#171B19] sm:px-6 sm:py-12 lg:py-14">
+        
+<section className="flex min-h-[calc(100dvh-80px)] flex-col justify-center bg-[#FAF8F5] px-4 py-3 transition-colors duration-300 dark:bg-[#171B19] sm:px-6 sm:py-4">
+
 
             {/* Main card: two columns on desktop */}
-            <div className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-2xl border border-[#EAE6DF] bg-white shadow-[0_18px_60px_rgba(48,61,51,0.08)] dark:border-[#343B36] dark:bg-[#202622] lg:min-h-[570px] lg:grid-cols-[0.9fr_1.1fr]">
+          
+<div className="mx-auto grid w-full max-w-5xl overflow-hidden rounded-2xl border border-[#EAE6DF] bg-white shadow-[0_18px_60px_rgba(48,61,51,0.08)] dark:border-[#343B36] dark:bg-[#202622] lg:min-h-0 lg:grid-cols-[0.9fr_1.1fr]">
+
 
                 {/* Left panel: branding and welcome message */}
                 <aside className="relative flex min-h-[220px] flex-col justify-between overflow-hidden bg-[#E8EEE6] p-6 dark:bg-[#29352D] sm:p-8 lg:min-h-full lg:p-10">
@@ -85,11 +89,11 @@ function AuthLayout({
                 </aside>
 
                 {/* Right panel: page-specific form */}
-                <div className="flex items-center justify-center p-6 sm:p-9 lg:p-12">
+                <div className="flex items-center justify-center p-5 sm:p-6 lg:p-8">
                     <div className="w-full max-w-md">
 
                         {/* Page-specific heading and description */}
-                        <div className="mb-7 sm:mb-8">
+                      <div className="mb-4 sm:mb-5">
                             <p className="mb-2 text-xs font-semibold tracking-[0.16em] text-[#7A9E8F] dark:text-[#A9C6B0]">
                                 {eyebrow}
                             </p>
