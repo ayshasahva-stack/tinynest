@@ -1,99 +1,140 @@
-// Import React's useState hook
-import { useState } from "react";
 
-// Import reusable form components
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-// Import the authentication loading selector
-import { selectAuthLoading } from "../../features/auth/authSelectors";
+import AuthLayout from "../../components/AuthLayout";
 
-// Import Redux's dispatch hook
-import { useDispatch,useSelector } from "react-redux";
-// Import React Router's navigation hook
-import { useNavigate,useLocation } from "react-router-dom";
-// Import Redux's selector hook
+import {
+    selectAuthLoading,
+    selectAuthError,
+} from "../../features/auth/authSelectors";
 
-// Import the authentication error selector
-import { selectAuthError } from "../../features/auth/authSelectors";
-// Import the login thunk
-import { 
+import {
     loginUserThunk,
-    getProfileThunk
+    getProfileThunk,
+} from "../../features/auth/authThunk";
 
- } from "../../features/auth/authThunk";
-
-// Login page component
 function Login() {
-    // Store the email entered by the user
+    // Store the email and password entered by the user.
     const [email, setEmail] = useState("");
-
-    // Store the password entered by the user
     const [password, setPassword] = useState("");
-    // Get the function used to navigate between pages
+
+    // Access Redux and React Router functionality.
     const navigate = useNavigate();
-    // Get the Redux dispatch function
-const location = useLocation();
+    const location = useLocation();
     const dispatch = useDispatch();
-    // Get the current authentication error from Redux
+
+    // Read authentication status from Redux.
     const error = useSelector(selectAuthError);
-    // Get the authentication loading state from Redux
     const loading = useSelector(selectAuthLoading);
-    // Handle login form submission
-   const handleSubmit = async (event) => {
-    event.preventDefault();
 
-    try {
-        // Authenticate the user and save the access token.
-        await dispatch(
-            loginUserThunk({ email, password })
-        ).unwrap();
+    // Authenticate the user and fetch their profile.
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
-        // Fetch the user's profile and role before navigating.
-        await dispatch(getProfileThunk()).unwrap();
+        try {
+            // Log in using the existing Redux thunk.
+            await dispatch(
+                loginUserThunk({ email, password })
+            ).unwrap();
 
-        // Return to the requested page, or go home by default.
-        const destination = location.state?.from?.pathname || "/";
+            // Fetch the user's profile and role.
+            await dispatch(
+                getProfileThunk()
+            ).unwrap();
 
-        navigate(destination, { replace: true });
-    } catch (error) {
-        // The existing Redux error state displays login/profile errors.
-        console.error("Authentication failed:", error);
-    }
-};
+            // Return to the requested page or go home.
+            const destination =
+                location.state?.from?.pathname || "/";
+
+            navigate(destination, { replace: true });
+        } catch (error) {
+            // Redux retains the error for display on the page.
+            console.error("Authentication failed:", error);
+        }
+    };
 
     return (
-        <main>
-            <h1>Login</h1>
-            {/* Show the login error when one exists */}
+        <AuthLayout
+            title="Welcome back"
+            description="Sign in to your account and pick up where you left off."
+            footer={
+                <p className="text-sm text-[#707771] dark:text-[#B5BDB7]">
+                    New to TinyNest?{" "}
+                    <Link
+                        to="/register"
+                        className="font-semibold text-[#5F816D] hover:text-[#456354] hover:underline dark:text-[#B4D0BB]"
+                    >
+                        Create an account
+                    </Link>
+                </p>
+            }
+        >
+            {/* Display the authentication error. */}
             {error && (
-                <p className="mb-4 text-sm text-red-600">
+                <p
+                    role="alert"
+                    className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                >
                     {error}
                 </p>
             )}
-            <form onSubmit={handleSubmit}>
+
+            {/* Login form */}
+            <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+            >
                 <Input
-                    label="Email"
+                    label="Email address"
                     type="email"
                     name="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Enter your email"
+                    onChange={(event) =>
+                        setEmail(event.target.value)
+                    }
+                    placeholder="you@example.com"
+                    autoComplete="email"
                 />
 
-                <Input
-                    label="Password"
-                    type="password"
-                    name="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    placeholder="Enter your password"
-                />
+                <div className="space-y-2">
+                    <Input
+                        label="Password"
+                        type="password"
+                        name="password"
+                        value={password}
+                        onChange={(event) =>
+                            setPassword(event.target.value)
+                        }
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                    />
 
-                <Button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
+                    {/* Navigate to the password recovery page. */}
+                    <div className="flex justify-end">
+                        <Link
+                            to="/forgot-password"
+                            className="text-sm font-medium text-[#668875] hover:underline dark:text-[#B4D0BB]"
+                        >
+                            Forgot password?
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Use the authentication button variant from the ZIP. */}
+                <Button
+                    type="submit"
+                    variant="auth"
+                    fullWidth
+                    disabled={loading}
+                >
+                    {loading ? "Signing in..." : "Sign in"}
                 </Button>
             </form>
-        </main>
+        </AuthLayout>
     );
 }
 

@@ -17,34 +17,34 @@ function Register() {
     // Store the password entered by the user
     const [password, setPassword] = useState("");
     // Store the confirmation password entered by the user
-const [confirmPassword, setConfirmPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     // Get the Redux dispatch function
-const dispatch = useDispatch();
-const navigate=useNavigate()
+    const dispatch = useDispatch();
+    const navigate = useNavigate()
     // Handle registration form submission
     // Handle registration form submission
-const handleSubmit = async (event) => {
-    // Prevent the browser from refreshing the page
-    event.preventDefault();
+    const handleSubmit = async (event) => {
+        // Prevent the browser from refreshing the page
+        event.preventDefault();
 
-    try {
-        // Send the registration data and wait for the backend response
-        await dispatch(
-            registerUserThunk({
-                email,
-                phone,
-                password,
-                confirmPassword,
-            })
-        ).unwrap();
+        try {
+            // Send the registration data and wait for the backend response
+            await dispatch(
+                registerUserThunk({
+                    email,
+                    phone,
+                    password,
+                    confirmPassword,
+                })
+            ).unwrap();
 
-        // Navigate to OTP verification after successful registration
-        navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
-    } catch (error) {
-        // Log the registration error for now
-        console.error(error);
-    }
-};
+            // Navigate to OTP verification after successful registration
+            navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
+        } catch (error) {
+            // Log the registration error for now
+            console.error(error);
+        }
+    };
     return (
         <main>
             <h1>Register</h1>
@@ -79,15 +79,15 @@ const handleSubmit = async (event) => {
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="Enter your password"
                 />
-{/* Confirm password input */}
-<Input
-    label="Confirm Password"
-    type="password"
-    name="confirmPassword"
-    value={confirmPassword}
-    onChange={(event) => setConfirmPassword(event.target.value)}
-    placeholder="Confirm your password"
-/>
+                {/* Confirm password input */}
+                <Input
+                    label="Confirm Password"
+                    type="password"
+                    name="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Confirm your password"
+                />
                 {/* Register button */}
                 <Button type="submit">
                     Register
