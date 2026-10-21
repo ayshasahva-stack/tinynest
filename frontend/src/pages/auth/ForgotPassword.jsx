@@ -1,80 +1,122 @@
 
-// Import React's useState hook
 import { useState } from "react";
-
-// Import reusable form components
-import Input from "../../components/Input";
-import Button from "../../components/Button";
-// Import Redux hooks
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-// Import the forgot password thunk
-import { forgotPasswordThunk } from "../../features/auth/authThunk";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import AuthLayout from "../../components/AuthLayout";
 
-// Import the authentication selectors
+import { forgotPasswordThunk } from "../../features/auth/authThunk";
 import {
     selectAuthLoading,
     selectAuthError,
 } from "../../features/auth/authSelectors";
 
-// Forgot Password page component
 function ForgotPassword() {
-    // Store the email entered by the user
+    // Store the email entered by the user.
     const [email, setEmail] = useState("");
-    // Get the Redux dispatch function
-const dispatch = useDispatch();
 
-// Get the current authentication loading state
-const loading = useSelector(selectAuthLoading);
+    // Store client-side validation errors separately.
+    const [validationError, setValidationError] = useState("");
 
-// Get the current authentication error
-const error = useSelector(selectAuthError);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    // Handle the forgot password form submission
-    // Handle the forgot password form submission
+    // Read the request status and backend error from Redux.
+    const loading = useSelector(selectAuthLoading);
+    const error = useSelector(selectAuthError);
+
+   
 const handleSubmit = async (event) => {
-    // Prevent the browser from refreshing the page
-    event.preventDefault();
+  event.preventDefault();
+  setValidationError("");
 
-    try {
-        // Send the email to the backend
-        const response = await dispatch(
-            forgotPasswordThunk(email)
-        ).unwrap();
+  const cleanedEmail = email.trim();
 
-        // Show the backend response for now
-        console.log(response);
-    } catch (error) {
-        // Log the error for now
-        console.error(error);
-    }
+  if (!cleanedEmail) {
+    setValidationError("Please enter your email address.");
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
+    setValidationError("Please enter a valid email address.");
+    return;
+  }
+
+  try {
+    // unwrap() throws if the Redux thunk is rejected.
+    await dispatch(forgotPasswordThunk(cleanedEmail)).unwrap();
+
+    // Navigate only after a successful response.
+    navigate(
+      `/verify-reset-otp?email=${encodeURIComponent(cleanedEmail)}`
+    );
+  } catch (error) {
+    // Stay on this page and let the Redux error selector display the error.
+    console.error("Forgot password failed:", error);
+  }
 };
 
-    return (
-        <main>
-            <h1>Forgot Password</h1>
-            {/* Show an error when the request fails */}
-{error && (
-    <p className="mb-4 text-sm text-red-600">
-        {error}
-    </p>
-)}
 
-            <form onSubmit={handleSubmit}>
+    // Show validation errors first, otherwise show the API error.
+    const displayedError = validationError || error;
+
+    return (
+        <AuthLayout
+            eyebrow="ACCOUNT RECOVERY"
+            title="Forgot your password?"
+            description="It happens! Enter the email address linked to your TinyNest account and we'll help you reset your password."
+            footer={
+                <p className="text-sm text-[#707771] dark:text-[#B5BDB7]">
+                    Remember your password?{" "}
+                    <Link
+                        to="/login"
+                        className="font-semibold text-[#5F816D] hover:underline dark:text-[#B4D0BB]"
+                    >
+                        Sign in
+                    </Link>
+                </p>
+            }
+        >
+            {/* Display validation and backend errors accessibly. */}
+            {displayedError && (
+                <p
+                    role="alert"
+                    className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                >
+                    {typeof displayedError === "string"
+                        ? displayedError
+                        : "We couldn't request a password reset. Please try again."}
+                </p>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Email address associated with the account. */}
                 <Input
-                    label="Email"
+                    label="Registered email address"
                     type="email"
                     name="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Enter your registered email"
+                    onChange={(event) => {
+                        setEmail(event.target.value);
+                        setValidationError("");
+                    }}
+                    placeholder="you@example.com"
+                    disabled={loading}
                 />
 
-                <Button type="submit" disabled={loading}>
-    {loading ? "Sending OTP..." : "Send Reset OTP"}
-</Button>
+                {/* Disable repeated requests while the API call is pending. */}
+                <Button
+                    type="submit"
+                    variant="auth"
+                    fullWidth
+                    disabled={loading}
+                >
+                    {loading ? "Sending reset OTP..." : "Send reset OTP"}
+                </Button>
             </form>
-        </main>
+        </AuthLayout>
     );
 }
 

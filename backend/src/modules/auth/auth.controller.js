@@ -567,12 +567,10 @@ export const forgotPassword = async (req, res, next) => {
 
         // Don't reveal whether an email exists
         // This helps prevent account enumeration
+        // Stop the password-reset flow if the email is not registered.
         if (!user) {
-            return sendSuccessResponse(
-                res,
-                200,
-                null,
-                "If an account exists with this email, a reset OTP has been sent"
+            return next(
+                new ApiError(404, "No account found with this email address")
             );
         }
 
