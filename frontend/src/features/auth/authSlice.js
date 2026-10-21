@@ -37,23 +37,29 @@ const authSlice = createSlice({
 
     initialState,
 
-    reducers: {
-        // Clear all authentication data when the user logs out
-        logout: (state) => {
-            state.user = null;
-            state.token = null;
-            state.resetToken = null;
-            state.isAuthenticated = false;
-            state.error = null;
-            state.sessionChecked = true;
-
-            localStorage.removeItem("token");
-        },
-        // Mark the initial session check as complete.
-        setSessionChecked: (state) => {
-            state.sessionChecked = true;
-        },
+   reducers: {
+    // Clear the previous authentication error.
+    clearAuthError: (state) => {
+        state.error = null;
     },
+
+    // Clear all authentication data when the user logs out.
+    logout: (state) => {
+        state.user = null;
+        state.token = null;
+        state.resetToken = null;
+        state.isAuthenticated = false;
+        state.error = null;
+        state.sessionChecked = true;
+
+        localStorage.removeItem("token");
+    },
+
+    // Mark the initial session check as complete.
+    setSessionChecked: (state) => {
+        state.sessionChecked = true;
+    },
+},
 
     extraReducers: (builder) => {
         // Registration started
@@ -219,7 +225,11 @@ const authSlice = createSlice({
 });
 
 // Export the logout action
-export const { logout, setSessionChecked } = authSlice.actions;
-
+// Export the authentication actions.
+export const {
+    logout,
+    setSessionChecked,
+    clearAuthError,
+} = authSlice.actions;
 // Export the authentication reducer
 export default authSlice.reducer;

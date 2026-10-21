@@ -1,12 +1,11 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import AuthLayout from "../../components/AuthLayout";
-
+import { clearAuthError } from "../../features/auth/authSlice";
 import {
     selectAuthLoading,
     selectAuthError,
@@ -26,6 +25,10 @@ function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
+    // Clear errors left behind by another authentication page.
+    useEffect(() => {
+        dispatch(clearAuthError());
+    }, [dispatch]);
 
     // Read authentication status from Redux.
     const error = useSelector(selectAuthError);
@@ -93,9 +96,10 @@ function Login() {
                     type="email"
                     name="email"
                     value={email}
-                    onChange={(event) =>
-                        setEmail(event.target.value)
-                    }
+                    onChange={(event) => {
+                        dispatch(clearAuthError());
+                        setEmail(event.target.value);
+                    }}
                     placeholder="you@example.com"
                     autoComplete="email"
                 />
@@ -106,9 +110,10 @@ function Login() {
                         type="password"
                         name="password"
                         value={password}
-                        onChange={(event) =>
-                            setPassword(event.target.value)
-                        }
+                        onChange={(event) => {
+                            dispatch(clearAuthError());
+                            setPassword(event.target.value);
+                        }}
                         placeholder="Enter your password"
                         autoComplete="current-password"
                     />

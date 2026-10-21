@@ -1,12 +1,11 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import AuthLayout from "../../components/AuthLayout";
-
+import { clearAuthError } from "../../features/auth/authSlice";
 import { forgotPasswordThunk } from "../../features/auth/authThunk";
 import {
     selectAuthLoading,
@@ -22,42 +21,45 @@ function ForgotPassword() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    // Prevent errors from Login or another auth page from appearing here.
+    useEffect(() => {
+        dispatch(clearAuthError());
+    }, [dispatch]);
 
     // Read the request status and backend error from Redux.
     const loading = useSelector(selectAuthLoading);
     const error = useSelector(selectAuthError);
 
-   
-const handleSubmit = async (event) => {
-  event.preventDefault();
-  setValidationError("");
 
-  const cleanedEmail = email.trim();
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setValidationError("");
 
-  if (!cleanedEmail) {
-    setValidationError("Please enter your email address.");
-    return;
-  }
+        const cleanedEmail = email.trim();
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
-    setValidationError("Please enter a valid email address.");
-    return;
-  }
+        if (!cleanedEmail) {
+            setValidationError("Please enter your email address.");
+            return;
+        }
 
-  try {
-    // unwrap() throws if the Redux thunk is rejected.
-    await dispatch(forgotPasswordThunk(cleanedEmail)).unwrap();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
+            setValidationError("Please enter a valid email address.");
+            return;
+        }
 
-    // Navigate only after a successful response.
-    navigate(
-      `/verify-reset-otp?email=${encodeURIComponent(cleanedEmail)}`
-    );
-  } catch (error) {
-    // Stay on this page and let the Redux error selector display the error.
-    console.error("Forgot password failed:", error);
-  }
-};
+        try {
+            // unwrap() throws if the Redux thunk is rejected.
+            await dispatch(forgotPasswordThunk(cleanedEmail)).unwrap();
 
+            // Navigate only after a successful response.
+            navigate(
+                `/verify-reset-otp?email=${encodeURIComponent(cleanedEmail)}`
+            );
+        } catch (error) {
+            // Stay on this page and let the Redux error selector display the error.
+            console.error("Forgot password failed:", error);
+        }
+    };
 
     // Show validation errors first, otherwise show the API error.
     const displayedError = validationError || error;
@@ -99,8 +101,10 @@ const handleSubmit = async (event) => {
                     name="email"
                     value={email}
                     onChange={(event) => {
+                        // Update the email and clear old error messages while typing.
                         setEmail(event.target.value);
                         setValidationError("");
+                        dispatch(clearAuthError());
                     }}
                     placeholder="you@example.com"
                     disabled={loading}

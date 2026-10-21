@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
+import { clearAuthError } from "../../features/auth/authSlice";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import AuthLayout from "../../components/AuthLayout";
@@ -25,6 +25,10 @@ function Register() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    // Clear errors left behind by Login or another auth page.
+    useEffect(() => {
+        dispatch(clearAuthError());
+    }, [dispatch]);
 
     // Read the current request status and API error from Redux.
     const loading = useSelector(selectAuthLoading);
@@ -46,17 +50,13 @@ function Register() {
             setValidationError("Please fill in all fields.");
             return;
         }
-// Ensure the password contains at least 8 characters.
-if (password.length < 8) {
-    setValidationError("Password must be at least 8 characters.");
-    return;
-}
+        // Ensure the password contains at least 8 characters.
+        if (password.length < 8) {
+            setValidationError("Password must be at least 8 characters.");
+            return;
+        }
 
-// Check that both password fields match.
-if (password !== confirmPassword) {
-    setValidationError("Passwords do not match.");
-    return;
-}
+
         // Check that both password fields match.
         if (password !== confirmPassword) {
             setValidationError("Passwords do not match.");
@@ -116,14 +116,18 @@ if (password !== confirmPassword) {
                 </p>
             )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Email field */}
                 <Input
                     label="Email address"
                     type="email"
                     name="email"
                     value={email}
-                    onChange={(event) => setEmail(event.target.value)}
+                    onChange={(event) => {
+                        setEmail(event.target.value);
+                        setValidationError("");
+                        dispatch(clearAuthError());
+                    }}
                     placeholder="you@example.com"
                 />
 
@@ -133,7 +137,11 @@ if (password !== confirmPassword) {
                     type="tel"
                     name="phone"
                     value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
+                    onChange={(event) => {
+                        setPhone(event.target.value);
+                        setValidationError("");
+                        dispatch(clearAuthError());
+                    }}
                     placeholder="Enter your phone number"
                 />
 
@@ -143,7 +151,11 @@ if (password !== confirmPassword) {
                     type="password"
                     name="password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={(event) => {
+                        setPassword(event.target.value);
+                        setValidationError("");
+                        dispatch(clearAuthError());
+                    }}
                     placeholder="Create a password"
                 />
 
@@ -153,7 +165,11 @@ if (password !== confirmPassword) {
                     type="password"
                     name="confirmPassword"
                     value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    onChange={(event) => {
+                        setConfirmPassword(event.target.value);
+                        setValidationError("");
+                        dispatch(clearAuthError());
+                    }}
                     placeholder="Enter your password again"
                 />
 
