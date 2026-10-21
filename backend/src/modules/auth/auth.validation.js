@@ -130,17 +130,21 @@ export const validateVerifyResetOtp = (body) => {
     return null;
 };
 // Validate the reset-password request
+
+/**
+ * Validate the reset-password request.
+ */
 export const validateResetPassword = (body) => {
     const { resetToken, newPassword } = body;
 
-    // Make sure both values were provided
+    // Make sure both values were provided.
     if (!resetToken || !newPassword) {
         return "Reset token and new password are required";
     }
 
-    // Make sure the new password meets our minimum requirement
-    if (newPassword.length < 6) {
-        return "Password must be at least 6 characters";
+    // Match the minimum password length used during registration.
+    if (newPassword.length < 8) {
+        return "Password must be at least 8 characters";
     }
 
     return null;

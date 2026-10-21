@@ -46,7 +46,17 @@ function Register() {
             setValidationError("Please fill in all fields.");
             return;
         }
+// Ensure the password contains at least 8 characters.
+if (password.length < 8) {
+    setValidationError("Password must be at least 8 characters.");
+    return;
+}
 
+// Check that both password fields match.
+if (password !== confirmPassword) {
+    setValidationError("Passwords do not match.");
+    return;
+}
         // Check that both password fields match.
         if (password !== confirmPassword) {
             setValidationError("Passwords do not match.");
