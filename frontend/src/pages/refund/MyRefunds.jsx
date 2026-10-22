@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink } from "react-router-dom";
-
+import AccountSidebar from "../../components/AccounSidebar";
 import { getMyRefundsThunk } from "../../features/refund/refundThunk";
 import {
     selectMyRefunds,
@@ -95,94 +95,6 @@ function Icon({ type, className = "h-5 w-5" }) {
     );
 }
 
-// Shared account sidebar, matching the other TinyNest customer pages.
-function AccountSidebar({ user }) {
-    const links = [
-        { to: "/profile", label: "Overview", icon: "overview" },
-        { to: "/orders", label: "My Orders", icon: "orders" },
-        { to: "/addresses", label: "Saved Addresses", icon: "addresses" },
-        { to: "/wishlist", label: "Saved Wishlist", icon: "wishlist" },
-        { to: "/coupons", label: "My Coupons", icon: "coupons" },
-        { to: "/refunds", label: "My Refunds", icon: "refunds" },
-    ];
-
-    return (
-        <aside className="space-y-5 lg:sticky lg:top-24">
-            {/* Customer identity card */}
-            <div className="flex items-center gap-3 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dcece4] text-[#436558]">
-                    <svg
-                        viewBox="0 0 24 24"
-                        className="h-6 w-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        aria-hidden="true"
-                    >
-                        <circle cx="12" cy="8" r="4" />
-                        <path d="M4 21a8 8 0 0 1 16 0" />
-                    </svg>
-                </div>
-
-                <div className="min-w-0">
-                    <p className="text-xs text-[#717974] dark:text-gray-400">
-                        Welcome back,
-                    </p>
-                    <p className="mt-1 truncate font-semibold text-[#181c20] dark:text-white">
-                        {user?.fullName || "TinyNest Customer"}
-                    </p>
-                    <p className="mt-1 text-xs text-[#436558]">
-                        Little things, lots of love
-                    </p>
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <nav
-                aria-label="Account navigation"
-                className="rounded-2xl bg-white p-2.5 shadow-sm dark:bg-gray-900"
-            >
-                {links.map((item) => (
-                    <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end
-                        className={({ isActive }) =>
-                            `mb-1 flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm transition last:mb-0 ${
-                                isActive
-                                    ? "bg-[#dce7e2] font-semibold text-[#436558] dark:bg-emerald-950 dark:text-emerald-300"
-                                    : "text-[#414845] hover:bg-[#f1f4f9] dark:text-gray-200 dark:hover:bg-gray-800"
-                            }`
-                        }
-                    >
-                        <Icon type={item.icon} />
-                        <span>{item.label}</span>
-                    </NavLink>
-                ))}
-            </nav>
-
-            {/* Concierge card */}
-            <div className="rounded-2xl bg-[#f8eeec] p-5 dark:bg-[#382925]">
-                <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#8a604c] dark:text-[#e0b8a7]">
-                    TinyNest Concierge
-                </p>
-                <h3 className="mt-2 font-serif text-xl leading-7 text-[#30231e] dark:text-white">
-                    Here for your little one's journey.
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-[#76635b] dark:text-gray-300">
-                    Thoughtful essentials and support for every little
-                    milestone.
-                </p>
-                <Link
-                    to="/products"
-                    className="mt-4 inline-flex rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#8a604c] shadow-sm transition hover:bg-[#fffaf8] dark:bg-gray-900 dark:text-[#e0b8a7]"
-                >
-                    Explore essentials
-                </Link>
-            </div>
-        </aside>
-    );
-}
 
 // Main customer refund history page.
 function MyRefunds() {
