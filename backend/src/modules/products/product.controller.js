@@ -113,44 +113,153 @@ export const createProduct = async (req, res, next) => {
 };
 
 // Get all products
+
+/**
+ * Get products with search, filters, and pagination.
+ *
+ * Supported query parameters:
+ * search, category, ageGroup, brand,
+ * minPrice, maxPrice, inStock, page, limit
+ */
 export const getProducts = async (req, res, next) => {
     try {
-        // Get query parameters from the URL
+        // Read the filters from the URL query parameters.
         const {
             page = 1,
             limit = 10,
             search = "",
-            category
+            category,
+            ageGroup,
+            brand,
+            minPrice,
+            maxPrice,
         } = req.query;
 
-        // Convert pagination values from strings to numbers
+        // Convert pagination values to numbers.
         const pageNumber = Number(page);
         const limitNumber = Number(limit);
 
-        // Calculate how many products should be skipped
+        // Validate pagination to prevent invalid database queries.
+        if (
+            !Number.isInteger(pageNumber) ||
+            pageNumber < 1 ||
+            !Number.isInteger(limitNumber) ||
+            limitNumber < 1 ||
+            limitNumber > 100
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Page must be positive and limit must be between 1 and 100"
+                )
+            );
+        }
+
+        // Validate optional price filters.
+        const minimumPrice =
+            minPrice !== undefined && minPrice !== ""
+                ? Number(minPrice)
+                : undefined;
+
+        const maximumPrice =
+            maxPrice !== undefined && maxPrice !== ""
+                ? Number(maxPrice)
+                : undefined;
+
+        if (
+            (minimumPrice !== undefined &&
+                (!Number.isFinite(minimumPrice) || minimumPrice < 0)) ||
+            (maximumPrice !== undefined &&
+                (!Number.isFinite(maximumPrice) || maximumPrice < 0))
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Minimum and maximum prices must be valid non-negative numbers"
+                )
+            );
+        }
+
+        if (
+            minimumPrice !== undefined &&
+            maximumPrice !== undefined &&
+            minimumPrice > maximumPrice
+        ) {
+            return next(
+                new ApiError(
+                    400,
+                    "Minimum price cannot exceed maximum price"
+                )
+            );
+        }
+
+        // Calculate how many products to skip.
         const skip = (pageNumber - 1) * limitNumber;
 
-        // Build the MongoDB filter
+        // Build one MongoDB filter from all selected criteria.
         const filter = {};
 
-        // Search products by title
+        // Search product titles without case sensitivity.
         if (search.trim()) {
             filter.title = {
                 $regex: search.trim(),
-                $options: "i"
+                $options: "i",
             };
         }
 
-        // Filter products by category ID
+        // Filter by category ID.
         if (category && category.trim()) {
             if (!mongoose.Types.ObjectId.isValid(category.trim())) {
-                return next(new ApiError(400, "Invalid category ID"));
+                return next(
+                    new ApiError(400, "Invalid category ID")
+                );
             }
 
             filter.category = category.trim();
         }
 
-        // Get products and total count at the same time
+        // Filter by the product's age group.
+        if (ageGroup && ageGroup.trim()) {
+            filter.ageGroup = {
+                $regex: `^${ageGroup.trim()}$`,
+                $options: "i",
+            };
+        }
+
+        // Match part of a brand name, ignoring letter case.
+// For example, "ti", "tiny", and "TINY" match "tinynest".
+if (brand && brand.trim()) {
+    // Escape special regex characters so user input is treated as text.
+    const safeBrand = brand.trim().replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+
+    filter.brand = {
+        $regex: safeBrand,
+        $options: "i",
+    };
+}
+
+        // Filter by the original product price.
+        if (
+            minimumPrice !== undefined ||
+            maximumPrice !== undefined
+        ) {
+            filter.price = {};
+
+            if (minimumPrice !== undefined) {
+                filter.price.$gte = minimumPrice;
+            }
+
+            if (maximumPrice !== undefined) {
+                filter.price.$lte = maximumPrice;
+            }
+        }
+// Always exclude products that are out of stock.
+// Customers will only see products with stock greater than zero.
+filter.stock = { $gt: 0 };
+        // Fetch matching products and their total count together.
         const [products, totalProducts] = await Promise.all([
             Product.find(filter)
                 .populate("category")
@@ -158,15 +267,15 @@ export const getProducts = async (req, res, next) => {
                 .skip(skip)
                 .limit(limitNumber),
 
-            Product.countDocuments(filter)
+            Product.countDocuments(filter),
         ]);
 
-        // Calculate total pages
+        // Calculate the number of result pages.
         const totalPages = Math.ceil(
             totalProducts / limitNumber
         );
 
-        // Send the products and pagination information
+        // Return products and pagination metadata.
         sendSuccessResponse(
             res,
             200,
@@ -176,17 +285,17 @@ export const getProducts = async (req, res, next) => {
                     currentPage: pageNumber,
                     limit: limitNumber,
                     totalProducts,
-                    totalPages
-                }
+                    totalPages,
+                },
             },
             "Products fetched successfully"
         );
-
     } catch (error) {
-        // Pass unexpected errors to the centralized error handler
+        // Pass unexpected errors to the central error handler.
         next(error);
     }
 };
+
 
 // Get a single product by its ID
 export const getProductById = async (req, res, next) => {

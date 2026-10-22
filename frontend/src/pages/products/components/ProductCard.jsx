@@ -136,22 +136,28 @@ function ProductCard({ product }) {
             <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
 
                 {/* Display a rating only if TinyNest has real rating data. */}
-                {(product.averageRating != null || product.rating != null) && (
-                    <div className="mb-1.5 flex items-center gap-1.5 text-xs text-[#876B3D]">
-                        <span aria-hidden="true">★</span>
-                        <span>
-                            {Number(
-                                product.averageRating ?? product.rating
-                            ).toFixed(1)}
-                        </span>
+               
+{/* Show a valid rating even if reviewCount is not provided. */}
+{(product.averageRating != null || product.rating != null) &&
+    Number(product.averageRating ?? product.rating) > 0 && (
+        <div className="mb-1.5 flex items-center gap-1.5 text-xs text-[#876B3D]">
+            <span aria-hidden="true">★</span>
 
-                        {product.reviewCount != null && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                                ({product.reviewCount})
-                            </span>
-                        )}
-                    </div>
-                )}
+            <span>
+                {Number(
+                    product.averageRating ?? product.rating
+                ).toFixed(1)}
+            </span>
+
+            {/* Display the review count only when it is greater than zero. */}
+            {Number(product.reviewCount) > 0 && (
+                <span className="text-gray-500 dark:text-gray-400">
+                    ({product.reviewCount})
+                </span>
+            )}
+        </div>
+    )}
+
 
                 <Link to={`/products/${product._id}`}>
                     <h3 className="line-clamp-2 min-h-10 font-serif text-base leading-5 text-[#292D29] transition-colors group-hover:text-[#52745C] dark:text-gray-100 dark:group-hover:text-[#B5D0AC]">
