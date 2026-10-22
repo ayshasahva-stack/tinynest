@@ -6,3 +6,9 @@ export const createOrder = async (orderData) => {
 
     return response.data;
 };
+// Safely abandon an unpaid online checkout. The backend verifies Razorpay
+// status before cancelling or restoring the customer's cart.
+export const abandonPendingOrder = async (orderId) => {
+    const response = await api.patch(`/orders/${orderId}/abandon-payment`);
+    return response.data;
+};

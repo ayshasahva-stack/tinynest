@@ -223,6 +223,13 @@ const orderSchema = new mongoose.Schema(
                 "cancelled"
             ],
             default: "pending"
+        },
+
+        // Idempotency marker: distinguishes abandoned-checkout restoration
+        // from an ordinary customer cancellation.
+        abandonedCheckoutRestored: {
+            type: Boolean,
+            default: false
         }
     },
     {

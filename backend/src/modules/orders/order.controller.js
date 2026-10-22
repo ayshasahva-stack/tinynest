@@ -12,6 +12,7 @@ import { createOrderCancellationRefund } from "../refund/refund.controller.js";
 import { validateShippingAddress } from "./order.validation.js";
 import { getIo } from "../../realtime/io.js";
 import Notification from "../notifications/notification.model.js";
+import razorpay from "../../config/razorpay.js";
 
 
 // Create an order using the logged-in user's cart
@@ -992,6 +993,274 @@ try {
         session.endSession();
     }
 };
+// Safely abandon an unpaid Razorpay checkout without refunding captured payments.
+// This is deliberately separate from cancelMyOrder: that function supports
+// normal customer cancellations and its existing paid-order refund behavior.
+export const abandonPendingRazorpayOrder = async (req, res, next) => {
+    let session;
+
+    try {
+        const { orderId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return next(new ApiError(400, "Order ID must be a valid order ID"));
+        }
+
+        // First verify ownership before asking Razorpay about any gateway order.
+        const ownedOrder = await Order.findOne({
+            _id: orderId,
+            user: req.user._id
+        });
+
+        if (!ownedOrder) {
+            return next(new ApiError(404, "Order not found"));
+        }
+
+        // Repeated dismissal/cancellation calls must not restore stock twice.
+        if (ownedOrder.status === "cancelled") {
+            return sendSuccessResponse(
+                res, 200,
+                {
+                    orderId: ownedOrder._id,
+                    status: "cancelled",
+                    restored: Boolean(ownedOrder.abandonedCheckoutRestored)
+                },
+                ownedOrder.abandonedCheckoutRestored
+                    ? "This abandoned checkout was already restored"
+                    : "This order was already cancelled; no additional restoration was performed"
+            );
+        }
+
+        if (ownedOrder.status !== "pending") {
+            return next(new ApiError(409, "This order is no longer pending and cannot be abandoned"));
+        }
+
+        const initialPayment = await Payment.findOne({
+            order: ownedOrder._id,
+            user: req.user._id,
+            paymentMethod: "online"
+        });
+
+        if (initialPayment?.status === "paid") {
+            return sendSuccessResponse(
+                res, 200,
+                { orderId: ownedOrder._id, status: "paid", restored: false },
+                "Payment is already recorded. The order has not been cancelled"
+            );
+        }
+
+        // Check the gateway before touching inventory. A gateway/network error
+        // is intentionally allowed to fail this request; uncertainty is not failure.
+        let gatewayPayments = [];
+        let gatewayOrder = null;
+
+        if (initialPayment?.razorpayOrderId) {
+            try {
+                const [paymentsResponse, orderResponse] = await Promise.all([
+                    razorpay.orders.fetchPayments(initialPayment.razorpayOrderId),
+                    razorpay.orders.fetch(initialPayment.razorpayOrderId)
+                ]);
+                gatewayPayments = paymentsResponse?.items || [];
+                gatewayOrder = orderResponse;
+            } catch (gatewayError) {
+                console.error("Unable to verify Razorpay state before abandonment:", gatewayError.message);
+                return next(new ApiError(
+                    503,
+                    "We couldn't confirm the payment status with Razorpay. Your order and cart have been left unchanged. Please try again shortly."
+                ));
+            }
+        }
+
+        const capturedPayment = gatewayPayments.find((item) => item.status === "captured");
+        const authorizedPayment = gatewayPayments.find((item) => item.status === "authorized");
+        const unknownGatewayPayment = gatewayPayments.find(
+            (item) => !["captured", "authorized", "failed", "created"].includes(item.status)
+        );
+
+        // A captured payment is never cancelled or restocked. Reconcile our DB
+        // to the gateway, so closing the popup cannot leave a paid order pending.
+        if (capturedPayment || gatewayOrder?.status === "paid") {
+            const captured = capturedPayment || gatewayPayments.find((item) => item.status === "captured");
+            session = await mongoose.startSession();
+            session.startTransaction();
+
+            const order = await Order.findOne({ _id: ownedOrder._id, user: req.user._id }).session(session);
+            const payment = await Payment.findOne({ order: ownedOrder._id, user: req.user._id }).session(session);
+
+            if (order && payment && order.status !== "cancelled") {
+                order.status = "confirmed";
+                payment.status = "paid";
+                payment.transactionId = captured?.id || payment.transactionId;
+                payment.paidAt = payment.paidAt || new Date();
+                await order.save({ session });
+                await payment.save({ session });
+            }
+
+            await session.commitTransaction();
+            return sendSuccessResponse(
+                res, 200,
+                { orderId: ownedOrder._id, status: "paid", restored: false },
+                "Razorpay confirms payment. Your order has been kept and inventory was not restored"
+            );
+        }
+
+        // Authorization is not the same as a failed payment. Do not release
+        // inventory while an authorized payment might still be captured.
+        if (authorizedPayment || unknownGatewayPayment || gatewayOrder?.status === "paid") {
+            return next(new ApiError(
+                409,
+                "Razorpay has a payment that is not confirmed as failed. Your order remains pending and no inventory or cart changes were made."
+            ));
+        }
+
+        // Only failed/created attempts (or an order for which no Razorpay order
+        // was ever created) may proceed to atomic restoration.
+        if (gatewayOrder && !["created", "attempted"].includes(gatewayOrder.status)) {
+            return next(new ApiError(
+                409,
+                "Razorpay's order status is uncertain. Your cart and inventory have not been changed."
+            ));
+        }
+
+        session = await mongoose.startSession();
+        session.startTransaction();
+
+        // Re-read all records inside the transaction to handle races with the
+        // verification endpoint or another dismissal request.
+        const order = await Order.findOne({
+            _id: ownedOrder._id,
+            user: req.user._id
+        }).session(session);
+
+        const payment = await Payment.findOne({
+            order: ownedOrder._id,
+            user: req.user._id,
+            paymentMethod: "online"
+        }).session(session);
+
+        if (!order) throw new ApiError(404, "Order not found");
+
+        if (order.status === "cancelled") {
+            await session.commitTransaction();
+            return sendSuccessResponse(
+                res, 200,
+                {
+                    orderId: order._id,
+                    status: "cancelled",
+                    restored: Boolean(order.abandonedCheckoutRestored)
+                },
+                order.abandonedCheckoutRestored
+                    ? "This abandoned checkout was already restored"
+                    : "This order was already cancelled; no additional restoration was performed"
+            );
+        }
+
+        // If payment verification won the race, stop before any restoration.
+        if (order.status !== "pending" || payment?.status === "paid") {
+            await session.abortTransaction();
+            return sendSuccessResponse(
+                res, 200,
+                { orderId: order._id, status: payment?.status === "paid" ? "paid" : order.status, restored: false },
+                "The order changed while checkout was closing. No inventory was restored"
+            );
+        }
+
+        // Restore reserved stock for direct products and kit snapshot contents.
+        const stockRestorations = new Map();
+        for (const item of order.items) {
+            if (item.itemType === "product") {
+                if (!item.product) throw new ApiError(400, "Product reference is missing from order");
+                const id = item.product.toString();
+                stockRestorations.set(id, (stockRestorations.get(id) || 0) + item.quantity);
+            } else if (item.itemType === "kit") {
+                if (!item.kitItems?.length) throw new ApiError(400, "Kit snapshot is missing from order");
+                for (const kitItem of item.kitItems) {
+                    if (!kitItem.product) throw new ApiError(400, "Product reference is missing from kit snapshot");
+                    const id = kitItem.product.toString();
+                    stockRestorations.set(
+                        id,
+                        (stockRestorations.get(id) || 0) + kitItem.quantity * item.quantity
+                    );
+                }
+            } else {
+                throw new ApiError(400, "Order contains an invalid item type");
+            }
+        }
+
+        for (const [productId, quantity] of stockRestorations) {
+            const updatedProduct = await Product.findByIdAndUpdate(
+                productId,
+                { $inc: { stock: quantity } },
+                { session, new: true }
+            );
+            if (!updatedProduct) throw new ApiError(404, "Product not found while restoring stock");
+        }
+
+        // Merge order items into the user's current cart instead of replacing it.
+        let cart = await Cart.findOne({ user: req.user._id }).session(session);
+        if (!cart) cart = new Cart({ user: req.user._id, items: [] });
+
+        const mergeCartItem = (itemType, refId, quantity) => {
+            const existing = cart.items.find((cartItem) => {
+                const existingType = cartItem.itemType || "product";
+                const existingRef = itemType === "kit" ? cartItem.kit : cartItem.product;
+                return existingType === itemType && existingRef && existingRef.toString() === refId.toString();
+            });
+
+            if (existing) existing.quantity += quantity;
+            else cart.items.push({
+                itemType,
+                product: itemType === "product" ? refId : null,
+                kit: itemType === "kit" ? refId : null,
+                quantity
+            });
+        };
+
+        for (const item of order.items) {
+            if (item.itemType === "product") {
+                mergeCartItem("product", item.product, item.quantity);
+            } else {
+                mergeCartItem("kit", item.kit, item.quantity);
+            }
+        }
+        await cart.save({ session });
+
+        // Coupon usage was incremented at order creation, so reverse exactly
+        // one use when this unpaid order is cancelled.
+        if (order.coupon) {
+            await Coupon.updateOne(
+                { _id: order.coupon, usedCount: { $gt: 0 } },
+                { $inc: { usedCount: -1 } },
+                { session }
+            );
+        }
+
+        // Changing the order status in the same transaction makes restoration
+        // idempotent: a repeated request sees cancelled and cannot add stock again.
+        order.status = "cancelled";
+        order.abandonedCheckoutRestored = true;
+        await order.save({ session });
+
+        if (payment && payment.status !== "paid") {
+            payment.status = "failed";
+            await payment.save({ session });
+        }
+
+        await session.commitTransaction();
+
+        return sendSuccessResponse(
+            res, 200,
+            { orderId: order._id, status: "cancelled", restored: true },
+            "Unpaid checkout was cancelled and your cart was restored"
+        );
+    } catch (error) {
+        if (session?.inTransaction()) await session.abortTransaction();
+        next(error);
+    } finally {
+        if (session) session.endSession();
+    }
+};
+
 // Get all orders for the admin
 // Get all orders - Admin only
 

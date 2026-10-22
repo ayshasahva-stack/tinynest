@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 
 import { getMyCartThunk } from "../../features/cart/cartThunk";
-import { createOrderThunk } from "../../features/checkout/checkoutThunk";
+import { createOrderThunk, abandonPendingOrderThunk } from "../../features/checkout/checkoutThunk";
 import { getMyAddressesThunk } from "../../features/addresses/addressThunk";
 import { selectAddresses } from "../../features/addresses/addressSelectors";
 import {
@@ -163,6 +163,41 @@ function Checkout() {
     setCouponError("");
   };
 
+  // Ask the backend to check Razorpay before cancelling anything.
+  // Cart state is refreshed only after the backend confirms restoration.
+  const handleAbandonedCheckout = async (orderId) => {
+    try {
+      const result = await dispatch(abandonPendingOrderThunk(orderId)).unwrap();
+      const outcome = result.data;
+
+      if (outcome?.status === "paid" || outcome?.status === "confirmed") {
+        setValidationError("Razorpay confirms payment. Your order has been kept safely.");
+        navigate("/orders");
+        return;
+      }
+
+      if (outcome?.status === "cancelled") {
+        // Also refresh on a repeated dismissal request: the first request may
+        // have succeeded even if its HTTP response never reached this browser.
+        await dispatch(getMyCartThunk()).unwrap();
+        setValidationError(
+          outcome?.restored
+            ? "Payment was not completed. Your cart has been restored, and the unpaid order was cancelled."
+            : "This order was already cancelled. Your current cart has been refreshed."
+        );
+        return;
+      }
+
+      setValidationError("Your payment status is not confirmed yet. The order was left unchanged; please check My Orders before trying again.");
+    } catch (error) {
+      setValidationError(
+        typeof error === "string"
+          ? error
+          : "We couldn't confirm your payment status. Your order was left unchanged. Please check My Orders before retrying."
+      );
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setValidationError("");
@@ -176,6 +211,9 @@ function Checkout() {
       setValidationError("Please select a delivery address.");
       return;
     }
+
+    let orderId = null;
+    let razorpayOpened = false;
 
     try {
       // Create the order using the existing checkout API and selected saved address.
@@ -195,19 +233,17 @@ function Checkout() {
       ).unwrap();
 
       const order = orderResult.data;
-      const orderId = order?._id;
+      orderId = order?._id;
 
       if (!orderId) {
         throw new Error("The created order ID was not returned.");
       }
 
-      // The backend clears the cart when the order is created.
-      dispatch(getMyCartThunk());
-
       if (paymentMethod === "cod") {
         await dispatch(
           createPaymentThunk({ orderId, paymentMethod: "cod" })
         ).unwrap();
+        await dispatch(getMyCartThunk()).unwrap();
         navigate("/orders");
         return;
       }
@@ -243,37 +279,43 @@ function Checkout() {
             navigate("/orders");
           } catch (error) {
             console.error("Payment verification failed:", error);
-            setValidationError(
-              typeof error === "string"
-                ? error
-                : "Payment verification failed. Please contact support before retrying."
-            );
+            // A captured payment can reach the server even if this browser
+            // callback fails. Reconcile with Razorpay before showing failure.
+            await handleAbandonedCheckout(orderId);
           }
         },
         modal: {
           ondismiss: () => {
-            setValidationError(
-              "Payment was not completed. Your order remains pending."
-            );
+            // Closing the popup is not proof of payment failure. The backend
+            // checks Razorpay before deciding whether restoration is safe.
+            void handleAbandonedCheckout(orderId);
           },
         },
         theme: { color: "#436558" },
       };
 
       const razorpay = new window.Razorpay(options);
-      razorpay.on("payment.failed", (response) => {
-        setValidationError(
-          response.error?.description || "Payment failed. Please try again."
-        );
+      razorpay.on("payment.failed", async (response) => {
+        // Do not trust the browser event alone; the backend checks the gateway.
+        razorpay.close();
+        await handleAbandonedCheckout(orderId);
       });
       razorpay.open();
+      razorpayOpened = true;
     } catch (error) {
       console.error("Checkout failed:", error);
-      setValidationError(
-        typeof error === "string"
-          ? error
-          : error.message || "Unable to complete checkout."
-      );
+
+      // If an order was created but checkout could not be opened, reconcile it
+      // through the same safe backend flow instead of leaving a stranded order.
+      if (orderId && paymentMethod === "online" && !razorpayOpened) {
+        await handleAbandonedCheckout(orderId);
+      } else {
+        setValidationError(
+          typeof error === "string"
+            ? error
+            : error.message || "Unable to complete checkout."
+        );
+      }
     }
   };
 
@@ -305,6 +347,11 @@ function Checkout() {
     return (
       <main className="min-h-screen bg-[#f7f8f6] px-4 py-12 dark:bg-gray-950">
         <div className="mx-auto max-w-3xl rounded-3xl bg-white p-8 text-center shadow-sm dark:bg-gray-900 sm:p-12">
+          {validationError && (
+            <div role="alert" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              {validationError}
+            </div>
+          )}
           <EmptyState
             title="Your cart is empty"
             message="Add some products before proceeding to checkout."

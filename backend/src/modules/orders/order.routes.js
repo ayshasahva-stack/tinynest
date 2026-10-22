@@ -8,6 +8,7 @@ import {
     getMyOrders,
     getMyOrderById,
     cancelMyOrder,
+    abandonPendingRazorpayOrder,
     getAllOrders,
     updateOrderStatus,
     confirmCodPayment, // New: confirm COD payment collection
@@ -43,7 +44,10 @@ router.patch(
 // Get one order belonging to the logged-in user
 router.get("/:orderId", protect, getMyOrderById);
 
-// Cancel an order belonging to the logged-in user
+// Safely abandon an unpaid Razorpay checkout and restore cart/inventory.
+router.patch("/:orderId/abandon-payment", protect, abandonPendingRazorpayOrder);
+
+// Cancel an order belonging to the logged-in user (existing cancellation/refund flow)
 router.patch("/:orderId/cancel", protect, cancelMyOrder);
 
 export default router;
