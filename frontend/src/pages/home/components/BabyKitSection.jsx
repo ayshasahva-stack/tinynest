@@ -53,7 +53,7 @@ function BabyKitSection() {
                     </p>
                     {/* Navigate to the existing product catalogue. */}
                     <Link
-                        to="/products"
+                        to="/kits"
                         className="inline-flex w-fit items-center gap-2 text-sm font-medium text-[#52745C] transition-colors hover:text-[#344E3A] dark:text-[#B5D0AC] dark:hover:text-white"
                     >
                         <span>View all kits</span>
@@ -208,7 +208,7 @@ function BabyKitSection() {
                                                     to={`/kits/${kit._id}`}
                                                     className="flex w-full items-center justify-center gap-2 rounded-full bg-[#49634B] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#344E3A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#668875] focus-visible:ring-offset-2 dark:bg-[#607D5F] dark:hover:bg-[#49634B]"
                                                 >
-                                                    Explore Kit
+                                                    view Details
                                                     <span aria-hidden="true">
                                                         →
                                                     </span>

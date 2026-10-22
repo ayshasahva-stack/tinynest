@@ -1,25 +1,30 @@
+
 import express from "express";
 import protect from "../../middleware/auth.middleware.js";
 
 import {
     addToWishlist,
+    addKitToWishlist,
     getMyWishlist,
     removeFromWishlist,
-    clearWishlist
+    removeKitFromWishlist,
+    clearWishlist,
 } from "./wishlist.controller.js";
 
 const router = express.Router();
 
-// Add a product to the logged-in user's wishlist
-router.post("/:productId", protect, addToWishlist);
-
-// Get the logged-in user's wishlist
+// All wishlist routes require a logged-in user.
 router.get("/", protect, getMyWishlist);
 
-// Remove a product from the wishlist
+// Kit wishlist routes.
+router.post("/kit/:kitId", protect, addKitToWishlist);
+router.delete("/kit/:kitId", protect, removeKitFromWishlist);
+
+// Existing product wishlist routes — preserved.
+router.post("/:productId", protect, addToWishlist);
 router.delete("/:productId", protect, removeFromWishlist);
 
-// Remove all products from the wishlist
+// Clear products and kits.
 router.delete("/", protect, clearWishlist);
 
 export default router;

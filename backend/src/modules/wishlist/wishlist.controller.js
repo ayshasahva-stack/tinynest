@@ -1,59 +1,76 @@
+
+import mongoose from "mongoose";
+
 import Wishlist from "./wishlist.model.js";
 import Product from "../products/product.model.js";
+import Kit from "../kits/kit.model.js";
+
 import ApiError from "../../utils/Apierror.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import { validateWishlistProduct } from "./wishlist.validation.js";
 
-// Add a product to the logged-in user's wishlist
+// Populate both types whenever a wishlist is returned.
+const populateWishlist = async (wishlist) => {
+    await wishlist.populate(["products", "kits"]);
+    return wishlist;
+};
+
+// Validate MongoDB IDs before querying.
+const validateId = (id, label, next) => {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        next(new ApiError(400, `${label} must be a valid ID`));
+        return false;
+    }
+
+    return true;
+};
+
+// Find the logged-in user's wishlist or create an empty one.
+const findOrCreateWishlist = async (userId) => {
+    let wishlist = await Wishlist.findOne({ user: userId });
+
+    if (!wishlist) {
+        wishlist = await Wishlist.create({
+            user: userId,
+            products: [],
+            kits: [],
+        });
+    }
+
+    return wishlist;
+};
+
+// -------------------- PRODUCTS --------------------
+
+// Add a product to the user's wishlist.
 export const addToWishlist = async (req, res, next) => {
     try {
         const { productId } = req.params;
 
-        // Validate the product ID
-        const validationError = validateWishlistProduct(productId);
+        if (!validateId(productId, "Product ID", next)) return;
 
-        if (validationError) {
-            return next(new ApiError(400, validationError));
-        }
-
-        // Check that the product actually exists
         const product = await Product.findById(productId);
 
         if (!product) {
             return next(new ApiError(404, "Product not found"));
         }
 
-        // Find the wishlist belonging to the logged-in user
-        let wishlist = await Wishlist.findOne({
-            user: req.user._id
-        });
+        const wishlist = await findOrCreateWishlist(req.user._id);
 
-        // Create a wishlist if the user doesn't have one yet
-        if (!wishlist) {
-            wishlist = await Wishlist.create({
-                user: req.user._id,
-                products: [productId]
-            });
-        } else {
-            // Check whether the product is already in the wishlist
-            const alreadyExists = wishlist.products.some(
-                (id) => id.toString() === productId
+        const alreadyExists = wishlist.products.some(
+            (id) => id.toString() === productId
+        );
+
+        if (alreadyExists) {
+            return next(
+                new ApiError(400, "Product already exists in wishlist")
             );
-
-            if (alreadyExists) {
-                return next(new ApiError(400, "Product already exists in wishlist"));
-            }
-
-            // Add the product to the wishlist
-            wishlist.products.push(productId);
-
-            await wishlist.save();
         }
 
-        // Return complete product information
-        await wishlist.populate("products");
+        wishlist.products.push(productId);
+        await wishlist.save();
+        await populateWishlist(wishlist);
 
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             wishlist,
@@ -64,25 +81,70 @@ export const addToWishlist = async (req, res, next) => {
     }
 };
 
-// Get the logged-in user's wishlist
+// -------------------- KITS --------------------
+
+// Add a baby kit to the user's wishlist.
+export const addKitToWishlist = async (req, res, next) => {
+    try {
+        const { kitId } = req.params;
+
+        if (!validateId(kitId, "Kit ID", next)) return;
+
+        // Only allow existing, active kits to be wishlisted.
+        const kit = await Kit.findOne({
+            _id: kitId,
+            isActive: true,
+        });
+
+        if (!kit) {
+            return next(new ApiError(404, "Kit not found or unavailable"));
+        }
+
+        const wishlist = await findOrCreateWishlist(req.user._id);
+
+        const alreadyExists = wishlist.kits.some(
+            (id) => id.toString() === kitId
+        );
+
+        if (alreadyExists) {
+            return next(new ApiError(400, "Kit already exists in wishlist"));
+        }
+
+        wishlist.kits.push(kitId);
+        await wishlist.save();
+        await populateWishlist(wishlist);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            wishlist,
+            "Kit added to wishlist"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+// -------------------- GET WISHLIST --------------------
+
+// Fetch the user's products and kits together.
 export const getMyWishlist = async (req, res, next) => {
     try {
-        // Find the wishlist belonging to the logged-in user
         const wishlist = await Wishlist.findOne({
-            user: req.user._id
-        }).populate("products");
+            user: req.user._id,
+        }).populate(["products", "kits"]);
 
-        // If the user doesn't have a wishlist yet, return an empty list
+        // Existing users may not have a wishlist document yet.
         if (!wishlist) {
             return sendSuccessResponse(
                 res,
                 200,
-                { products: [] },
+                { products: [], kits: [] },
                 "Wishlist fetched successfully"
             );
         }
 
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             wishlist,
@@ -93,47 +155,41 @@ export const getMyWishlist = async (req, res, next) => {
     }
 };
 
-// Remove a product from the logged-in user's wishlist
+// -------------------- REMOVE ITEMS --------------------
+
+// Remove a product from the wishlist.
 export const removeFromWishlist = async (req, res, next) => {
     try {
         const { productId } = req.params;
 
-        // Validate the product ID
-        const validationError = validateWishlistProduct(productId);
+        if (!validateId(productId, "Product ID", next)) return;
 
-        if (validationError) {
-            return next(new ApiError(400, validationError));
-        }
-
-        // Find the user's wishlist
         const wishlist = await Wishlist.findOne({
-            user: req.user._id
+            user: req.user._id,
         });
 
         if (!wishlist) {
             return next(new ApiError(404, "Wishlist not found"));
         }
 
-        // Check whether the product exists in the wishlist
-        const productExists = wishlist.products.some(
+        const exists = wishlist.products.some(
             (id) => id.toString() === productId
         );
 
-        if (!productExists) {
-            return next(new ApiError(404, "Product not found in wishlist"));
+        if (!exists) {
+            return next(
+                new ApiError(404, "Product not found in wishlist")
+            );
         }
 
-        // Remove the product
         wishlist.products = wishlist.products.filter(
             (id) => id.toString() !== productId
         );
 
         await wishlist.save();
+        await populateWishlist(wishlist);
 
-        // Return the updated wishlist with product details
-        await wishlist.populate("products");
-
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             wishlist,
@@ -144,30 +200,70 @@ export const removeFromWishlist = async (req, res, next) => {
     }
 };
 
-// Clear all products from the logged-in user's wishlist
-export const clearWishlist = async (req, res, next) => {
+// Remove a kit from the wishlist.
+export const removeKitFromWishlist = async (req, res, next) => {
     try {
-        // Find the user's wishlist
+        const { kitId } = req.params;
+
+        if (!validateId(kitId, "Kit ID", next)) return;
+
         const wishlist = await Wishlist.findOne({
-            user: req.user._id
+            user: req.user._id,
         });
 
-        // If no wishlist exists, return an empty list
+        if (!wishlist) {
+            return next(new ApiError(404, "Wishlist not found"));
+        }
+
+        const exists = wishlist.kits.some(
+            (id) => id.toString() === kitId
+        );
+
+        if (!exists) {
+            return next(new ApiError(404, "Kit not found in wishlist"));
+        }
+
+        wishlist.kits = wishlist.kits.filter(
+            (id) => id.toString() !== kitId
+        );
+
+        await wishlist.save();
+        await populateWishlist(wishlist);
+
+        return sendSuccessResponse(
+            res,
+            200,
+            wishlist,
+            "Kit removed from wishlist"
+        );
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Clear products and kits from the wishlist.
+export const clearWishlist = async (req, res, next) => {
+    try {
+        const wishlist = await Wishlist.findOne({
+            user: req.user._id,
+        });
+
         if (!wishlist) {
             return sendSuccessResponse(
                 res,
                 200,
-                { products: [] },
+                { products: [], kits: [] },
                 "Wishlist cleared successfully"
             );
         }
 
-        // Remove all products
         wishlist.products = [];
+        wishlist.kits = [];
 
         await wishlist.save();
+        await populateWishlist(wishlist);
 
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             wishlist,

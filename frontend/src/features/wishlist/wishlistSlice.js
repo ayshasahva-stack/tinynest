@@ -1,114 +1,68 @@
+
 import { createSlice } from "@reduxjs/toolkit";
 
 import {
     addToWishlistThunk,
+    addKitToWishlistThunk,
     getMyWishlistThunk,
     removeFromWishlistThunk,
-    clearWishlistThunk
+    removeKitFromWishlistThunk,
+    clearWishlistThunk,
 } from "./wishlistThunk";
 
 const initialState = {
     products: [],
+    kits: [],
     loading: false,
-    error: null
+    error: null,
+};
+
+// Read both arrays from the backend response.
+const updateWishlist = (state, action) => {
+    const data = action.payload?.data;
+
+    state.products = data?.products || [];
+    state.kits = data?.kits || [];
 };
 
 const wishlistSlice = createSlice({
     name: "wishlist",
-
     initialState,
 
     reducers: {
-        // Clear any previous wishlist error
         clearWishlistError: (state) => {
             state.error = null;
-        }
+        },
     },
 
     extraReducers: (builder) => {
-        builder
+        const requests = [
+            addToWishlistThunk,
+            addKitToWishlistThunk,
+            getMyWishlistThunk,
+            removeFromWishlistThunk,
+            removeKitFromWishlistThunk,
+            clearWishlistThunk,
+        ];
 
-            // -------------------------
-            // Add to wishlist
-            // -------------------------
-
-            .addCase(addToWishlistThunk.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
-            .addCase(addToWishlistThunk.fulfilled, (state, action) => {
-                state.loading = false;
-
-                // Backend returns the updated wishlist
-                state.products = action.payload.data?.products || [];
-            })
-
-            .addCase(addToWishlistThunk.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-
-            // -------------------------
-            // Get wishlist
-            // -------------------------
-
-            .addCase(getMyWishlistThunk.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
-            .addCase(getMyWishlistThunk.fulfilled, (state, action) => {
-                state.loading = false;
-
-                state.products = action.payload.data?.products || [];
-            })
-
-            .addCase(getMyWishlistThunk.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-
-            // -------------------------
-            // Remove from wishlist
-            // -------------------------
-
-            .addCase(removeFromWishlistThunk.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
-            .addCase(removeFromWishlistThunk.fulfilled, (state, action) => {
-                state.loading = false;
-
-                state.products = action.payload.data?.products || [];
-            })
-
-            .addCase(removeFromWishlistThunk.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            })
-
-            // -------------------------
-            // Clear wishlist
-            // -------------------------
-
-            .addCase(clearWishlistThunk.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-
-            .addCase(clearWishlistThunk.fulfilled, (state, action) => {
-                state.loading = false;
-
-                state.products = action.payload.data?.products || [];
-            })
-
-            .addCase(clearWishlistThunk.rejected, (state, action) => {
-                state.loading = false;
-                state.error = action.payload;
-            });
-    }
+        // Keep loading and error state consistent for every request.
+        requests.forEach((thunk) => {
+            builder
+                .addCase(thunk.pending, (state) => {
+                    state.loading = true;
+                    state.error = null;
+                })
+                .addCase(thunk.fulfilled, (state, action) => {
+                    state.loading = false;
+                    updateWishlist(state, action);
+                })
+                .addCase(thunk.rejected, (state, action) => {
+                    state.loading = false;
+                    state.error =
+                        action.payload || "Wishlist request failed";
+                });
+        });
+    },
 });
 
 export const { clearWishlistError } = wishlistSlice.actions;

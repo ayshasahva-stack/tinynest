@@ -1,13 +1,20 @@
+
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
 import {
     addToWishlist,
+    addKitToWishlist,
     getMyWishlist,
     removeFromWishlist,
-    clearWishlist
+    removeKitFromWishlist,
+    clearWishlist,
 } from "./wishlistService";
 
-// Add a product to the wishlist
+// Shared error handling for wishlist requests.
+const getErrorMessage = (error, fallback) =>
+    error.response?.data?.message || error.message || fallback;
+
+// Existing product thunk.
 export const addToWishlistThunk = createAsyncThunk(
     "wishlist/addToWishlist",
     async (productId, thunkAPI) => {
@@ -15,13 +22,27 @@ export const addToWishlistThunk = createAsyncThunk(
             return await addToWishlist(productId);
         } catch (error) {
             return thunkAPI.rejectWithValue(
-                error.response?.data?.message || "Failed to add product to wishlist"
+                getErrorMessage(error, "Failed to add product to wishlist")
             );
         }
     }
 );
 
-// Fetch the logged-in user's wishlist
+// New kit thunk.
+export const addKitToWishlistThunk = createAsyncThunk(
+    "wishlist/addKitToWishlist",
+    async (kitId, thunkAPI) => {
+        try {
+            return await addKitToWishlist(kitId);
+        } catch (error) {
+            return thunkAPI.rejectWithValue(
+                getErrorMessage(error, "Failed to add kit to wishlist")
+            );
+        }
+    }
+);
+
+// Fetch products and kits.
 export const getMyWishlistThunk = createAsyncThunk(
     "wishlist/getMyWishlist",
     async (_, thunkAPI) => {
@@ -29,13 +50,13 @@ export const getMyWishlistThunk = createAsyncThunk(
             return await getMyWishlist();
         } catch (error) {
             return thunkAPI.rejectWithValue(
-                error.response?.data?.message || "Failed to fetch wishlist"
+                getErrorMessage(error, "Failed to fetch wishlist")
             );
         }
     }
 );
 
-// Remove a product from the wishlist
+// Existing product removal thunk.
 export const removeFromWishlistThunk = createAsyncThunk(
     "wishlist/removeFromWishlist",
     async (productId, thunkAPI) => {
@@ -43,13 +64,27 @@ export const removeFromWishlistThunk = createAsyncThunk(
             return await removeFromWishlist(productId);
         } catch (error) {
             return thunkAPI.rejectWithValue(
-                error.response?.data?.message || "Failed to remove product from wishlist"
+                getErrorMessage(error, "Failed to remove product from wishlist")
             );
         }
     }
 );
 
-// Clear the entire wishlist
+// New kit removal thunk.
+export const removeKitFromWishlistThunk = createAsyncThunk(
+    "wishlist/removeKitFromWishlist",
+    async (kitId, thunkAPI) => {
+        try {
+            return await removeKitFromWishlist(kitId);
+        } catch (error) {
+            return thunkAPI.rejectWithValue(
+                getErrorMessage(error, "Failed to remove kit from wishlist")
+            );
+        }
+    }
+);
+
+// Clear both wishlist item types.
 export const clearWishlistThunk = createAsyncThunk(
     "wishlist/clearWishlist",
     async (_, thunkAPI) => {
@@ -57,7 +92,7 @@ export const clearWishlistThunk = createAsyncThunk(
             return await clearWishlist();
         } catch (error) {
             return thunkAPI.rejectWithValue(
-                error.response?.data?.message || "Failed to clear wishlist"
+                getErrorMessage(error, "Failed to clear wishlist")
             );
         }
     }
