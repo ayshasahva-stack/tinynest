@@ -1,293 +1,332 @@
-// Import React's useEffect hook
+
 import { useEffect } from "react";
-
-// Import Redux hooks
-import {
-    useDispatch,
-    useSelector,
-} from "react-redux";
-
-// Import navigation
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-// Import cart thunks
 import {
     getMyCartThunk,
     clearCartThunk,
 } from "../../features/cart/cartThunk";
 
-// Import cart selectors
 import {
     selectCartItems,
     selectCartLoading,
     selectCartError,
 } from "../../features/cart/cartSelectors";
 
-// Import reusable components
 import Loading from "../../components/Loading";
 import EmptyState from "../../components/EmptyState";
 import ErrorMessage from "../../components/ErrorMessage";
-
-// Import cart item component
 import CartItem from "./components/CartItem";
 
-
-// Cart page component
 function Cart() {
-
-    // Get Redux dispatch function
     const dispatch = useDispatch();
-
-    // Get navigation function
     const navigate = useNavigate();
 
-
-    // ------------------------------------------------
-    // REDUX STATE
-    // ------------------------------------------------
-
-    // Get cart items
+    // Read cart data and request status from Redux.
     const items = useSelector(selectCartItems);
-
-    // Get cart loading state
     const loading = useSelector(selectCartLoading);
-
-    // Get cart error
     const error = useSelector(selectCartError);
 
-
-    // ------------------------------------------------
-    // FETCH CART
-    // ------------------------------------------------
-
+    // Fetch the logged-in customer's cart when the page opens.
     useEffect(() => {
-
-        // Load the logged-in user's cart
         dispatch(getMyCartThunk());
-
     }, [dispatch]);
 
+    // Calculate discounted prices consistently for products and kits.
+    const getSellingPrice = (item) => {
+        const entry =
+            item.itemType === "kit" ? item.kit : item.product;
 
-    // Calculate the total price of all cart items
-const totalPrice = items.reduce((total, item) => {
+        if (!entry) return 0;
 
-    // --------------------------------
-    // PRODUCT
-    // --------------------------------
+        const price = Number(entry.price) || 0;
+        const discount = Number(entry.discount) || 0;
 
-    if (
-        item.itemType === "product" &&
-        item.product
-    ) {
-        return (
-            total +
-            item.product.price * item.quantity
-        );
-    }
-
-
-    // --------------------------------
-    // KIT
-    // --------------------------------
-
-    if (
-        item.itemType === "kit" &&
-        item.kit
-    ) {
-        // Calculate kit discount
-        const discountAmount =
-            (item.kit.price * item.kit.discount) / 100;
-
-        // Calculate discounted kit price
-        const kitSellingPrice =
-            item.kit.price - discountAmount;
-
-        return (
-            total +
-            kitSellingPrice * item.quantity
-        );
-    }
-
-
-    // Ignore invalid items
-    return total;
-
-}, 0);
-
-    // ------------------------------------------------
-    // CLEAR CART
-    // ------------------------------------------------
-
-    const handleClearCart = () => {
-
-        dispatch(clearCartThunk());
-
+        return Math.max(0, price - (price * discount) / 100);
     };
 
+    // Subtotal is the sum of item prices after discounts.
+    const subtotal = items.reduce((total, item) => {
+        return total + getSellingPrice(item) * item.quantity;
+    }, 0);
 
-    // ------------------------------------------------
-    // PAGE
-    // ------------------------------------------------
+    // Calculate the total savings against the original listed prices.
+    const totalSavings = items.reduce((total, item) => {
+        const entry =
+            item.itemType === "kit" ? item.kit : item.product;
+
+        if (!entry) return total;
+
+        const originalPrice = Number(entry.price) || 0;
+        const sellingPrice = getSellingPrice(item);
+
+        return total + (originalPrice - sellingPrice) * item.quantity;
+    }, 0);
+
+    // Count individual units, not just distinct cart rows.
+    const itemCount = items.reduce(
+        (total, item) => total + (Number(item.quantity) || 0),
+        0
+    );
+
+    // Keep the existing clear-cart Redux action.
+    const handleClearCart = () => {
+        dispatch(clearCartThunk());
+    };
 
     return (
+        <main className="min-h-screen bg-[#f7f8fb] px-4 py-8 text-gray-900 dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8 lg:py-12">
+            <div className="mx-auto max-w-7xl">
 
-        <main className="mx-auto max-w-5xl px-4 py-10">
+                {/* Breadcrumb and page heading */}
+                <nav
+                    aria-label="Breadcrumb"
+                    className="mb-7 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+                >
+                    <button
+                        type="button"
+                        onClick={() => navigate("/")}
+                        className="transition hover:text-[#436558]"
+                    >
+                        Home
+                    </button>
 
+                    <span aria-hidden="true">/</span>
 
-            {/* ======================================== */}
-            {/* PAGE HEADING */}
-            {/* ======================================== */}
+                    <span className="font-medium text-gray-900 dark:text-white">
+                        Shopping Bag
+                    </span>
 
-            <h1 className="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
+                    {!loading && !error && (
+                        <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                            {itemCount} {itemCount === 1 ? "Item" : "Items"}
+                        </span>
+                    )}
+                </nav>
 
-                Your Cart
+                {/* Loading and error states */}
+                {loading && <Loading />}
 
-            </h1>
-
-
-            {/* ======================================== */}
-            {/* LOADING */}
-            {/* ======================================== */}
-
-            {loading && <Loading />}
-
-
-            {/* ======================================== */}
-            {/* ERROR */}
-            {/* ======================================== */}
-
-            {!loading && error && (
-
-                <ErrorMessage
-                    title="Unable to load cart"
-                    message={error}
-                />
-
-            )}
-
-
-            {/* ======================================== */}
-            {/* EMPTY CART */}
-            {/* ======================================== */}
-
-            {!loading &&
-                !error &&
-                items.length === 0 && (
-
-                    <EmptyState
-                        title="Your cart is empty"
-                        message="Add some products or kits to your cart to get started."
+                {!loading && error && (
+                    <ErrorMessage
+                        title="Unable to load cart"
+                        message={error}
                     />
-
                 )}
 
+                {/* Empty cart */}
+                {!loading && !error && items.length === 0 && (
+                    <section className="rounded-3xl bg-white px-5 py-12 text-center shadow-sm dark:bg-gray-900 sm:py-16">
+                        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#e4eee8] text-3xl text-[#436558] dark:bg-gray-800">
+                            ♡
+                        </div>
 
-            {/* ======================================== */}
-            {/* CART CONTENT */}
-            {/* ======================================== */}
+                        <h1 className="font-serif text-3xl text-gray-900 dark:text-white">
+                            Your nursery bag is empty
+                        </h1>
 
-            {!loading &&
-                !error &&
-                items.length > 0 && (
+                        <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500 dark:text-gray-400">
+                            Discover thoughtful essentials for your little
+                            one and add your favourites to your bag.
+                        </p>
 
+                        <button
+                            type="button"
+                            onClick={() => navigate("/products")}
+                            className="mt-7 rounded-full bg-[#436558] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#345246] focus:outline-none focus:ring-2 focus:ring-[#436558] focus:ring-offset-2"
+                        >
+                            Explore Essentials
+                        </button>
+                    </section>
+                )}
+
+                {/* Shopping bag and order summary */}
+                {!loading && !error && items.length > 0 && (
                     <>
+                        <header className="mb-7">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#8b6048]">
+                                Little things, lots of love
+                            </p>
 
+                            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                                <div>
+                                    <h1 className="font-serif text-4xl font-normal tracking-tight sm:text-5xl">
+                                        Your Nursery Bag
+                                    </h1>
 
-                        {/* -------------------------------- */}
-                        {/* CART ITEMS */}
-                        {/* -------------------------------- */}
+                                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                        A little collection of essentials
+                                        for your little one.
+                                    </p>
+                                </div>
 
-                        <section>
-
-                            {items.map((item) => (
-
-                                <CartItem
-                                    key={
-                                        item.itemType === "kit"
-                                            ? `kit-${item.kit?._id}`
-                                            : `product-${item.product?._id}`
-                                    }
-                                    item={item}
-                                />
-
-                            ))}
-
-                        </section>
-
-
-                        {/* -------------------------------- */}
-                        {/* CART SUMMARY */}
-                        {/* -------------------------------- */}
-
-                        <section className="mt-8 flex flex-col gap-5 border-t border-gray-200 pt-6 dark:border-gray-700">
-
-
-                            {/* ================================= */}
-                            {/* SUMMARY ROW */}
-                            {/* ================================= */}
-
-                            <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
-
-
-                                {/* Clear cart */}
                                 <button
                                     type="button"
                                     onClick={handleClearCart}
-                                    className="text-sm font-medium text-red-600 hover:text-red-700"
+                                    className="self-start text-sm font-medium text-gray-500 underline decoration-gray-300 underline-offset-4 transition hover:text-red-600 sm:self-auto dark:text-gray-400"
                                 >
-
-                                    Clear Cart
-
+                                    Clear bag
                                 </button>
-
-
-                                {/* Total */}
-                                <div className="text-right">
-
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-
-                                        Total
-
-                                    </p>
-
-
-                                    <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-
-                                        ₹{totalPrice.toFixed(2)}
-
-                                    </p>
-
-                                </div>
-
                             </div>
+                        </header>
 
+                        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_350px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
 
-                            {/* ================================= */}
-                            {/* CHECKOUT BUTTON */}
-                            {/* ================================= */}
-
-                            <button
-                                type="button"
-                                onClick={() => navigate("/checkout")}
-                                className="w-full rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white transition hover:bg-gray-700 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                            {/* Cart item cards */}
+                            <section
+                                aria-label="Items in your shopping bag"
+                                className="min-w-0 space-y-4"
                             >
+                                {items.map((item, index) => (
+                                    <CartItem
+                                        key={
+                                            item.itemType === "kit"
+                                                ? `kit-${item.kit?._id || item.kit}`
+                                                : `product-${item.product?._id || item.product}`
+                                        }
+                                        item={item}
+                                        index={index}
+                                    />
+                                ))}
 
-                                Proceed to Checkout
+                                {/* Trust information inspired by the reference */}
+                                <div className="grid grid-cols-1 gap-3 rounded-2xl bg-[#edf1f5] p-4 dark:bg-gray-900 sm:grid-cols-3">
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-xl text-[#436558]" aria-hidden="true">
+                                            ♧
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-semibold">
+                                                Thoughtful essentials
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                Chosen for little ones
+                                            </p>
+                                        </div>
+                                    </div>
 
-                            </button>
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-xl text-[#8b6048]" aria-hidden="true">
+                                            ◇
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-semibold">
+                                                Simple shopping
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                Manage your bag with ease
+                                            </p>
+                                        </div>
+                                    </div>
 
+                                    <div className="flex items-start gap-3">
+                                        <span className="text-xl text-[#436558]" aria-hidden="true">
+                                            ♡
+                                        </span>
+                                        <div>
+                                            <p className="text-xs font-semibold">
+                                                Made for your family
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                Little things matter
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-                        </section>
+                            {/* Order summary */}
+                            <aside className="lg:sticky lg:top-6">
+                                <div className="rounded-3xl bg-white p-5 shadow-[0_4px_24px_-8px_rgba(43,47,51,0.12)] sm:p-6 dark:bg-gray-900 dark:ring-1 dark:ring-gray-800">
+                                    <div className="flex items-center justify-between border-b border-gray-100 pb-4 dark:border-gray-800">
+                                        <h2 className="font-serif text-2xl">
+                                            Order Summary
+                                        </h2>
 
+                                        <span
+                                            className="text-sm text-[#436558]"
+                                            aria-hidden="true"
+                                        >
+                                            ♧
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-5 space-y-4 text-sm">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <span className="text-gray-500 dark:text-gray-400">
+                                                Items ({itemCount})
+                                            </span>
+
+                                            <span className="font-medium">
+                                                ₹{subtotal.toFixed(2)}
+                                            </span>
+                                        </div>
+
+                                        {totalSavings > 0 && (
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-gray-500 dark:text-gray-400">
+                                                    You save
+                                                </span>
+
+                                                <span className="font-medium text-[#436558]">
+                                                    −₹{totalSavings.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                            Delivery charges and any applicable
+                                            taxes will be calculated according
+                                            to your checkout details.
+                                        </p>
+                                    </div>
+
+                                    <div className="my-5 border-t border-gray-200 dark:border-gray-800" />
+
+                                    <div className="flex items-end justify-between gap-3">
+                                        <div>
+                                            <p className="font-serif text-xl">
+                                                Total
+                                            </p>
+                                            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                Before checkout charges
+                                            </p>
+                                        </div>
+
+                                        <p className="font-serif text-3xl font-medium tracking-tight text-[#436558] dark:text-[#a9cfbe]">
+                                            ₹{subtotal.toFixed(2)}
+                                        </p>
+                                    </div>
+
+                                    {totalSavings > 0 && (
+                                        <p className="mt-4 rounded-xl bg-[#fff0e9] px-3 py-2.5 text-center text-xs font-medium text-[#80513c] dark:bg-[#392820] dark:text-[#f0bba5]">
+                                            You saved ₹{totalSavings.toFixed(2)} on this order.
+                                        </p>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate("/checkout")}
+                                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#436558] px-5 py-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#345246] focus:outline-none focus:ring-2 focus:ring-[#436558] focus:ring-offset-2"
+                                    >
+                                        <span aria-hidden="true">♧</span>
+                                        Proceed to Checkout
+                                        <span aria-hidden="true">→</span>
+                                    </button>
+
+                                    <p className="mt-4 text-center text-xs leading-5 text-gray-500 dark:text-gray-400">
+                                        Your order details will be confirmed
+                                        during checkout.
+                                    </p>
+                                </div>
+                            </aside>
+                        </div>
                     </>
-
                 )}
-
+            </div>
         </main>
-
     );
-
 }
-
 
 export default Cart;
