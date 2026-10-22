@@ -26,3 +26,21 @@ export const createPayment = async (orderId, paymentData) => {
 
     return response.data;
 };
+
+// Start Razorpay without creating a TinyNest order first.
+export const createRazorpayCheckoutSession = async (checkoutData) => {
+    const response = await api.post(
+        "/payments/razorpay/checkout-session",
+        checkoutData
+    );
+    return response.data;
+};
+
+// Verify the captured payment and let the backend create the actual order.
+export const verifyRazorpayCheckoutSession = async (paymentData) => {
+    const response = await api.post(
+        "/payments/razorpay/checkout-session/verify",
+        paymentData
+    );
+    return response.data;
+};

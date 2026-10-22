@@ -8,12 +8,20 @@ import {
     updatePaymentStatus,
     createRazorpayOrder,
     verifyRazorpayPayment,
+    createRazorpayCheckoutSession,
+    verifyRazorpayCheckoutSession,
 } from "./payment.controller.js";
 
 const router = express.Router();
 
+// Create a payment attempt without creating a TinyNest order.
+router.post("/razorpay/checkout-session", protect, createRazorpayCheckoutSession);
+// Verify a captured checkout attempt and only then create a TinyNest order.
+router.post("/razorpay/checkout-session/verify", protect, verifyRazorpayCheckoutSession);
+
+// Legacy verification route retained for existing payment/order records.
 // Verify the Razorpay payment signature
-router.post("/razorpay/verify",protect,verifyRazorpayPayment);
+router.post("/razorpay/verify", protect, verifyRazorpayPayment);
 // Create a Razorpay order for the logged-in user's order
 router.post("/razorpay/:orderId", protect, createRazorpayOrder);
 // Create payment for the logged-in user's order

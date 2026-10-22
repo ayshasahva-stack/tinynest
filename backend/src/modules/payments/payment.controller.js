@@ -12,6 +12,14 @@ import {
     validateRazorpayPayment,
 } from "./payment.validation.js";
 import razorpay from "../../config/razorpay.js";
+import CheckoutSession from "./checkoutSession.model.js";
+import Cart from "../cart/cart.model.js";
+import Product from "../products/product.model.js";
+import Kit from "../kits/kit.model.js";
+import Coupon from "../coupons/coupon.model.js";
+import { getProductOfferPrice } from "../offers/offer.service.js";
+import { validateShippingAddress } from "../orders/order.validation.js";
+import { createOrder } from "../orders/order.controller.js";
 
 // Create a Razorpay order for a TinyNest order
 export const createRazorpayOrder = async (req, res, next) => {
@@ -597,5 +605,283 @@ export const updatePaymentStatus = async (req, res, next) => {
     } finally {
         // Always close the MongoDB session
         session.endSession();
+    }
+};
+
+// Build a stable cart signature so the basket cannot silently change
+// between opening Razorpay and confirming a captured payment.
+const getCartFingerprint = (cart) =>
+    JSON.stringify(
+        (cart?.items || []).map((item) => ({
+            itemType: item.itemType || "product",
+            product: item.product?.toString?.() || null,
+            kit: item.kit?.toString?.() || null,
+            quantity: Number(item.quantity),
+        }))
+    );
+
+// Recalculate the amount on the server. Never accept a price from the browser.
+const calculateCheckoutTotal = async (userId, couponCode) => {
+    const cart = await Cart.findOne({ user: userId });
+    if (!cart || !cart.items.length) {
+        throw new ApiError(400, "Your cart is empty");
+    }
+
+    let subtotal = 0;
+    for (const item of cart.items) {
+        const itemType = item.itemType || "product";
+        if (itemType === "product") {
+            const product = await Product.findById(item.product);
+            if (!product) throw new ApiError(404, "A product in your cart no longer exists");
+            if (product.stock < item.quantity) {
+                throw new ApiError(400, `Not enough stock for ${product.title}`);
+            }
+            const pricing = await getProductOfferPrice(product);
+            subtotal += pricing.offerPrice * item.quantity;
+        } else if (itemType === "kit") {
+            const kit = await Kit.findById(item.kit).populate("items.product");
+            if (!kit || !kit.isActive) throw new ApiError(400, "A kit in your cart is no longer available");
+            for (const kitItem of kit.items) {
+                if (!kitItem.product || kitItem.product.stock < kitItem.quantity * item.quantity) {
+                    throw new ApiError(400, `Not enough stock for ${kitItem.product?.title || kit.name}`);
+                }
+            }
+            subtotal += (kit.price - (kit.price * (kit.discount || 0)) / 100) * item.quantity;
+        } else {
+            throw new ApiError(400, "Your cart contains an invalid item");
+        }
+    }
+
+    let discount = 0;
+    let normalizedCouponCode = null;
+    if (couponCode) {
+        if (typeof couponCode !== "string" || !couponCode.trim()) {
+            throw new ApiError(400, "Coupon code is invalid");
+        }
+        normalizedCouponCode = couponCode.trim().toUpperCase();
+        const coupon = await Coupon.findOne({ code: normalizedCouponCode });
+        if (!coupon || !coupon.isActive) throw new ApiError(400, "Coupon is unavailable");
+        const now = new Date();
+        if (now < coupon.startDate || now > coupon.expiryDate) throw new ApiError(400, "Coupon is not currently active");
+        if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+            throw new ApiError(400, "Coupon usage limit reached");
+        }
+        if (subtotal < coupon.minOrderAmount) {
+            throw new ApiError(400, `Minimum order amount is ₹${coupon.minOrderAmount}`);
+        }
+        discount = coupon.discountType === "percentage"
+            ? subtotal * coupon.discountValue / 100
+            : Math.min(coupon.discountValue, subtotal);
+        if (coupon.discountType === "percentage" && coupon.maxDiscount !== null) {
+            discount = Math.min(discount, coupon.maxDiscount);
+        }
+        discount = Math.round(discount * 100) / 100;
+    }
+
+    const shippingFee = subtotal >= 1000 ? 0 : 50;
+    const totalAmount = Math.round((subtotal - discount + shippingFee) * 100) / 100;
+    return { cart, subtotal, discount, shippingFee, totalAmount, couponCode: normalizedCouponCode };
+};
+
+// Create a Razorpay checkout attempt WITHOUT creating an Order document.
+// A closed popup leaves only this separate attempt record.
+export const createRazorpayCheckoutSession = async (req, res, next) => {
+    try {
+        const addressError = validateShippingAddress(req.body.shippingAddress);
+        if (addressError) return next(new ApiError(400, addressError));
+
+        const pricing = await calculateCheckoutTotal(req.user._id, req.body.couponCode);
+        const amountInPaise = Math.round(pricing.totalAmount * 100);
+
+        const razorpayOrder = await razorpay.orders.create({
+            amount: amountInPaise,
+            currency: "INR",
+            receipt: `tn-checkout-${Date.now()}`,
+            notes: { userId: req.user._id.toString() },
+        });
+
+        const checkoutSession = await CheckoutSession.create({
+            user: req.user._id,
+            razorpayOrderId: razorpayOrder.id,
+            amount: pricing.totalAmount,
+            currency: "INR",
+            shippingAddress: req.body.shippingAddress,
+            couponCode: pricing.couponCode,
+            cartFingerprint: getCartFingerprint(pricing.cart),
+            status: "pending",
+        });
+
+        return sendSuccessResponse(res, 201, {
+            checkoutSessionId: checkoutSession._id,
+            razorpayOrderId: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            currency: razorpayOrder.currency,
+        }, "Razorpay checkout session created");
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Verify captured payment first, then create the real TinyNest order.
+// If the customer closes the popup, this endpoint is never called and no Order exists.
+export const verifyRazorpayCheckoutSession = async (req, res, next) => {
+    try {
+        const validationError = validateRazorpayPayment(req.body);
+        if (validationError) return next(new ApiError(400, validationError));
+
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const checkoutSession = await CheckoutSession.findOne({
+            razorpayOrderId: razorpay_order_id,
+            user: req.user._id,
+        });
+
+        if (!checkoutSession) return next(new ApiError(404, "Checkout session not found"));
+
+        // Idempotent response for a retry after a successful verification.
+        if (checkoutSession.status === "paid" && checkoutSession.order) {
+            return sendSuccessResponse(res, 200, {
+                verified: true,
+                orderId: checkoutSession.order,
+            }, "Payment was already verified");
+        }
+
+        if (checkoutSession.status !== "pending") {
+            return next(new ApiError(409, "This checkout attempt is no longer pending"));
+        }
+
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest("hex");
+
+        // Use a timing-safe comparison for the signature.
+        const received = Buffer.from(String(razorpay_signature));
+        const expected = Buffer.from(expectedSignature);
+        if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
+            return next(new ApiError(400, "Invalid Razorpay payment signature"));
+        }
+
+        // The payment state is checked directly with Razorpay, never trusted from the browser.
+        const gatewayPayment = await razorpay.payments.fetch(razorpay_payment_id);
+        if (gatewayPayment.order_id !== razorpay_order_id) {
+            return next(new ApiError(400, "Payment does not belong to this checkout"));
+        }
+        if (gatewayPayment.amount !== Math.round(checkoutSession.amount * 100)) {
+            return next(new ApiError(400, "Payment amount mismatch"));
+        }
+        if (gatewayPayment.status !== "captured") {
+            return next(new ApiError(409, "Razorpay has not confirmed a captured payment yet"));
+        }
+
+        // Ensure the basket is still the basket that was priced for this payment attempt.
+        const currentCart = await Cart.findOne({ user: req.user._id });
+        if (getCartFingerprint(currentCart) !== checkoutSession.cartFingerprint) {
+            checkoutSession.status = "review";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            await checkoutSession.save();
+            return next(new ApiError(
+                409,
+                "Payment was captured, but your cart changed during checkout. Please contact support; do not retry payment."
+            ));
+        }
+
+        // Recalculate current server-side prices/coupon validity before placing the order.
+        const pricing = await calculateCheckoutTotal(req.user._id, checkoutSession.couponCode);
+        if (Math.round(pricing.totalAmount * 100) !== Math.round(checkoutSession.amount * 100)) {
+            checkoutSession.status = "review";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            await checkoutSession.save();
+            return next(new ApiError(
+                409,
+                "Payment was captured, but the checkout total changed. Please contact support; do not retry payment."
+            ));
+        }
+
+        // Reuse the project's established order transaction and inventory/coupon logic.
+        // The small response adapter lets the existing Express handler return its created order
+        // without duplicating its large business-logic implementation.
+        let orderResponse = null;
+        let orderError = null;
+        const mockResponse = {
+            status(code) { this.statusCode = code; return this; },
+            json(body) { orderResponse = body; return this; },
+        };
+
+        await createOrder(
+            {
+                user: { _id: req.user._id },
+                body: {
+                    shippingAddress: checkoutSession.shippingAddress,
+                    ...(checkoutSession.couponCode ? { couponCode: checkoutSession.couponCode } : {}),
+                },
+            },
+            mockResponse,
+            (error) => { orderError = error; }
+        );
+
+        if (orderError) {
+            // The gateway captured money but order creation failed. Flag for manual reconciliation.
+            checkoutSession.status = "review";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            await checkoutSession.save();
+            return next(new ApiError(
+                409,
+                "Razorpay captured the payment, but TinyNest could not place the order. Please contact support and do not pay again."
+            ));
+        }
+
+        const order = orderResponse?.data;
+        if (!order?._id) {
+            checkoutSession.status = "review";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            await checkoutSession.save();
+            return next(new ApiError(500, "Payment was captured but order confirmation needs support review"));
+        }
+
+        // Link the verified payment and mark the order confirmed.
+        const dbSession = await mongoose.startSession();
+        try {
+            dbSession.startTransaction();
+            const orderDoc = await Order.findOne({ _id: order._id, user: req.user._id }).session(dbSession);
+            if (!orderDoc) throw new ApiError(500, "Created order could not be found");
+
+            orderDoc.status = "confirmed";
+            await orderDoc.save({ session: dbSession });
+
+            await Payment.create([{
+                order: orderDoc._id,
+                user: req.user._id,
+                paymentMethod: "online",
+                transactionId: razorpay_payment_id,
+                razorpayOrderId: razorpay_order_id,
+                amount: checkoutSession.amount,
+                status: "paid",
+                paidAt: new Date(),
+            }], { session: dbSession });
+
+            checkoutSession.status = "paid";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            checkoutSession.order = orderDoc._id;
+            await checkoutSession.save({ session: dbSession });
+
+            await dbSession.commitTransaction();
+        } catch (error) {
+            await dbSession.abortTransaction();
+            checkoutSession.status = "review";
+            checkoutSession.razorpayPaymentId = razorpay_payment_id;
+            await checkoutSession.save();
+            throw error;
+        } finally {
+            dbSession.endSession();
+        }
+
+        return sendSuccessResponse(res, 200, {
+            verified: true,
+            orderId: order._id,
+            razorpayOrderId: razorpay_order_id,
+            razorpayPaymentId: razorpay_payment_id,
+        }, "Payment verified and order placed successfully");
+    } catch (error) {
+        next(error);
     }
 };

@@ -5,6 +5,8 @@ import {
     createRazorpayOrderThunk,
     verifyRazorpayPaymentThunk,
     createPaymentThunk,
+    createRazorpayCheckoutSessionThunk,
+    verifyRazorpayCheckoutSessionThunk,
 } from "./paymentThunk";
 
 const initialState = {
@@ -65,6 +67,38 @@ const paymentSlice = createSlice({
                 state.verified = true;
             })
             .addCase(verifyRazorpayPaymentThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || "Payment verification failed";
+                state.verified = false;
+            })
+
+            // Start Razorpay without creating an order.
+            .addCase(createRazorpayCheckoutSessionThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.verified = false;
+            })
+            .addCase(createRazorpayCheckoutSessionThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.razorpayOrder = action.payload.data;
+            })
+            .addCase(createRazorpayCheckoutSessionThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || "Could not start Razorpay checkout";
+            })
+
+            // Verify captured checkout payment and finalize the order.
+            .addCase(verifyRazorpayCheckoutSessionThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.verified = false;
+            })
+            .addCase(verifyRazorpayCheckoutSessionThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.payment = action.payload.data;
+                state.verified = true;
+            })
+            .addCase(verifyRazorpayCheckoutSessionThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || "Payment verification failed";
                 state.verified = false;
