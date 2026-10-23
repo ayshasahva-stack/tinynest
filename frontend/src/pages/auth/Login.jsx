@@ -25,6 +25,7 @@ function Login() {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
+    
     // Clear errors left behind by another authentication page.
     useEffect(() => {
         dispatch(clearAuthError());
@@ -35,30 +36,46 @@ function Login() {
     const loading = useSelector(selectAuthLoading);
 
     // Authenticate the user and fetch their profile.
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    
 
-        try {
-            // Log in using the existing Redux thunk.
-            await dispatch(
-                loginUserThunk({ email, password })
-            ).unwrap();
+// Authenticate the user and redirect based on their role.
+const handleSubmit = async (event) => {
+    event.preventDefault();
 
-            // Fetch the user's profile and role.
-            await dispatch(
-                getProfileThunk()
-            ).unwrap();
+    try {
+        // Step 1: Log in using your existing Redux thunk.
+        await dispatch(
+            loginUserThunk({ email, password })
+        ).unwrap();
 
-            // Return to the requested page or go home.
+        // Step 2: Fetch the logged-in user's profile and role.
+        const profileResponse = await dispatch(
+            getProfileThunk()
+        ).unwrap();
+
+        // Handle common profile response structures.
+        const user =
+            profileResponse?.user ??
+            profileResponse?.data?.user ??
+            profileResponse?.data ??
+            profileResponse;
+
+        // Step 3: Redirect admins to the admin dashboard.
+        if (user?.role === "admin") {
+            navigate("/admin", { replace: true });
+        } else {
+            // Normal customers return to their requested page or Home.
             const destination =
                 location.state?.from?.pathname || "/";
 
             navigate(destination, { replace: true });
-        } catch (error) {
-            // Redux retains the error for display on the page.
-            console.error("Authentication failed:", error);
         }
-    };
+    } catch (error) {
+        // Redux retains the error for display on the page.
+        console.error("Authentication failed:", error);
+    }
+};
+
 
    
 return (

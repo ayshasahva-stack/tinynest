@@ -1,144 +1,130 @@
 
-import { Link, NavLink } from "react-router-dom";
-
-// Existing notification component.
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../features/auth/authSlice";
 import NotificationBell from "./NotificationBell";
 
-// Sidebar used by all admin pages.
+// Shared sidebar for all admin pages.
+// The notification section has a higher stacking order so its dropdown
+// can appear above the sidebar navigation and page content.
 function AdminSidebar() {
-    // Reusable styling keeps all navigation links consistent.
+    // Preserve the existing routes and active-link behavior.
     const navLinkClass = ({ isActive }) =>
-        `flex items-center gap-3 rounded-lg px-4 py-3 transition ${
-            isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
+        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200 ${isActive
+            ? "bg-[#7a9e8f] font-medium text-[#203d32]"
+            : "text-[#414845] hover:bg-[#e3e9e6]"
         }`;
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
+    // Clear the Redux authentication state and return to login.
+    const handleLogout = () => {
+        dispatch(logout());
+        localStorage.removeItem("token");
+        navigate("/login", { replace: true });
+    };
     return (
         <aside
             className="
-                fixed left-0 top-0 z-40
+                fixed inset-y-0 left-0 z-40
                 flex h-screen w-64 flex-col
-                border-r border-gray-200
-                bg-white p-5
-                dark:border-gray-700 dark:bg-gray-800
+                overflow-visible
+                bg-[#f1f4f9] px-2 py-4
             "
         >
-            {/* Admin logo and panel title */}
-            <div className="mb-6">
-                <h2
-                    className="
-                        text-2xl font-bold
-                        text-gray-900 dark:text-white
-                    "
-                >
-                    TinyNest
-                </h2>
+            {/* TinyNest brand */}
+            <div className="mb-5 flex items-center justify-between px-2">
+                <Link to="/admin" className="flex items-center gap-2">
 
-                <p
-                    className="
-                        text-sm text-gray-500
-                        dark:text-gray-400
-                    "
-                >
-                    Admin Panel
-                </p>
+                    <span>
+                        <span className="block font-serif text-xl leading-6 text-[#436558]">
+                            TinyNest
+                        </span>
+
+                        <span className="block text-[10px] uppercase tracking-wider text-[#626c68]">
+                            Admin Core
+                        </span>
+                    </span>
+                </Link>
             </div>
 
-            {/* Admin notifications remain in the sidebar. */}
+            {/* Notifications: keep this section above the navigation */}
             <div
                 className="
-                    mb-6 flex items-center justify-between
-                    rounded-lg border border-gray-200
-                    p-3 dark:border-gray-700
+                    relative z-50 mb-4
+                    flex shrink-0 items-center justify-between
+                    overflow-visible
+                    rounded-lg border border-[#e0e3e8]
+                    bg-white px-3 py-3
                 "
             >
-                <span
-                    className="
-                        text-sm font-medium
-                        text-gray-700 dark:text-gray-200
-                    "
-                >
+                <span className="text-sm font-medium text-[#414845]">
                     Notifications
                 </span>
 
-                <NotificationBell />
+                {/* Existing notification component and behavior */}
+                <div className="relative z-[60] shrink-0">
+                    <NotificationBell />
+                </div>
             </div>
 
-            {/* Admin navigation links */}
-            <nav className="flex-1 space-y-2 overflow-y-auto">
-                {/* Dashboard */}
-                <NavLink
-                    to="/admin"
-                    end
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">📊</span>
+            {/* Navigation: existing routes preserved */}
+            <nav className="relative z-0 flex-1 space-y-1 overflow-y-auto">
+                <NavLink to="/admin" end className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▦</span>
                     <span>Dashboard</span>
                 </NavLink>
 
-                {/* Products */}
-                <NavLink
-                    to="/admin/products"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">📦</span>
+                <NavLink to="/admin/products" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▤</span>
                     <span>Products</span>
                 </NavLink>
 
-                {/* Orders */}
-                <NavLink
-                    to="/admin/orders"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">🛒</span>
+                <NavLink to="/admin/categories" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▦</span>
+                    <span>Categories</span>
+                </NavLink>
+
+                <NavLink to="/admin/orders" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▣</span>
                     <span>Orders</span>
                 </NavLink>
 
-                {/* Baby kits */}
-                <NavLink
-                    to="/admin/kits"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">🧸</span>
+                <NavLink to="/admin/kits" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">♧</span>
                     <span>Kits</span>
                 </NavLink>
 
-                {/* Coupons */}
-                <NavLink
-                    to="/admin/coupons"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">🎟️</span>
+                <NavLink to="/admin/coupons" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▣</span>
                     <span>Coupons</span>
                 </NavLink>
 
-                {/* Users */}
-                <NavLink
-                    to="/admin/users"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">👥</span>
+                <NavLink to="/admin/refunds" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">▣</span>
+                    <span>Refunds</span>
+                </NavLink>
+
+                <NavLink to="/admin/users" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">♧</span>
                     <span>Users</span>
                 </NavLink>
 
-                {/* Reviews and ratings */}
-                <NavLink
-                    to="/admin/reviews"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">⭐</span>
+                <NavLink to="/admin/reviews" className={navLinkClass}>
+                    <span className="text-base" aria-hidden="true">☆</span>
                     <span>Reviews &amp; Ratings</span>
                 </NavLink>
-
-                {/* Shared admin profile management page */}
-                <NavLink
-                    to="/admin/profile"
-                    className={navLinkClass}
-                >
-                    <span aria-hidden="true">👤</span>
-                    <span>My Profile</span>
-                </NavLink>
+                {/* Logout button stays at the bottom of the sidebar. */}
+                <div className="mt-3 border-t border-[#dce7e2] pt-3">
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800"
+                    >
+                        <span aria-hidden="true">↪</span>
+                        Logout
+                    </button>
+                </div>
             </nav>
         </aside>
     );

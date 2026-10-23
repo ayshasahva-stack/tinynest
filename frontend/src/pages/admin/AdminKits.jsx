@@ -315,500 +315,496 @@ function AdminKits() {
     }));
 
     return (
-        <div className="min-h-screen p-4 md:p-8">
-            {/* Page header */}
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Kit Management
-                    </h1>
+    <div className="min-h-screen bg-[#f7f9ff] p-4 md:p-8 dark:bg-slate-950">
+        {/* Page header */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
+                    Kit Management
+                </h1>
 
-                    <p className="mt-1 text-gray-500 dark:text-gray-400">
-                        Create and manage TinyNest product kits.
+                <p className="mt-1 text-[#77847d] dark:text-gray-400">
+                    Create and manage TinyNest product kits.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                onClick={handleAddKit}
+                className="rounded-lg bg-[#436558] px-5 py-2.5 font-medium text-white transition hover:bg-[#354f44] focus:outline-none focus:ring-2 focus:ring-[#a8c2b5]"
+            >
+                + Add Kit
+            </button>
+        </div>
+
+        {/* Search and status filter */}
+        <div className="mb-6 grid grid-cols-1 gap-4 rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:grid-cols-3">
+            <div className="md:col-span-2">
+                <label
+                    htmlFor="kitSearch"
+                    className="mb-2 block text-sm font-semibold text-[#46574e] dark:text-gray-200"
+                >
+                    Search Kits
+                </label>
+
+                <input
+                    id="kitSearch"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search by kit name..."
+                    className="w-full rounded-lg border border-[#d6e0da] bg-white px-4 py-2.5 text-[#263d32] outline-none placeholder:text-[#9aa69f] focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />
+            </div>
+
+            <div>
+                <label
+                    htmlFor="kitStatusFilter"
+                    className="mb-2 block text-sm font-semibold text-[#46574e] dark:text-gray-200"
+                >
+                    Status
+                </label>
+
+                <select
+                    id="kitStatusFilter"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                    className="w-full rounded-lg border border-[#d6e0da] bg-white px-4 py-2.5 text-[#263d32] focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                    <option value="all">All kits</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        {/* API feedback */}
+        {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                {error}
+            </div>
+        )}
+
+        {saveError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                {saveError}
+            </div>
+        )}
+
+        {saveSuccess && (
+            <div className="mb-4 rounded-xl border border-[#cbdcd3] bg-[#edf4f0] p-4 text-[#436558] dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300">
+                Kit changes saved successfully.
+            </div>
+        )}
+
+        {/* Kit listing */}
+        <div className="overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            {loading ? (
+                <div className="py-16 text-center text-[#77847d] dark:text-gray-400">
+                    Loading kits...
+                </div>
+            ) : filteredKits.length === 0 ? (
+                <div className="py-16 text-center">
+                    <h2 className="font-serif text-lg font-semibold text-[#263d32] dark:text-white">
+                        No kits found
+                    </h2>
+
+                    <p className="mt-1 text-sm text-[#77847d] dark:text-gray-400">
+                        Try a different search or add a new kit.
                     </p>
                 </div>
-
-                <button
-                    type="button"
-                    onClick={handleAddKit}
-                    className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700"
-                >
-                    + Add Kit
-                </button>
-            </div>
-
-            {/* Search and status filter */}
-            <div className="mb-6 grid grid-cols-1 gap-4 rounded-xl bg-white p-5 shadow-sm dark:bg-gray-800 md:grid-cols-3">
-                <div className="md:col-span-2">
-                    <label
-                        htmlFor="kitSearch"
-                        className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
-                    >
-                        Search Kits
-                    </label>
-
-                    <input
-                        id="kitSearch"
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search by kit name..."
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    />
-                </div>
-
-                <div>
-                    <label
-                        htmlFor="kitStatusFilter"
-                        className="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-200"
-                    >
-                        Status
-                    </label>
-
-                    <select
-                        id="kitStatusFilter"
-                        value={statusFilter}
-                        onChange={(event) => setStatusFilter(event.target.value)}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                    >
-                        <option value="all">All kits</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-            </div>
-
-            {/* API feedback */}
-            {error && (
-                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-                    {error}
-                </div>
-            )}
-
-            {saveError && (
-                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
-                    {saveError}
-                </div>
-            )}
-
-            {saveSuccess && (
-                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
-                    Kit changes saved successfully.
-                </div>
-            )}
-
-            {/* Kit listing */}
-            <div className="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-gray-800">
-                {loading ? (
-                    <div className="py-16 text-center text-gray-500">
-                        Loading kits...
-                    </div>
-                ) : filteredKits.length === 0 ? (
-                    <div className="py-16 text-center">
-                        <h2 className="font-semibold text-gray-800 dark:text-white">
-                            No kits found
-                        </h2>
-
-                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                            Try a different search or add a new kit.
-                        </p>
-                    </div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700">
-                                <tr>
-                                    {[
-                                        "Kit",
-                                        "Products",
-                                        "Price",
-                                        "Discount",
-                                        "Status",
-                                        "Actions",
-                                    ].map((heading) => (
-                                        <th
-                                            key={heading}
-                                            className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200"
-                                        >
-                                            {heading}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-
-                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                {filteredKits.map((kit) => (
-                                    <tr
-                                        key={kit._id}
-                                        className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead className="border-b border-[#e0e7e3] bg-[#f1f4f9] dark:border-gray-700 dark:bg-gray-700">
+                            <tr>
+                                {[
+                                    "Kit",
+                                    "Products",
+                                    "Price",
+                                    "Discount",
+                                    "Status",
+                                    "Actions",
+                                ].map((heading) => (
+                                    <th
+                                        key={heading}
+                                        className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200"
                                     >
-                                        <td className="px-5 py-4">
-                                            <div className="flex items-center gap-3">
-                                                {kit.image ? (
-                                                    <img
-                                                        src={kit.image}
-                                                        alt={kit.name}
-                                                        className="h-14 w-14 rounded-lg border border-gray-200 object-cover dark:border-gray-700"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
-                                                        No image
-                                                    </div>
-                                                )}
+                                        {heading}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
 
-                                                <div className="min-w-40">
-                                                    <p className="font-semibold text-gray-900 dark:text-white">
-                                                        {kit.name}
-                                                    </p>
-
-                                                    <p className="mt-1 max-w-xs text-xs text-gray-500 dark:text-gray-400">
-                                                        {kit.description}
-                                                    </p>
-
-                                                    <p className="mt-1 break-all text-xs text-gray-400">
-                                                        ID: {kit._id}
-                                                    </p>
+                        <tbody className="divide-y divide-[#edf1ee] dark:divide-gray-700">
+                            {filteredKits.map((kit) => (
+                                <tr
+                                    key={kit._id}
+                                    className="transition-colors hover:bg-[#f7f9f8] dark:hover:bg-gray-700/50"
+                                >
+                                    {/* Kit image and details */}
+                                    <td className="px-5 py-4">
+                                        <div className="flex items-center gap-3">
+                                            {kit.image ? (
+                                                <img
+                                                    src={kit.image}
+                                                    alt={kit.name}
+                                                    className="h-14 w-14 rounded-lg border border-[#e0e7e3] object-cover dark:border-gray-700"
+                                                />
+                                            ) : (
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#edf4f0] text-xs text-[#9aa69f] dark:bg-gray-700">
+                                                    No image
                                                 </div>
+                                            )}
+
+                                            <div className="min-w-40">
+                                                <p className="font-semibold text-[#263d32] dark:text-white">
+                                                    {kit.name}
+                                                </p>
+
+                                                <p className="mt-1 max-w-xs text-xs text-[#77847d] dark:text-gray-400">
+                                                    {kit.description}
+                                                </p>
+
+                                                <p className="mt-1 break-all text-xs text-[#9aa69f]">
+                                                    ID: {kit._id}
+                                                </p>
                                             </div>
-                                        </td>
+                                        </div>
+                                    </td>
 
-                                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {kit.items?.length || 0} product type(s)
-                                        </td>
+                                    {/* Product count */}
+                                    <td className="px-5 py-4 text-sm text-[#65756c] dark:text-gray-300">
+                                        {kit.items?.length || 0} product type(s)
+                                    </td>
 
-                                        <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white">
-                                            {formatPrice(kit.price)}
-                                        </td>
+                                    {/* Kit price */}
+                                    <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-[#263d32] dark:text-white">
+                                        {formatPrice(kit.price)}
+                                    </td>
 
-                                        <td className="px-5 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                            {kit.discount || 0}%
-                                        </td>
+                                    {/* Discount */}
+                                    <td className="px-5 py-4 text-sm text-[#65756c] dark:text-gray-300">
+                                        {kit.discount || 0}%
+                                    </td>
 
-                                        <td className="px-5 py-4">
-                                            <span
-                                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    {/* Active status */}
+                                    <td className="px-5 py-4">
+                                        <span
+                                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                                kit.isActive
+                                                    ? "bg-[#edf4f0] text-[#436558] dark:bg-emerald-950/40 dark:text-emerald-300"
+                                                    : "bg-[#f1f4f9] text-[#77847d] dark:bg-gray-700 dark:text-gray-300"
+                                            }`}
+                                        >
+                                            {kit.isActive ? "Active" : "Inactive"}
+                                        </span>
+                                    </td>
+
+                                    {/* Kit actions */}
+                                    <td className="px-5 py-4">
+                                        <div className="flex flex-col items-start gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleEditKit(kit)}
+                                                className="rounded-lg border border-[#cbdcd3] px-3 py-1.5 text-sm font-medium text-[#436558] transition hover:bg-[#edf4f0] dark:border-[#536e61] dark:text-[#b7d0c3] dark:hover:bg-gray-700"
+                                            >
+                                                Edit
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleStatus(kit)}
+                                                className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
                                                     kit.isActive
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-700"
+                                                        ? "border-[#ead2c9] text-[#a85f4a] hover:bg-[#fbf0eb] dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/40"
+                                                        : "border-[#cbdcd3] text-[#436558] hover:bg-[#edf4f0] dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
                                                 }`}
                                             >
-                                                {kit.isActive ? "Active" : "Inactive"}
-                                            </span>
-                                        </td>
+                                                {kit.isActive ? "Deactivate" : "Activate"}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
 
-                                        <td className="px-5 py-4">
-                                            <div className="flex flex-col items-start gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleEditKit(kit)}
-                                                    className="rounded-lg border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50"
-                                                >
-                                                    Edit
-                                                </button>
+        {/* Create / edit form */}
+        {showForm && (
+            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 py-8">
+                <form
+                    onSubmit={handleSubmit}
+                    className="my-auto w-full max-w-3xl space-y-5 rounded-2xl border border-[#e0e7e3] bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+                >
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <h2 className="font-serif text-xl font-semibold text-[#263d32] dark:text-white">
+                                {editingKitId ? "Edit Kit" : "Create Kit"}
+                            </h2>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleToggleStatus(kit)}
-                                                    className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                                                        kit.isActive
-                                                            ? "border-red-200 text-red-600 hover:bg-red-50"
-                                                            : "border-green-200 text-green-600 hover:bg-green-50"
-                                                    }`}
-                                                >
-                                                    {kit.isActive
-                                                        ? "Deactivate"
-                                                        : "Activate"}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-
-            {/* Create / edit form */}
-            {showForm && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 py-8">
-                    <form
-                        onSubmit={handleSubmit}
-                        className="my-auto w-full max-w-3xl space-y-5 rounded-2xl bg-white p-6 shadow-xl dark:bg-gray-800"
-                    >
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {editingKitId ? "Edit Kit" : "Create Kit"}
-                                </h2>
-
-                                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Configure kit information and its products.
-                                </p>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                className="rounded-lg px-3 py-1 text-2xl text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                aria-label="Close form"
-                            >
-                                ×
-                            </button>
+                            <p className="mt-1 text-sm text-[#77847d] dark:text-gray-400">
+                                Configure kit information and its products.
+                            </p>
                         </div>
 
-                        {formError && (
-                            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                                {formError}
-                            </div>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="rounded-lg px-3 py-1 text-2xl text-[#65756c] transition hover:bg-[#f1f4f9] dark:hover:bg-gray-700"
+                            aria-label="Close form"
+                        >
+                            ×
+                        </button>
+                    </div>
 
-                        {/* Basic kit information */}
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label
-                                    htmlFor="kitName"
-                                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                                >
-                                    Kit Name
-                                </label>
+                    {formError && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+                            {formError}
+                        </div>
+                    )}
 
-                                <input
-                                    id="kitName"
-                                    name="name"
-                                    value={form.name}
-                                    onChange={updateField}
-                                    required
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
+                    {/* Basic kit information */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label
+                                htmlFor="kitName"
+                                className="mb-1 block text-sm font-medium text-[#46574e] dark:text-gray-200"
+                            >
+                                Kit Name
+                            </label>
 
-                            <div>
-                                <label
-                                    htmlFor="kitImage"
-                                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                                >
-                                    Image URL
-                                </label>
-
-                                <input
-                                    id="kitImage"
-                                    name="image"
-                                    type="url"
-                                    value={form.image}
-                                    onChange={updateField}
-                                    required
-                                    placeholder="https://..."
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
+                            <input
+                                id="kitName"
+                                name="name"
+                                value={form.name}
+                                onChange={updateField}
+                                required
+                                className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
                         </div>
 
                         <div>
                             <label
-                                htmlFor="kitDescription"
-                                className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
+                                htmlFor="kitImage"
+                                className="mb-1 block text-sm font-medium text-[#46574e] dark:text-gray-200"
                             >
-                                Description
+                                Image URL
                             </label>
 
-                            <textarea
-                                id="kitDescription"
-                                name="description"
-                                value={form.description}
+                            <input
+                                id="kitImage"
+                                name="image"
+                                type="url"
+                                value={form.image}
                                 onChange={updateField}
                                 required
-                                rows={3}
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                placeholder="https://..."
+                                className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             />
                         </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label
-                                    htmlFor="kitPrice"
-                                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                                >
-                                    Kit Price (₹)
-                                </label>
-
-                                <input
-                                    id="kitPrice"
-                                    name="price"
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={form.price}
-                                    onChange={updateField}
-                                    required
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
-
-                            <div>
-                                <label
-                                    htmlFor="kitDiscount"
-                                    className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-200"
-                                >
-                                    Discount (%)
-                                </label>
-
-                                <input
-                                    id="kitDiscount"
-                                    name="discount"
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    step="0.01"
-                                    value={form.discount}
-                                    onChange={updateField}
-                                    required
-                                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Product selection */}
-                        <div className="space-y-3">
-                            <label
-                                htmlFor="productPicker"
-                                className="block text-sm font-semibold text-gray-800 dark:text-gray-200"
-                            >
-                                Add Products to Kit
-                            </label>
-
-                            <select
-                                id="productPicker"
-                                value=""
-                                disabled={productsLoading}
-                                onChange={(event) =>
-                                    handleAddProduct(event.target.value)
-                                }
-                                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            >
-                                <option value="">
-                                    {productsLoading
-                                        ? "Loading products..."
-                                        : "Select a product to add"}
-                                </option>
-
-                                {products.map((product) => (
-                                    <option
-                                        key={product._id}
-                                        value={product._id}
-                                    >
-                                        {product.title} — {formatPrice(product.price)}
-                                    </option>
-                                ))}
-                            </select>
-
-                            {selectedProducts.length === 0 ? (
-                                <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-500 dark:bg-gray-700/50 dark:text-gray-400">
-                                    No products selected yet.
-                                </p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {selectedProducts.map((item) => (
-                                        <div
-                                            key={item.product}
-                                            className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700 sm:flex-row sm:items-center"
-                                        >
-                                            {item.details?.images?.[0] && (
-                                                <img
-                                                    src={item.details.images[0]}
-                                                    alt={item.details.title}
-                                                    className="h-12 w-12 rounded-lg object-cover"
-                                                />
-                                            )}
-
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-medium text-gray-800 dark:text-gray-200">
-                                                    {item.details?.title ||
-                                                        "Product unavailable"}
-                                                </p>
-
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {formatPrice(item.details?.price)}
-                                                </p>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <label
-                                                    htmlFor={`quantity-${item.product}`}
-                                                    className="text-sm text-gray-600 dark:text-gray-300"
-                                                >
-                                                    Qty
-                                                </label>
-
-                                                <input
-                                                    id={`quantity-${item.product}`}
-                                                    type="number"
-                                                    min="1"
-                                                    step="1"
-                                                    value={item.quantity}
-                                                    onChange={(event) =>
-                                                        handleQuantityChange(
-                                                            item.product,
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    className="w-20 rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                                                />
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleRemoveProduct(item.product)
-                                                    }
-                                                    className="rounded-lg px-2 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Active status */}
-                        <label className="flex items-center gap-3 text-sm font-medium text-gray-700 dark:text-gray-200">
-                            <input
-                                type="checkbox"
-                                name="isActive"
-                                checked={form.isActive}
-                                onChange={updateField}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            Make this kit available to customers
+                    <div>
+                        <label
+                            htmlFor="kitDescription"
+                            className="mb-1 block text-sm font-medium text-[#46574e] dark:text-gray-200"
+                        >
+                            Description
                         </label>
 
-                        {/* Form actions */}
-                        <div className="flex flex-col-reverse justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700 sm:flex-row">
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                className="rounded-lg border border-gray-300 px-5 py-2.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-                            >
-                                Cancel
-                            </button>
+                        <textarea
+                            id="kitDescription"
+                            name="description"
+                            value={form.description}
+                            onChange={updateField}
+                            required
+                            rows={3}
+                            className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        />
+                    </div>
 
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label
+                                htmlFor="kitPrice"
+                                className="mb-1 block text-sm font-medium text-[#46574e] dark:text-gray-200"
                             >
-                                {saving
-                                    ? "Saving..."
-                                    : editingKitId
-                                        ? "Save Changes"
-                                        : "Create Kit"}
-                            </button>
+                                Kit Price (₹)
+                            </label>
+
+                            <input
+                                id="kitPrice"
+                                name="price"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={form.price}
+                                onChange={updateField}
+                                required
+                                className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
                         </div>
-                    </form>
-                </div>
-            )}
-        </div>
-    );
+
+                        <div>
+                            <label
+                                htmlFor="kitDiscount"
+                                className="mb-1 block text-sm font-medium text-[#46574e] dark:text-gray-200"
+                            >
+                                Discount (%)
+                            </label>
+
+                            <input
+                                id="kitDiscount"
+                                name="discount"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                value={form.discount}
+                                onChange={updateField}
+                                required
+                                className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Product selection */}
+                    <div className="space-y-3">
+                        <label
+                            htmlFor="productPicker"
+                            className="block text-sm font-semibold text-[#46574e] dark:text-gray-200"
+                        >
+                            Add Products to Kit
+                        </label>
+
+                        <select
+                            id="productPicker"
+                            value=""
+                            disabled={productsLoading}
+                            onChange={(event) => handleAddProduct(event.target.value)}
+                            className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        >
+                            <option value="">
+                                {productsLoading
+                                    ? "Loading products..."
+                                    : "Select a product to add"}
+                            </option>
+
+                            {products.map((product) => (
+                                <option key={product._id} value={product._id}>
+                                    {product.title} — {formatPrice(product.price)}
+                                </option>
+                            ))}
+                        </select>
+
+                        {selectedProducts.length === 0 ? (
+                            <p className="rounded-lg bg-[#f1f4f9] p-4 text-sm text-[#77847d] dark:bg-gray-700/50 dark:text-gray-400">
+                                No products selected yet.
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {selectedProducts.map((item) => (
+                                    <div
+                                        key={item.product}
+                                        className="flex flex-col gap-3 rounded-lg border border-[#e0e7e3] p-3 dark:border-gray-700 sm:flex-row sm:items-center"
+                                    >
+                                        {item.details?.images?.[0] && (
+                                            <img
+                                                src={item.details.images[0]}
+                                                alt={item.details.title}
+                                                className="h-12 w-12 rounded-lg object-cover"
+                                            />
+                                        )}
+
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-[#263d32] dark:text-gray-200">
+                                                {item.details?.title || "Product unavailable"}
+                                            </p>
+
+                                            <p className="text-xs text-[#77847d] dark:text-gray-400">
+                                                {formatPrice(item.details?.price)}
+                                            </p>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <label
+                                                htmlFor={`quantity-${item.product}`}
+                                                className="text-sm text-[#65756c] dark:text-gray-300"
+                                            >
+                                                Qty
+                                            </label>
+
+                                            <input
+                                                id={`quantity-${item.product}`}
+                                                type="number"
+                                                min="1"
+                                                step="1"
+                                                value={item.quantity}
+                                                onChange={(event) =>
+                                                    handleQuantityChange(
+                                                        item.product,
+                                                        event.target.value
+                                                    )
+                                                }
+                                                className="w-20 rounded-lg border border-[#d6e0da] bg-white px-2 py-1.5 text-[#263d32] focus:border-[#7a9e8f] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            />
+
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveProduct(item.product)}
+                                                className="rounded-lg px-2 py-1.5 text-sm font-medium text-[#a85f4a] transition hover:bg-[#fbf0eb] dark:text-red-300 dark:hover:bg-red-950/40"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Active status */}
+                    <label className="flex items-center gap-3 text-sm font-medium text-[#46574e] dark:text-gray-200">
+                        <input
+                            type="checkbox"
+                            name="isActive"
+                            checked={form.isActive}
+                            onChange={updateField}
+                            className="h-4 w-4 rounded border-gray-300 accent-[#436558] focus:ring-[#7a9e8f]"
+                        />
+                        Make this kit available to customers
+                    </label>
+
+                    {/* Form actions */}
+                    <div className="flex flex-col-reverse justify-end gap-3 border-t border-[#e0e7e3] pt-4 dark:border-gray-700 sm:flex-row">
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="rounded-lg border border-[#d6e0da] px-5 py-2.5 font-medium text-[#46574e] transition hover:bg-[#f1f4f9] dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={saving}
+                            className="rounded-lg bg-[#436558] px-5 py-2.5 font-medium text-white transition hover:bg-[#354f44] focus:outline-none focus:ring-2 focus:ring-[#a8c2b5] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {saving
+                                ? "Saving..."
+                                : editingKitId
+                                  ? "Save Changes"
+                                  : "Create Kit"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        )}
+    </div>
+);
 }
 
 export default AdminKits;

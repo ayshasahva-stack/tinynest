@@ -103,221 +103,256 @@ function AdminReviews() {
         }
     };
 
-    return (
-        <main className="space-y-6 p-4 sm:p-6">
-            {/* Page heading */}
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Reviews & Ratings
-                </h1>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Monitor customer feedback and manage product reviews.
+
+return (
+    <main className="min-h-screen space-y-6 bg-[#f7f9ff] p-4 text-[#263d32] sm:p-6">
+        {/* Page heading */}
+        <div>
+            <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#263d32] sm:text-3xl">
+                Reviews & Ratings
+            </h1>
+            <p className="mt-2 text-sm text-[#77847d]">
+                Monitor customer feedback and manage product reviews.
+            </p>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm">
+                <p className="text-sm font-medium text-[#77847d]">
+                    Total Reviews
+                </p>
+                <p className="mt-3 text-3xl font-semibold text-[#263d32]">
+                    {reviews.length}
+                </p>
+                <p className="mt-1 text-xs text-[#77847d]">
+                    Customer feedback received
                 </p>
             </div>
 
-            {/* Summary cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Total Reviews
-                    </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                        {reviews.length}
-                    </p>
-                </div>
-
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Average Rating
-                    </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                        {averageRating}{" "}
-                        <span className="text-yellow-400">★</span>
-                    </p>
-                </div>
-
-                <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Five-Star Reviews
-                    </p>
-                    <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                        {ratingDistribution.find((item) => item.rating === 5)?.count || 0}
-                    </p>
-                </div>
+            <div className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm">
+                <p className="text-sm font-medium text-[#77847d]">
+                    Average Rating
+                </p>
+                <p className="mt-3 flex items-center gap-2 text-3xl font-semibold text-[#263d32]">
+                    {averageRating}
+                    <span className="text-xl text-[#bd8069]">★</span>
+                </p>
+                <p className="mt-1 text-xs text-[#77847d]">
+                    Average customer satisfaction
+                </p>
             </div>
 
-            {/* Rating distribution */}
-            <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                <h2 className="mb-4 font-semibold text-gray-900 dark:text-white">
+            <div className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm">
+                <p className="text-sm font-medium text-[#77847d]">
+                    Five-Star Reviews
+                </p>
+                <p className="mt-3 text-3xl font-semibold text-[#436558]">
+                    {ratingDistribution.find((item) => item.rating === 5)?.count || 0}
+                </p>
+                <p className="mt-1 text-xs text-[#77847d]">
+                    Highest-rated customer reviews
+                </p>
+            </div>
+        </div>
+
+        {/* Rating distribution */}
+        <section className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-5">
+                <h2 className="font-serif text-lg font-semibold text-[#263d32]">
                     Rating Distribution
                 </h2>
+                <p className="mt-1 text-sm text-[#77847d]">
+                    Breakdown of customer ratings across all reviews.
+                </p>
+            </div>
 
-                <div className="space-y-3">
-                    {ratingDistribution.map(({ rating, count }) => (
-                        <div
-                            key={rating}
-                            className="flex items-center gap-3 text-sm"
-                        >
-                            <span className="w-12 text-gray-700 dark:text-gray-300">
-                                {rating} ★
-                            </span>
+            <div className="space-y-4">
+                {ratingDistribution.map(({ rating, count }) => (
+                    <div
+                        key={rating}
+                        className="flex items-center gap-3 text-sm"
+                    >
+                        <span className="w-12 shrink-0 font-medium text-[#46574e]">
+                            {rating} ★
+                        </span>
 
-                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div
-                                    className="h-full rounded-full bg-yellow-400"
-                                    style={{
-                                        width: `${
-                                            reviews.length
-                                                ? (count / reviews.length) * 100
-                                                : 0
-                                        }%`,
-                                    }}
-                                />
-                            </div>
-
-                            <span className="w-8 text-right text-gray-500 dark:text-gray-400">
-                                {count}
-                            </span>
+                        {/* Rating bar */}
+                        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#edf4f0]">
+                            <div
+                                className="h-full rounded-full bg-[#7a9e8f] transition-all duration-300"
+                                style={{
+                                    width: `${
+                                        reviews.length
+                                            ? (count / reviews.length) * 100
+                                            : 0
+                                    }%`,
+                                }}
+                            />
                         </div>
-                    ))}
-                </div>
-            </section>
 
-            {/* Search and filter */}
-            <section className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Search product, customer, or comment..."
-                        className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-white"
-                    />
+                        <span className="w-8 text-right font-medium tabular-nums text-[#77847d]">
+                            {count}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </section>
 
-                    <select
-                        value={ratingFilter}
-                        onChange={(event) => setRatingFilter(event.target.value)}
-                        className="rounded-lg border border-gray-300 px-4 py-3 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white"
-                    >
-                        <option value="all">All ratings</option>
-                        <option value="5">5 stars</option>
-                        <option value="4">4 stars</option>
-                        <option value="3">3 stars</option>
-                        <option value="2">2 stars</option>
-                        <option value="1">1 star</option>
-                    </select>
+        {/* Search and filter */}
+        <section className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm">
+            <div className="mb-4">
+                <h2 className="font-serif text-lg font-semibold text-[#263d32]">
+                    Find Reviews
+                </h2>
+                <p className="mt-1 text-sm text-[#77847d]">
+                    Search customer feedback or filter by rating.
+                </p>
+            </div>
 
-                    <button
-                        type="button"
-                        onClick={fetchReviews}
-                        disabled={loading}
-                        className="rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium hover:bg-gray-100 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                    >
-                        Refresh
-                    </button>
-                </div>
-            </section>
+            <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                    type="search"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search product, customer, or comment..."
+                    className="min-w-0 flex-1 rounded-xl border border-[#dce7e2] bg-[#f7f9ff] px-4 py-3 text-sm text-[#263d32] outline-none transition placeholder:text-[#9aa69f] focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#7a9e8f]/20"
+                />
 
-            {/* Error messages */}
-            {(error || deleteError) && (
-                <div
-                    role="alert"
-                    className="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                <select
+                    value={ratingFilter}
+                    onChange={(event) => setRatingFilter(event.target.value)}
+                    className="rounded-xl border border-[#dce7e2] bg-[#f7f9ff] px-4 py-3 text-sm text-[#46574e] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#7a9e8f]/20"
                 >
-                    {deleteError || error}
-                </div>
-            )}
+                    <option value="all">All ratings</option>
+                    <option value="5">5 stars</option>
+                    <option value="4">4 stars</option>
+                    <option value="3">3 stars</option>
+                    <option value="2">2 stars</option>
+                    <option value="1">1 star</option>
+                </select>
 
-            {/* Reviews table */}
-            <section className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-                <div className="flex items-center justify-between border-b border-gray-200 p-5 dark:border-gray-700">
-                    <h2 className="font-semibold text-gray-900 dark:text-white">
+                <button
+                    type="button"
+                    onClick={fetchReviews}
+                    disabled={loading}
+                    className="rounded-xl border border-[#dce7e2] bg-[#edf4f0] px-5 py-3 text-sm font-semibold text-[#436558] transition hover:bg-[#dce7e2] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                    {loading ? "Refreshing..." : "Refresh"}
+                </button>
+            </div>
+        </section>
+
+        {/* Error messages */}
+        {(error || deleteError) && (
+            <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+            >
+                {deleteError || error}
+            </div>
+        )}
+
+        {/* Reviews table */}
+        <section className="overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white shadow-sm">
+            <div className="flex flex-col gap-2 border-b border-[#e0e7e3] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div>
+                    <h2 className="font-serif text-lg font-semibold text-[#263d32]">
                         Customer Reviews
                     </h2>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {filteredReviews.length} results
-                    </span>
+                    <p className="mt-1 text-sm text-[#77847d]">
+                        Review customer ratings and comments.
+                    </p>
                 </div>
 
-                {loading ? (
-                    <p className="p-8 text-center text-gray-500 dark:text-gray-400">
-                        Loading reviews...
-                    </p>
-                ) : error ? (
-                    <p className="p-8 text-center text-gray-500 dark:text-gray-400">
-                        Reviews could not be loaded.
-                    </p>
-                ) : filteredReviews.length === 0 ? (
-                    <p className="p-8 text-center text-gray-500 dark:text-gray-400">
-                        No reviews match your search.
-                    </p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full min-w-[750px] text-left text-sm">
-                            <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-                                <tr>
-                                    <th className="px-5 py-4">Product</th>
-                                    <th className="px-5 py-4">Customer</th>
-                                    <th className="px-5 py-4">Rating</th>
-                                    <th className="px-5 py-4">Comment</th>
-                                    <th className="px-5 py-4">Date</th>
-                                    <th className="px-5 py-4">Action</th>
+                <span className="w-fit rounded-full bg-[#edf4f0] px-3 py-1.5 text-xs font-semibold text-[#436558]">
+                    {filteredReviews.length} results
+                </span>
+            </div>
+
+            {loading ? (
+                <p className="p-10 text-center text-sm text-[#77847d]">
+                    Loading reviews...
+                </p>
+            ) : error ? (
+                <p className="p-10 text-center text-sm text-[#77847d]">
+                    Reviews could not be loaded.
+                </p>
+            ) : filteredReviews.length === 0 ? (
+                <p className="p-10 text-center text-sm text-[#77847d]">
+                    No reviews match your search.
+                </p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[750px] text-left text-sm">
+                        <thead className="bg-[#f1f4f9] text-xs uppercase tracking-wide text-[#77847d]">
+                            <tr>
+                                <th className="px-5 py-4 font-semibold">Product</th>
+                                <th className="px-5 py-4 font-semibold">Customer</th>
+                                <th className="px-5 py-4 font-semibold">Rating</th>
+                                <th className="px-5 py-4 font-semibold">Comment</th>
+                                <th className="px-5 py-4 font-semibold">Date</th>
+                                <th className="px-5 py-4 font-semibold">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody className="divide-y divide-[#edf1ee]">
+                            {filteredReviews.map((review) => (
+                                <tr
+                                    key={review._id}
+                                    className="transition-colors hover:bg-[#f7f9ff]"
+                                >
+                                    <td className="px-5 py-4 font-medium text-[#263d32]">
+                                        {review.product?.title || "Product unavailable"}
+                                    </td>
+
+                                    <td className="px-5 py-4 text-[#46574e]">
+                                        {review.user?.email || "Customer unavailable"}
+                                    </td>
+
+                                    <td className="whitespace-nowrap px-5 py-4">
+                                        <span className="text-[#bd8069]">
+                                            {"★".repeat(Number(review.rating) || 0)}
+                                        </span>
+                                        <span className="ml-1 text-xs text-[#77847d]">
+                                            {review.rating}/5
+                                        </span>
+                                    </td>
+
+                                    <td className="max-w-xs px-5 py-4 text-[#46574e]">
+                                        <p className="whitespace-normal break-words leading-6">
+                                            {review.comment || "No comment"}
+                                        </p>
+                                    </td>
+
+                                    <td className="whitespace-nowrap px-5 py-4 text-[#77847d]">
+                                        {review.createdAt
+                                            ? new Date(review.createdAt).toLocaleDateString()
+                                            : "—"}
+                                    </td>
+
+                                    <td className="px-5 py-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDelete(review)}
+                                            disabled={deletingId === review._id}
+                                            className="rounded-lg border border-[#f0d8d0] bg-[#fbf0eb] px-3 py-2 text-xs font-semibold text-[#a65f4c] transition hover:bg-[#f5e2da] disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {deletingId === review._id
+                                                ? "Deleting..."
+                                                : "Delete"}
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </section>
+    </main>
+);
 
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                {filteredReviews.map((review) => (
-                                    <tr key={review._id}>
-                                        <td className="px-5 py-4 font-medium text-gray-900 dark:text-white">
-                                            {review.product?.title || "Product unavailable"}
-                                        </td>
-
-                                        <td className="px-5 py-4 text-gray-600 dark:text-gray-300">
-                                            {review.user?.email || "Customer unavailable"}
-                                        </td>
-
-                                        <td className="px-5 py-4 whitespace-nowrap">
-                                            <span className="text-yellow-400">
-                                                {"★".repeat(Number(review.rating) || 0)}
-                                            </span>
-                                            <span className="ml-1 text-gray-500 dark:text-gray-400">
-                                                {review.rating}/5
-                                            </span>
-                                        </td>
-
-                                        <td className="max-w-xs px-5 py-4 text-gray-600 dark:text-gray-300">
-                                            <p className="whitespace-normal break-words">
-                                                {review.comment || "No comment"}
-                                            </p>
-                                        </td>
-
-                                        <td className="whitespace-nowrap px-5 py-4 text-gray-600 dark:text-gray-300">
-                                            {review.createdAt
-                                                ? new Date(review.createdAt).toLocaleDateString()
-                                                : "—"}
-                                        </td>
-
-                                        <td className="px-5 py-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => handleDelete(review)}
-                                                disabled={deletingId === review._id}
-                                                className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-900/20 dark:text-red-400"
-                                            >
-                                                {deletingId === review._id
-                                                    ? "Deleting..."
-                                                    : "Delete"}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </section>
-        </main>
-    );
 }
 
 export default AdminReviews;

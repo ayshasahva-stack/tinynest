@@ -291,7 +291,9 @@ function NotificationBell({ badgeOnly = false }) {
 
             {/* Notification dropdown */}
             {isOpen && (
-                <div className="absolute right-0 z-[60] mt-3 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-[#E8E0D5] bg-[#FFFCF7] shadow-xl dark:border-stone-700 dark:bg-stone-900">
+               
+<div className="absolute left-0 z-[100] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white shadow-xl">
+
                     {/* Dropdown heading */}
                     <div className="flex items-center justify-between border-b border-[#E8E0D5] px-4 py-3 dark:border-stone-700">
                         <h2 className="font-semibold text-stone-800 dark:text-stone-100">

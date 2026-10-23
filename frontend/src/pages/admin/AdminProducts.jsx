@@ -89,541 +89,469 @@ function AdminProducts() {
         }
     };
 
-    return (
-        <div className="min-h-screen p-6 md:p-8">
+  return (
+    <div className="min-h-screen bg-[#f7f9ff] p-6 md:p-8 dark:bg-slate-950">
 
-            {/* =========================================
-                PAGE HEADER
-            ========================================== */}
+        {/* =========================================
+            PAGE HEADER
+        ========================================== */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
+                    Product Management
+                </h1>
 
-            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Product Management
-                    </h1>
-
-                    <p className="mt-1 text-gray-500 dark:text-gray-400">
-                        Manage TinyNest products.
-                    </p>
-                </div>
-
-                {/* Add Product will be implemented next */}
-                <button
-                    type="button"
-                    onClick={() =>
-                        navigate("/admin/products/new")
-                    }
-                    className="
-        rounded-lg
-        bg-blue-600
-        px-5    
-        py-2.5
-        font-medium
-        text-white
-        transition
-        hover:bg-blue-700
-    "
-                >
-                    + Add Product
-                </button>
-
+                <p className="mt-1 text-[#77847d] dark:text-gray-400">
+                    Manage TinyNest products.
+                </p>
             </div>
 
-            {/* =========================================
-                SEARCH
-            ========================================== */}
+            {/* Navigate to the Add Product page */}
+            <button
+                type="button"
+                onClick={() => navigate("/admin/products/new")}
+                className="
+                    rounded-lg
+                    bg-[#436558]
+                    px-5 py-2.5
+                    font-medium
+                    text-white
+                    transition
+                    hover:bg-[#354f44]
+                    focus:outline-none
+                    focus:ring-2
+                    focus:ring-[#a8c2b5]
+                "
+            >
+                + Add Product
+            </button>
+        </div>
 
+        {/* =========================================
+            SEARCH
+        ========================================== */}
+        <div className="
+            mb-6
+            rounded-2xl
+            bg-white
+            p-5
+            shadow-sm
+            ring-1 ring-[#e0e7e3]
+            dark:bg-gray-800
+            dark:ring-gray-700
+        ">
+            <label
+                htmlFor="productSearch"
+                className="
+                    mb-2
+                    block
+                    text-sm
+                    font-semibold
+                    text-[#46574e]
+                    dark:text-gray-200
+                "
+            >
+                Search Products
+            </label>
+
+            <input
+                id="productSearch"
+                type="text"
+                placeholder="Search by product name..."
+                value={search}
+                onChange={(event) => {
+                    // Update the search text.
+                    setSearch(event.target.value);
+
+                    // Reset pagination when searching.
+                    setPage(1);
+                }}
+                className="
+                    w-full
+                    rounded-lg
+                    border border-[#d6e0da]
+                    bg-white
+                    px-4 py-2.5
+                    text-[#263d32]
+                    outline-none
+                    transition
+                    placeholder:text-[#9aa69f]
+                    focus:border-[#7a9e8f]
+                    focus:ring-2
+                    focus:ring-[#dce7e2]
+                    dark:border-gray-600
+                    dark:bg-gray-700
+                    dark:text-white
+                "
+            />
+        </div>
+
+        {/* =========================================
+            ERROR MESSAGE
+        ========================================== */}
+        {error && (
             <div className="
                 mb-6
                 rounded-xl
-                bg-white
-                p-5
-                shadow-sm
-                dark:bg-gray-800
+                border border-red-200
+                bg-red-50
+                p-4
+                text-red-700
+                dark:border-red-900
+                dark:bg-red-950/30
+                dark:text-red-300
             ">
-
-                <label
-                    htmlFor="productSearch"
-                    className="
-                        mb-2
-                        block
-                        text-sm
-                        font-semibold
-                        text-gray-700
-                        dark:text-gray-200
-                    "
-                >
-                    Search Products
-                </label>
-
-                <input
-                    id="productSearch"
-                    type="text"
-                    placeholder="Search by product name..."
-                    value={search}
-                    onChange={(event) => {
-                        // Update search text.
-                        setSearch(event.target.value);
-
-                        // Start from page 1 when a new search
-                        // is entered.
-                        setPage(1);
-                    }}
-                    className="
-                        w-full
-                        rounded-lg
-                        border
-                        border-gray-300
-                        bg-white
-                        px-4
-                        py-2.5
-                        text-gray-900
-                        outline-none
-                        focus:border-blue-500
-                        focus:ring-2
-                        focus:ring-blue-200
-                        dark:border-gray-600
-                        dark:bg-gray-700
-                        dark:text-white
-                    "
-                />
-
+                {error}
             </div>
+        )}
 
-            {/* =========================================
-                ERROR MESSAGE
-            ========================================== */}
+        {/* =========================================
+            PRODUCT TABLE
+        ========================================== */}
+        <div className="
+            overflow-hidden
+            rounded-2xl
+            bg-white
+            shadow-sm
+            ring-1 ring-[#e0e7e3]
+            dark:bg-gray-800
+            dark:ring-gray-700
+        ">
 
-            {error && (
-                <div className="
-                    mb-6
-                    rounded-lg
-                    border
-                    border-red-200
-                    bg-red-50
-                    p-4
-                    text-red-700
-                ">
-                    {error}
+            {loading ? (
+
+                /* Loading state */
+                <div className="flex flex-col items-center justify-center py-16">
+                    <div className="
+                        h-10 w-10
+                        animate-spin
+                        rounded-full
+                        border-4 border-[#dce7e2]
+                        border-t-[#436558]
+                    " />
+
+                    <p className="mt-4 text-sm text-[#77847d] dark:text-gray-400">
+                        Loading products...
+                    </p>
                 </div>
-            )}
 
-            {/* =========================================
-                PRODUCT TABLE
-            ========================================== */}
+            ) : products.length === 0 ? (
 
-            <div className="
-                overflow-hidden
-                rounded-xl
-                bg-white
-                shadow-sm
-                dark:bg-gray-800
-            ">
+                /* Empty state */
+                <div className="py-16 text-center">
+                    <h3 className="
+                        text-lg
+                        font-semibold
+                        text-[#263d32]
+                        dark:text-white
+                    ">
+                        No products found
+                    </h3>
 
-                {loading ? (
+                    <p className="mt-1 text-sm text-[#77847d] dark:text-gray-400">
+                        Try a different search.
+                    </p>
+                </div>
 
-                    /* Loading state */
-                    <div className="flex flex-col items-center justify-center py-16">
+            ) : (
 
-                        <div className="
-                            h-10
-                            w-10
-                            animate-spin
-                            rounded-full
-                            border-4
-                            border-gray-200
-                            border-t-blue-600
-                        " />
+                /* Responsive product table */
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
 
-                        <p className="mt-4 text-gray-500">
-                            Loading products...
-                        </p>
-
-                    </div>
-
-                ) : products.length === 0 ? (
-
-                    /* Empty state */
-                    <div className="py-16 text-center">
-
-                        <h3 className="
-                            text-lg
-                            font-semibold
-                            text-gray-800
-                            dark:text-white
+                        {/* Table header */}
+                        <thead className="
+                            border-b border-[#e0e7e3]
+                            bg-[#f1f4f9]
+                            dark:border-gray-700
+                            dark:bg-gray-700
                         ">
-                            No products found
-                        </h3>
+                            <tr>
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Product
+                                </th>
 
-                        <p className="mt-1 text-gray-500">
-                            Try a different search.
-                        </p>
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Category
+                                </th>
 
-                    </div>
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Brand
+                                </th>
 
-                ) : (
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Price
+                                </th>
 
-                    /* Responsive table */
-                    <div className="overflow-x-auto">
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Stock
+                                </th>
 
-                        <table className="w-full text-left">
+                                <th className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-[#46574e] dark:text-gray-200">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
 
-                            {/* Table header */}
-                            <thead className="
-                                border-b
-                                border-gray-200
-                                bg-gray-50
-                                dark:border-gray-700
-                                dark:bg-gray-700
-                            ">
+                        {/* Table body */}
+                        <tbody className="
+                            divide-y divide-[#edf1ee]
+                            dark:divide-gray-700
+                        ">
+                            {products.map((product) => (
+                                <tr
+                                    key={product._id}
+                                    className="
+                                        transition-colors
+                                        hover:bg-[#f7f9f8]
+                                        dark:hover:bg-gray-700/50
+                                    "
+                                >
+                                    {/* Product images and details */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-4">
 
-                                <tr>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Product
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Category
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Brand
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Price
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Stock
-                                    </th>
-
-                                    <th className="px-6 py-4 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                        Actions
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-                            {/* Table body */}
-                            <tbody className="
-                                divide-y
-                                divide-gray-100
-                                dark:divide-gray-700
-                            ">
-
-                                {products.map((product) => (
-
-                                    <tr
-                                        key={product._id}
-                                        className="
-                                            transition
-                                            hover:bg-gray-50
-                                            dark:hover:bg-gray-700/50
-                                        "
-                                    >
-
-                                        {/* Product */}
-                                        <td className="px-6 py-4">
-
-                                            <div className="flex items-center gap-4">
-
-                                                {/* Product thumbnails */}
-                                                {product.images?.length > 0 ? (
-                                                    <div className="flex items-center gap-1.5">
-
-                                                        {/* Show maximum 3 thumbnails */}
-                                                        {product.images.slice(0, 3).map((image, index) => (
+                                            {/* Show up to three product thumbnails */}
+                                            {product.images?.length > 0 ? (
+                                                <div className="flex shrink-0 items-center gap-1.5">
+                                                    {product.images
+                                                        .slice(0, 3)
+                                                        .map((image, index) => (
                                                             <img
                                                                 key={`${image}-${index}`}
                                                                 src={image}
                                                                 alt={`${product.title} ${index + 1}`}
                                                                 className="
-                    h-14
-                    w-14
-                    rounded-lg
-                    border
-                    border-gray-200
-                    object-cover
-                    dark:border-gray-700
-                "
+                                                                    h-14 w-14
+                                                                    rounded-lg
+                                                                    border border-[#e0e7e3]
+                                                                    object-cover
+                                                                    dark:border-gray-700
+                                                                "
                                                             />
                                                         ))}
 
-                                                        {/* Show remaining image count */}
-                                                        {product.images.length > 3 && (
-                                                            <div
-                                                                className="
-                    flex
-                    h-14
-                    w-14
-                    items-center
-                    justify-center
-                    rounded-lg
-                    bg-gray-100
-                    text-xs
-                    font-semibold
-                    text-gray-600
-                    dark:bg-gray-700
-                    dark:text-gray-200
-                "
-                                                            >
-                                                                +{product.images.length - 3}
-                                                            </div>
-                                                        )}
-
-                                                    </div>
-                                                ) : (
-                                                    <div className="
-        flex
-        h-14
-        w-14
-        items-center
-        justify-center
-        rounded-lg
-        bg-gray-100
-        text-xs
-        text-gray-400
-    ">
-                                                        No image
-                                                    </div>
-                                                )}
-                                                <div className="min-w-0">
-
-                                                    <p className="
-                                                        font-semibold
-                                                        text-gray-900
-                                                        dark:text-white
-                                                    ">
-                                                        {product.title}
-                                                    </p>
-
-                                                    <p className="
-                                                        mt-1
-                                                        text-xs
-                                                        text-gray-400
-                                                    ">
-                                                        ID: {product._id}
-                                                    </p>
-
+                                                    {/* Display the number of remaining images */}
+                                                    {product.images.length > 3 && (
+                                                        <div className="
+                                                            flex h-14 w-14
+                                                            items-center justify-center
+                                                            rounded-lg
+                                                            bg-[#edf4f0]
+                                                            text-xs font-semibold
+                                                            text-[#436558]
+                                                            dark:bg-gray-700
+                                                            dark:text-gray-200
+                                                        ">
+                                                            +{product.images.length - 3}
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                            </div>
-
-                                        </td>
-
-                                        {/* Category */}
-                                        <td className="
-                                            px-6
-                                            py-4
-                                            text-sm
-                                            text-gray-600
-                                            dark:text-gray-300
-                                        ">
-                                            {product.category?.name || "N/A"}
-                                        </td>
-
-                                        {/* Brand */}
-                                        <td className="
-                                            px-6
-                                            py-4
-                                            text-sm
-                                            text-gray-600
-                                            dark:text-gray-300
-                                        ">
-                                            {product.brand || "N/A"}
-                                        </td>
-
-                                        {/* Price */}
-                                        <td className="
-                                            px-6
-                                            py-4
-                                            text-sm
-                                            font-semibold
-                                            text-gray-900
-                                            dark:text-white
-                                        ">
-                                            ₹{product.price}
-                                        </td>
-
-                                        {/* Stock */}
-                                        <td className="px-6 py-4">
-
-                                            <span
-                                                className={`
-                                                    inline-flex
-                                                    rounded-full
-                                                    px-3
-                                                    py-1
+                                            ) : (
+                                                /* Fallback when no product image exists */
+                                                <div className="
+                                                    flex h-14 w-14 shrink-0
+                                                    items-center justify-center
+                                                    rounded-lg
+                                                    bg-[#edf4f0]
                                                     text-xs
+                                                    text-[#9aa69f]
+                                                    dark:bg-gray-700
+                                                ">
+                                                    No image
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0">
+                                                <p className="
                                                     font-semibold
-                                                    ${product.stock <= 5
-                                                        ? "bg-red-100 text-red-700"
-                                                        : "bg-green-100 text-green-700"
-                                                    }
-                                                `}
-                                            >
-                                                {product.stock}
-                                            </span>
+                                                    text-[#263d32]
+                                                    dark:text-white
+                                                ">
+                                                    {product.title}
+                                                </p>
 
-                                        </td>
-
-                                        {/* Actions */}
-                                        <td className="px-6 py-4">
-
-                                            <div className="flex gap-2">
-
-                                                {/* Edit will be implemented next */}
-                                                {/* Edit product */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        navigate(`/admin/products/edit/${product._id}`)
-                                                    }
-                                                    className="
-        rounded-lg
-        border
-        border-blue-200
-        px-3
-        py-1.5
-        text-sm
-        font-medium
-        text-blue-600
-        transition
-        hover:bg-blue-50
-    "
-                                                >
-                                                    Edit
-                                                </button>
-                                                {/* Delete */}
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleDelete(
-                                                            product._id
-                                                        )
-                                                    }
-                                                    className="
-                                                        rounded-lg
-                                                        border
-                                                        border-red-200
-                                                        px-3
-                                                        py-1.5
-                                                        text-sm
-                                                        font-medium
-                                                        text-red-600
-                                                        transition
-                                                        hover:bg-red-50
-                                                    "
-                                                >
-                                                    Delete
-                                                </button>
-
+                                                <p className="mt-1 text-xs text-[#9aa69f]">
+                                                    ID: {product._id}
+                                                </p>
                                             </div>
+                                        </div>
+                                    </td>
 
-                                        </td>
+                                    {/* Category */}
+                                    <td className="
+                                        px-6 py-4
+                                        text-sm text-[#65756c]
+                                        dark:text-gray-300
+                                    ">
+                                        {product.category?.name || "N/A"}
+                                    </td>
 
-                                    </tr>
+                                    {/* Brand */}
+                                    <td className="
+                                        px-6 py-4
+                                        text-sm text-[#65756c]
+                                        dark:text-gray-300
+                                    ">
+                                        {product.brand || "N/A"}
+                                    </td>
 
-                                ))}
+                                    {/* Price */}
+                                    <td className="
+                                        whitespace-nowrap
+                                        px-6 py-4
+                                        text-sm font-semibold
+                                        text-[#263d32]
+                                        dark:text-white
+                                    ">
+                                        ₹{product.price}
+                                    </td>
 
-                            </tbody>
+                                    {/* Stock status */}
+                                    <td className="px-6 py-4">
+                                        <span
+                                            className={`
+                                                inline-flex
+                                                rounded-full
+                                                px-3 py-1
+                                                text-xs font-semibold
+                                                ${
+                                                    product.stock <= 5
+                                                        ? "bg-[#fbf0eb] text-[#a85f4a] dark:bg-red-950/40 dark:text-red-300"
+                                                        : "bg-[#edf4f0] text-[#436558] dark:bg-emerald-950/40 dark:text-emerald-300"
+                                                }
+                                            `}
+                                        >
+                                            {product.stock}
+                                        </span>
+                                    </td>
 
-                        </table>
+                                    {/* Edit and Delete actions */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
 
-                    </div>
+                                            {/* Navigate to Edit Product */}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    navigate(`/admin/products/edit/${product._id}`)
+                                                }
+                                                className="
+                                                    rounded-lg
+                                                    border border-[#cbdcd3]
+                                                    px-3 py-1.5
+                                                    text-sm font-medium
+                                                    text-[#436558]
+                                                    transition
+                                                    hover:bg-[#edf4f0]
+                                                    dark:border-[#536e61]
+                                                    dark:text-[#b7d0c3]
+                                                    dark:hover:bg-gray-700
+                                                "
+                                            >
+                                                Edit
+                                            </button>
 
-                )}
-
-                {/* =========================================
-                    PAGINATION
-                ========================================== */}
-
-                <div className="
-                    flex
-                    flex-col
-                    gap-3
-                    border-t
-                    border-gray-200
-                    px-6
-                    py-4
-                    sm:flex-row
-                    sm:items-center
-                    sm:justify-between
-                    dark:border-gray-700
-                ">
-
-                    <p className="
-                        text-sm
-                        text-gray-500
-                        dark:text-gray-400
-                    ">
-                        Page {pagination.currentPage} of{" "}
-                        {pagination.totalPages || 1}
-                    </p>
-
-                    <div className="flex gap-2">
-
-                        <button
-                            type="button"
-                            onClick={handlePreviousPage}
-                            disabled={page <= 1 || loading}
-                            className="
-                                rounded-lg
-                                border
-                                border-gray-300
-                                px-4
-                                py-2
-                                text-sm
-                                font-medium
-                                text-gray-700
-                                transition
-                                hover:bg-gray-100
-                                disabled:cursor-not-allowed
-                                disabled:opacity-50
-                                dark:border-gray-600
-                                dark:text-gray-200
-                                dark:hover:bg-gray-700
-                            "
-                        >
-                            Previous
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={handleNextPage}
-                            disabled={
-                                page >= pagination.totalPages ||
-                                loading
-                            }
-                            className="
-                                rounded-lg
-                                bg-blue-600
-                                px-4
-                                py-2
-                                text-sm
-                                font-medium
-                                text-white
-                                transition
-                                hover:bg-blue-700
-                                disabled:cursor-not-allowed
-                                disabled:opacity-50
-                            "
-                        >
-                            Next
-                        </button>
-
-                    </div>
-
+                                            {/* Delete the selected product */}
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleDelete(product._id)
+                                                }
+                                                className="
+                                                    rounded-lg
+                                                    border border-red-200
+                                                    px-3 py-1.5
+                                                    text-sm font-medium
+                                                    text-red-600
+                                                    transition
+                                                    hover:bg-red-50
+                                                    dark:border-red-900
+                                                    dark:text-red-400
+                                                    dark:hover:bg-red-950/40
+                                                "
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+            )}
 
+            {/* =========================================
+                PAGINATION
+            ========================================== */}
+            <div className="
+                flex flex-col gap-3
+                border-t border-[#e0e7e3]
+                px-6 py-4
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+                dark:border-gray-700
+            ">
+                <p className="text-sm text-[#77847d] dark:text-gray-400">
+                    Page {pagination.currentPage} of{" "}
+                    {pagination.totalPages || 1}
+                </p>
+
+                <div className="flex gap-2">
+                    {/* Previous page */}
+                    <button
+                        type="button"
+                        onClick={handlePreviousPage}
+                        disabled={page <= 1 || loading}
+                        className="
+                            rounded-lg
+                            border border-[#d6e0da]
+                            bg-white
+                            px-4 py-2
+                            text-sm font-medium
+                            text-[#46574e]
+                            transition
+                            hover:bg-[#edf4f0]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                            dark:border-gray-600
+                            dark:bg-gray-800
+                            dark:text-gray-200
+                            dark:hover:bg-gray-700
+                        "
+                    >
+                        Previous
+                    </button>
+
+                    {/* Next page */}
+                    <button
+                        type="button"
+                        onClick={handleNextPage}
+                        disabled={
+                            page >= pagination.totalPages ||
+                            loading
+                        }
+                        className="
+                            rounded-lg
+                            bg-[#436558]
+                            px-4 py-2
+                            text-sm font-medium
+                            text-white
+                            transition
+                            hover:bg-[#354f44]
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
+                        "
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
-
         </div>
-    );
+    </div>
+);
 }
 
 export default AdminProducts;
