@@ -60,11 +60,6 @@ const userSchema = new mongoose.Schema(
             default: false
         },
 
-        isBlocked: {
-            type: Boolean,
-            default: false
-        },
-
         // Hashed refresh token; never store the raw token in MongoDB.
         refreshTokenHash: {
             type: String,
