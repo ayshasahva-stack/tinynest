@@ -1,6 +1,8 @@
 // Import the components required for routing
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../../components/ProtectedRoute";
+
+import ScrollToTop from "../../components/ScrollToTop";
 // Import the pages
 import Home from "../../pages/home/Home";
 import Products from "../../pages/products/Product";
@@ -53,6 +55,7 @@ import SocketManager from "../../realtime/SocketManager";
 function AppRouter() {
     return (
         <BrowserRouter>
+         <ScrollToTop />
             <SocketManager />
 
             <Routes>
