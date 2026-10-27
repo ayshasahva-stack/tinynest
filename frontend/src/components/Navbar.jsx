@@ -10,6 +10,7 @@ import {
     selectAuthUser,
 } from "../features/auth/authSelectors";
 import { logout } from "../features/auth/authSlice";
+import { clearCart } from "../features/cart/cartSlice";
 
 import { selectCartItemCount } from "../features/cart/cartSelectors";
 import { selectWishlistCount } from "../features/wishlist/wishlistSelectors";
@@ -54,24 +55,23 @@ function Navbar() {
     const handleLogout = () => {
         dispatch(logout());
         setIsMenuOpen(false);
+        dispatch(clearCart());
         setIsAccountMenuOpen(false);
         navigate("/login");
     };
 
     // Desktop navigation link styling.
     const linkClass = ({ isActive }) =>
-        `rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${
-            isActive
-                ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
-                : "text-[#414845] hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+        `rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${isActive
+            ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
+            : "text-[#414845] hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
         }`;
 
     // Mobile links occupy the full width to prevent horizontal wrapping.
     const mobileLinkClass = ({ isActive }) =>
-        `block w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${
-            isActive
-                ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
-                : "text-[#414845] hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
+        `block w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${isActive
+            ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
+            : "text-[#414845] hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
         }`;
 
     // Shared styling for account menu links.
@@ -89,9 +89,8 @@ function Navbar() {
         <button
             type="button"
             onClick={toggleTheme}
-            aria-label={`Switch to ${
-                theme === "light" ? "dark" : "light"
-            } mode`}
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"
+                } mode`}
             aria-pressed={theme === "dark"}
             className="flex w-full items-center justify-between px-5 py-3 text-sm text-[#414845] transition-colors hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
         >
@@ -197,15 +196,7 @@ function Navbar() {
                             Baby Kits
                         </NavLink>
 
-                        <NavLink to="/wishlist" className={linkClass}>
-                            Wishlist
 
-                            {wishlistCount > 0 && (
-                                <span className="ml-2 rounded-full bg-[#DCE8E1] px-2 py-0.5 text-xs font-semibold text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
-                                    {wishlistCount}
-                                </span>
-                            )}
-                        </NavLink>
 
                         <NavLink to="/cart" className={linkClass}>
                             Cart
@@ -246,9 +237,8 @@ function Navbar() {
 
                                 {/* Desktop account dropdown. */}
                                 <div
-                                    className={`absolute right-0 top-full z-50 mt-3 w-72 overflow-hidden rounded-2xl border border-[#E0E4E8] bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-gray-900 ${
-                                        isAccountMenuOpen ? "block" : "hidden"
-                                    }`}
+                                    className={`absolute right-0 top-full z-50 mt-3 w-72 overflow-hidden rounded-2xl border border-[#E0E4E8] bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-gray-900 ${isAccountMenuOpen ? "block" : "hidden"
+                                        }`}
                                 >
                                     <div className="border-b border-[#E0E4E8] px-5 py-3 dark:border-gray-700">
                                         <p className="font-semibold text-[#252A28] dark:text-white">
@@ -339,19 +329,7 @@ function Navbar() {
                             Baby Kits
                         </NavLink>
 
-                        <NavLink
-                            to="/wishlist"
-                            className={mobileLinkClass}
-                        >
-                            <span className="flex items-center justify-between">
-                                Wishlist
-                                {wishlistCount > 0 && (
-                                    <span className="rounded-full bg-[#DCE8E1] px-2 py-0.5 text-xs font-semibold text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
-                                        {wishlistCount}
-                                    </span>
-                                )}
-                            </span>
-                        </NavLink>
+
 
                         <NavLink
                             to="/cart"

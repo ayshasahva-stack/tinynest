@@ -23,7 +23,14 @@ const cartSlice = createSlice({
 
     initialState,
 
-    reducers: {},
+   reducers: {
+    // Clear cart items immediately when the user logs out.
+    clearCart: (state) => {
+        state.items = [];
+        state.error = null;
+        state.loading = false;
+    },
+},
 
     extraReducers: (builder) => {
         // -----------------------------
@@ -166,5 +173,8 @@ const cartSlice = createSlice({
     },
 });
 
-// Export the cart reducer
+// Export the synchronous cart-clearing action.
+export const { clearCart } = cartSlice.actions;
+
+// Export the cart reducer for the Redux store.
 export default cartSlice.reducer;
