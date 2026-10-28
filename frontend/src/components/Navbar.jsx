@@ -15,6 +15,7 @@ import {
     Sun,
     ChevronDown,
     ChevronUp,
+    ShoppingCart 
 } from "lucide-react";
 import { useTheme } from "../app/ThemeContext";
 
@@ -213,19 +214,26 @@ function Navbar() {
 
 
 
-                        <NavLink to="/cart" className={linkClass}>
-                            Cart
-
-                            {cartItemCount > 0 && (
-                                <span className="ml-2 rounded-full bg-[#436558] px-2 py-0.5 text-xs font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
-                                    {cartItemCount}
-                                </span>
-                            )}
-                        </NavLink>
                     </div>
 
                     {/* Desktop account actions. */}
                     <div className="hidden items-center gap-2 md:flex ">
+                            
+{/* Cart icon beside the profile dropdown. */}
+<NavLink
+    to="/cart"
+    aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
+    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
+>
+    <ShoppingCart size={21} strokeWidth={1.7} />
+
+    {cartItemCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
+            {cartItemCount}
+        </span>
+    )}
+</NavLink>
+
                         {isAuthenticated ? (
                             <div className="relative">
                                 <button
@@ -345,19 +353,21 @@ function Navbar() {
 
 
 
-                        <NavLink
-                            to="/cart"
-                            className={mobileLinkClass}
-                        >
-                            <span className="flex items-center justify-between">
-                                Cart
-                                {cartItemCount > 0 && (
-                                    <span className="rounded-full bg-[#436558] px-2 py-0.5 text-xs font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
-                                        {cartItemCount}
-                                    </span>
-                                )}
-                            </span>
-                        </NavLink>
+                        
+{/* Cart icon beside the profile dropdown. */}
+<NavLink
+    to="/cart"
+    aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
+    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
+>
+    <ShoppingCart size={21} strokeWidth={1.7} />
+
+    {cartItemCount > 0 && (
+        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
+            {cartItemCount}
+        </span>
+    )}
+</NavLink>
 
                         {isAuthenticated ? (
                             <div className="mt-3 border-t border-[#E0E4E8] pt-3 dark:border-gray-800">
