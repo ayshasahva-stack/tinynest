@@ -38,15 +38,18 @@ function AdminProducts() {
     const [page, setPage] = useState(1);
 
     // Fetch products whenever page or search changes.
-    useEffect(() => {
-        dispatch(
-            fetchProducts({
-                page,
-                limit: 10,
-                search,
-            })
-        );
-    }, [dispatch, page, search]);
+   
+useEffect(() => {
+    dispatch(
+        fetchProducts({
+            page,
+            limit: 10,
+            search,
+            includeOutOfStock: true, // Include stock-zero products for admins.
+        })
+    );
+}, [dispatch, page, search]);
+
 
     // Delete a product.
     const handleDelete = async (productId) => {

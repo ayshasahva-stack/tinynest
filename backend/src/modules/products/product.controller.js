@@ -227,19 +227,19 @@ export const getProducts = async (req, res, next) => {
         }
 
         // Match part of a brand name, ignoring letter case.
-// For example, "ti", "tiny", and "TINY" match "tinynest".
-if (brand && brand.trim()) {
-    // Escape special regex characters so user input is treated as text.
-    const safeBrand = brand.trim().replace(
-        /[.*+?^${}()|[\]\\]/g,
-        "\\$&"
-    );
+        // For example, "ti", "tiny", and "TINY" match "tinynest".
+        if (brand && brand.trim()) {
+            // Escape special regex characters so user input is treated as text.
+            const safeBrand = brand.trim().replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
 
-    filter.brand = {
-        $regex: safeBrand,
-        $options: "i",
-    };
-}
+            filter.brand = {
+                $regex: safeBrand,
+                $options: "i",
+            };
+        }
 
         // Filter by the original product price.
         if (
@@ -256,9 +256,15 @@ if (brand && brand.trim()) {
                 filter.price.$lte = maximumPrice;
             }
         }
-// Always exclude products that are out of stock.
-// Customers will only see products with stock greater than zero.
-filter.stock = { $gt: 0 };
+
+        // Public requests hide out-of-stock products.
+        // The protected admin route can retrieve every product.
+        if (req.originalUrl.includes("/admin")) {
+            // Do not apply a stock filter for admin requests.
+        } else {
+            filter.stock = { $gt: 0 };
+        }
+
         // Fetch matching products and their total count together.
         const [products, totalProducts] = await Promise.all([
             Product.find(filter)
@@ -426,7 +432,7 @@ export const updateProduct = async (req, res, next) => {
                 !existingImages.includes(oldImage)
         );
 
-     
+
 
         // Get newly uploaded Cloudinary image URLs
         const newImageUrls =
@@ -473,14 +479,14 @@ export const updateProduct = async (req, res, next) => {
         /*
          * Validate the updated product data.
          */
-       // Validate the updated product data
-const error = validateProductUpdate(req.body);
+        // Validate the updated product data
+        const error = validateProductUpdate(req.body);
 
-if (error) {
-    return next(
-        new ApiError(400, error)
-    );
-}
+        if (error) {
+            return next(
+                new ApiError(400, error)
+            );
+        }
 
         // If category is being changed, verify it exists
         if (req.body.category) {
@@ -523,18 +529,18 @@ if (error) {
         });
 
         // Save updated product
-       // Save updated product
-await product.save();
+        // Save updated product
+        await product.save();
 
-/*
- * MongoDB update was successful.
- *
- * Now it is safe to delete the images
- * that the admin removed from the product.
- */
-for (const imageUrl of removedImages) {
-    await deleteCloudinaryImage(imageUrl);
-}
+        /*
+         * MongoDB update was successful.
+         *
+         * Now it is safe to delete the images
+         * that the admin removed from the product.
+         */
+        for (const imageUrl of removedImages) {
+            await deleteCloudinaryImage(imageUrl);
+        }
 
         // Populate category information
         await product.populate("category");

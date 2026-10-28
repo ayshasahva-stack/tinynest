@@ -6,16 +6,29 @@ import api from "../../services/api";
 // GET ALL PRODUCTS
 // ======================================================
 
-// Fetch products from the backend
+
+/**
+ * Fetch products from the backend.
+ *
+ * Admin listing requests can include products with stock 0.
+ * Public product requests continue using the normal endpoint.
+ */
 export const getProducts = async (params = {}) => {
-    // Send a GET request to the products endpoint
-    const response = await api.get("/products", {
-        params,
+    // Use the admin endpoint only when explicitly requested.
+    const { includeOutOfStock, ...queryParams } = params;
+
+    const endpoint = includeOutOfStock
+        ? "/products/admin"
+        : "/products";
+
+    // Send normal search and pagination parameters.
+    const response = await api.get(endpoint, {
+        params: queryParams,
     });
 
-    // Return the backend response data
     return response.data;
 };
+
 
 
 // ======================================================

@@ -26,7 +26,13 @@ router.post(
     upload.array("images", 5),
     createProduct
 );
-
+// Get all products for admins, including out-of-stock products.
+router.get(
+    "/admin",
+    protect,
+    authorizeAdmin,
+    getProducts
+);
 // Get all products
 // This is a public route
 router.get("/", getProducts);
