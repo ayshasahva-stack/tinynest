@@ -31,6 +31,7 @@ function Product() {
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     // Additional product filter values.
     const [ageGroup, setAgeGroup] = useState("");
+    
     const [brand, setBrand] = useState("");
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
@@ -43,6 +44,9 @@ function Product() {
     const loading = useSelector(selectProductsLoading);
     const error = useSelector(selectProductsError);
 
+
+
+
     // Debounce search so we don't request products on every keystroke.
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -54,43 +58,46 @@ function Product() {
 
     // Fetch products when a search, category, or page changes.
     // Fetch products whenever an applied filter or page changes.
-    useEffect(() => {
-        dispatch(
-            fetchProducts({
-                search: debouncedSearch,
-                category,
-                ageGroup: ageGroup.trim(),
-                brand: brand.trim(),
-                minPrice,
-                maxPrice,
-               
-                page,
-            })
-        );
-    }, [
-        dispatch,
-        debouncedSearch,
-        category,
-        ageGroup,
-        brand,
-        minPrice,
-        maxPrice,
-     
-        page,
-    ]);
+   
+useEffect(() => {
+    // Fetch products using the latest applied filters.
+    dispatch(
+        fetchProducts({
+            search: debouncedSearch,
+            category,
+             ageGroup: ageGroup.trim(),
+            brand: brand.trim(),
+            minPrice,
+            maxPrice,
+            page,
+        })
+    );
+}, [
+    dispatch,
+    debouncedSearch,
+    category,
+    ageGroup, 
+    brand,
+    minPrice,
+    maxPrice,
+    page,
+]);
 
     // Reset pagination when the applied filters change.
     // Start at page 1 whenever the applied filters change.
-    useEffect(() => {
-        setPage(1);
-    }, [
-        debouncedSearch,
-        category,
-        ageGroup,
-        brand,
-        minPrice,
-        maxPrice,
-    ]);
+    
+useEffect(() => {
+    // Return to page 1 when an applied filter changes.
+    setPage(1);
+}, [
+    debouncedSearch,
+    category,
+    ageGroup,
+    brand,
+    minPrice,
+    maxPrice,
+]);
+
     // Load real categories for the chips and sidebar.
     useEffect(() => {
         dispatch(fetchCategories());

@@ -18,8 +18,7 @@ function ProductFilters({
     setMinPrice,
     maxPrice,
     setMaxPrice,
-    inStock,
-    setInStock,
+    
 }) {
     const categories = useSelector(selectCategories);
 
@@ -35,8 +34,7 @@ function ProductFilters({
         ageGroup.trim() ||
         brand.trim() ||
         minPrice !== "" ||
-        maxPrice !== "" ||
-        inStock !== ""
+        maxPrice !== "" 
     );
 
     // Clear every filter together.
@@ -47,7 +45,6 @@ function ProductFilters({
         setBrand("");
         setMinPrice("");
         setMaxPrice("");
-        setInStock("");
     };
 
     // Shared styles for the new filter inputs.
@@ -132,16 +129,7 @@ function ProductFilters({
                         </button>
                     )}
 
-                    {inStock !== "" && (
-                        <button
-                            type="button"
-                            onClick={() => setInStock("")}
-                            className="rounded-full bg-[#EBEEF3] px-3 py-1.5 text-xs text-[#414845] dark:bg-gray-800 dark:text-gray-200"
-                        >
-                            {inStock === "true" ? "In stock" : "Out of stock"} ×
-                        </button>
-                    )}
-
+                    
                     {!hasActiveFilters && (
                         <p className="text-xs leading-5 text-[#68716D] dark:text-gray-400">
                             Your selected filters will appear here.
