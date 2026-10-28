@@ -59,21 +59,21 @@ function AdminAddProduct() {
             [name]: value,
         }));
     };
+    // Store all selected image files, up to five.
+    const handleImageChange = (e) => {
+        const selectedFiles = Array.from(e.target.files || []);
 
-    // Handle image selection.
-    const handleImageChange = (event) => {
-        const selectedFiles = Array.from(event.target.files);
+        setImages((previousImages) => {
+            // Combine existing images with the newly selected images.
+            const combinedImages = [...previousImages, ...selectedFiles];
 
-        // Allow a maximum of five images.
-        if (selectedFiles.length > 5) {
-            alert("You can upload a maximum of 5 images.");
-            event.target.value = "";
-            return;
-        }
+            // Keep no more than five images.
+            return combinedImages.slice(0, 5);
+        });
 
-        setImages(selectedFiles);
+        // Allow selecting the same file again if needed.
+        e.target.value = "";
     };
-
     // Remove a selected image.
     const handleRemoveImage = (indexToRemove) => {
         setImages((previousImages) =>

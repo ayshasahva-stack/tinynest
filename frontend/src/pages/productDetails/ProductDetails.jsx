@@ -103,6 +103,7 @@ import ReviewList from "./components/ReviewList";
 
 import BabyKitSection from "../home/components/BabyKitSection"
 
+
 // Product Details page component
 function ProductDetails() {
 
@@ -144,6 +145,14 @@ function ProductDetails() {
 
     // Get selected product from Redux
     const product = useSelector(selectSelectedProduct);
+    // TEMP: Check how many images the backend returned.
+useEffect(() => {
+    if (product) {
+        console.log("Product title:", product.title);
+        console.log("Product images:", product.images);
+        console.log("Image count:", product.images?.length);
+    }
+}, [product]);
 
     // Get product loading state
     const productLoading = useSelector(
