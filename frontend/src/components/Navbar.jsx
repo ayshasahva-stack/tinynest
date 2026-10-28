@@ -2,7 +2,20 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
+import {
+    UserRound,
+    Package,
+    MapPin,
+    Heart,
+    Ticket,
+    Bell,
+    RotateCcw,
+    LogOut,
+    Moon,
+    Sun,
+    ChevronDown,
+    ChevronUp,
+} from "lucide-react";
 import { useTheme } from "../app/ThemeContext";
 
 import {
@@ -96,7 +109,9 @@ function Navbar() {
         >
             <span className="flex items-center gap-3">
                 <span aria-hidden="true">
-                    {theme === "light" ? "🌙" : "☀️"}
+                    {theme === "light"
+                        ? <Moon size={18} strokeWidth={1.7} />
+                        : <Sun size={18} strokeWidth={1.7} />}
                 </span>
                 Theme
             </span>
@@ -107,26 +122,26 @@ function Navbar() {
         </button>
     );
 
-    // Keep existing customer account routes and notification badge.
+
     const renderAccountLinks = () => (
         <>
             <Link to="/profile" className={accountLinkClass}>
-                <span aria-hidden="true">👤</span>
+                <UserRound size={18} strokeWidth={1.7} />
                 My Profile
             </Link>
 
             <Link to="/orders" className={accountLinkClass}>
-                <span aria-hidden="true">📦</span>
+                <Package size={18} strokeWidth={1.7} />
                 My Orders
             </Link>
 
             <Link to="/addresses" className={accountLinkClass}>
-                <span aria-hidden="true">📍</span>
+                <MapPin size={18} strokeWidth={1.7} />
                 Saved Addresses
             </Link>
 
             <Link to="/wishlist" className={accountLinkClass}>
-                <span aria-hidden="true">♡</span>
+                <Heart size={18} strokeWidth={1.7} />
                 Wishlist
 
                 {wishlistCount > 0 && (
@@ -137,18 +152,18 @@ function Navbar() {
             </Link>
 
             <Link to="/coupons" className={accountLinkClass}>
-                <span aria-hidden="true">🎟️</span>
+                <Ticket size={18} strokeWidth={1.7} />
                 My Coupons
             </Link>
 
             <Link to="/notifications" className={accountLinkClass}>
-                <span aria-hidden="true">🔔</span>
+                <Bell size={18} strokeWidth={1.7} />
                 <span>Notifications</span>
                 <NotificationBell badgeOnly />
             </Link>
 
             <Link to="/refunds" className={accountLinkClass}>
-                <span aria-hidden="true">↩</span>
+                <RotateCcw size={18} strokeWidth={1.7} />
                 My Refunds
             </Link>
         </>
@@ -210,7 +225,7 @@ function Navbar() {
                     </div>
 
                     {/* Desktop account actions. */}
-                    <div className="hidden items-center gap-2 md:flex">
+                    <div className="hidden items-center gap-2 md:flex ">
                         {isAuthenticated ? (
                             <div className="relative">
                                 <button
@@ -222,16 +237,15 @@ function Navbar() {
                                     aria-haspopup="true"
                                     className="flex max-w-56 items-center gap-2 rounded-full px-3 py-2.5 text-sm font-semibold text-[#414845] transition-colors hover:bg-[#EBEEF3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#668875] dark:text-gray-200 dark:hover:bg-gray-800"
                                 >
-                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DCE8E1] text-lg text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]">
-                                        👤
-                                    </span>
-
+                                    <UserRound size={20} strokeWidth={1.7} />
                                     <span className="max-w-32 truncate">
                                         {accountName}
                                     </span>
 
                                     <span aria-hidden="true">
-                                        {isAccountMenuOpen ? "⌃" : "⌄"}
+                                        {isAccountMenuOpen
+                                            ? <ChevronUp size={16} />
+                                            : <ChevronDown size={16} />}
                                     </span>
                                 </button>
 
@@ -260,7 +274,7 @@ function Navbar() {
                                             onClick={handleLogout}
                                             className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800"
                                         >
-                                            <span aria-hidden="true">↪</span>
+                                            <LogOut size={18} strokeWidth={1.7} />
                                             Logout
                                         </button>
                                     </div>
@@ -368,7 +382,7 @@ function Navbar() {
                                         onClick={handleLogout}
                                         className="flex w-full items-center gap-3 px-5 py-3 text-left text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-gray-800"
                                     >
-                                        <span aria-hidden="true">↪</span>
+                                        <LogOut size={18} strokeWidth={1.7} />
                                         Logout
                                     </button>
                                 </div>

@@ -225,19 +225,19 @@ export const getProducts = async (req, res, next) => {
                 $options: "i",
             };
         }
- // Filter age groups by partial text while the user types.
-if (ageGroup && ageGroup.trim()) {
-    // Escape special characters so the input is treated as plain text.
-    const safeAgeGroup = ageGroup.trim().replace(
-        /[.*+?^${}()|[\]\\]/g,
-        "\\$&"
-    );
+        // Filter age groups by partial text while the user types.
+        if (ageGroup && ageGroup.trim()) {
+            // Escape special characters so the input is treated as plain text.
+            const safeAgeGroup = ageGroup.trim().replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            );
 
-    filter.ageGroup = {
-        $regex: safeAgeGroup,
-        $options: "i", // Ignore uppercase/lowercase differences.
-    };
-}
+            filter.ageGroup = {
+                $regex: safeAgeGroup,
+                $options: "i", // Ignore uppercase/lowercase differences.
+            };
+        }
 
 
         // Match part of a brand name, ignoring letter case.
