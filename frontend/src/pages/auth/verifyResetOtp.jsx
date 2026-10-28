@@ -4,7 +4,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import Button from "../../components/Button";
-import AuthLayout from "../../components/AuthLayout";
 
 import { verifyResetOtpThunk } from "../../features/auth/authThunk";
 import {

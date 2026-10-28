@@ -1,5 +1,4 @@
 
-import Button from "../../../components/Button";
 
 // Displays one saved delivery address in the redesigned account page.
 function AddressCard({

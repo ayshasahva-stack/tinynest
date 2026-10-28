@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAuthError } from "../../features/auth/authSlice";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-import AuthLayout from "../../components/AuthLayout";
 
 import { registerUserThunk } from "../../features/auth/authThunk";
 import {
