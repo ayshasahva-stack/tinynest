@@ -17,15 +17,13 @@ export const createCategory = async (req, res, next) => {
             return next(new ApiError(400, error));
         }
 
-        // Normalize the category name
-        const normalizedName = req.body.name
-            .trim()
-            .toLowerCase();
+        // Keep the original capitalization while removing extra spaces.
+const categoryName = req.body.name.trim();
 
-        // Check whether the category already exists
-        const existingCategory = await Category.findOne({
-            name: normalizedName
-        });
+// Check for duplicate names without considering capitalization.
+const existingCategory = await Category.findOne({
+    name: { $regex: `^${categoryName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" }
+});
 
         if (existingCategory) {
             return next(
@@ -35,7 +33,7 @@ export const createCategory = async (req, res, next) => {
 
         // Create the category
         const category = new Category({
-            name: normalizedName,
+            name: categoryName,
             description: req.body.description?.trim() || "",
             image: req.body.image?.trim() || "",
             isActive: req.body.isActive ?? true
@@ -134,22 +132,29 @@ export const updateCategory = async (req, res, next) => {
             return next(new ApiError(404, "Category not found"));
         }
 
-        // If name is being updated, normalize it
-        if (req.body.name !== undefined) {
-            const normalizedName = req.body.name.trim().toLowerCase();
+       // Update the category name while preserving capitalization.
+if (req.body.name !== undefined) {
+    const categoryName = req.body.name.trim();
 
-            // Check whether another category already uses this name
-            const existingCategory = await Category.findOne({
-                name: normalizedName,
-                _id: { $ne: id }
-            });
+    // Escape special regex characters before checking duplicates.
+    const escapedName = categoryName.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
 
-            if (existingCategory) {
-                return next(new ApiError(409, "Category already exists"));
-            }
+    // Ignore capitalization when checking other categories.
+    const existingCategory = await Category.findOne({
+        name: { $regex: `^${escapedName}$`, $options: "i" },
+        _id: { $ne: id }
+    });
 
-            category.name = normalizedName;
-        }
+    if (existingCategory) {
+        return next(new ApiError(409, "Category already exists"));
+    }
+
+    // Save the name exactly as entered, apart from outer spaces.
+    category.name = categoryName;
+}
 
         // Update description if provided
         if (req.body.description !== undefined) {
