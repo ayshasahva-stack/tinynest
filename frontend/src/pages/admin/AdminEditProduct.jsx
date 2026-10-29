@@ -476,7 +476,7 @@ return (
     >
         <option value="">Select age group</option>
         <option value="0-6 months">0-6 months</option>
-        <option value="0-6 months">0-12 months</option>
+        <option value="0-12 months">0-12 months</option>
         <option value="6-12 months">6-12 months</option>
         <option value="1-2 years">1-2 years</option>
         <option value="2-4 years">2-4 years</option>
