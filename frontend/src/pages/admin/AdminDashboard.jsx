@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
+import Loading from "../../components/Loading";
 import {
     Line,
     BarChart,
@@ -177,29 +177,25 @@ function AdminDashboard() {
     // Main dashboard loading
     // -----------------------------------------
 
-    if (overviewLoading) {
-        return (
-            <div className="p-6">
-                <p className="text-gray-600 dark:text-gray-300">
-                    Loading dashboard...
-                </p>
-            </div>
-        );
-    }
+    // Show the reusable loading animation while dashboard data loads.
+if (overviewLoading) {
+    return <Loading />;
+}
 
     // -----------------------------------------
     // Main dashboard error
     // -----------------------------------------
 
-    if (overviewError) {
-        return (
-            <div className="p-6">
-                <p className="text-red-500">
-                    {overviewError}
-                </p>
-            </div>
-        );
-    }
+   if (overviewError) {
+    return (
+        <div className="min-h-screen bg-[#f7f9ff] p-6 text-[#181c20] dark:bg-gray-950 dark:text-gray-100">
+            {/* Display the existing dashboard error */}
+            <p className="text-red-500 dark:text-red-400">
+                {overviewError}
+            </p>
+        </div>
+    );
+}
 
     // Wait until overview data is available.
     if (!overview) {
