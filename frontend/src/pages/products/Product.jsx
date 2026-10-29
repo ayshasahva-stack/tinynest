@@ -68,16 +68,18 @@ useEffect(() => {
     // Fetch products when a search, category, or page changes.
     // Fetch products whenever an applied filter or page changes.
 
-   useEffect(() => {
+ // Fetch 12 products per page while preserving existing filters.
+useEffect(() => {
     dispatch(
         fetchProducts({
             search: debouncedSearch,
-            category: category,
+            category,
             ageGroup: ageGroup.trim(),
             brand: brand.trim(),
             minPrice,
             maxPrice,
             page,
+            limit: 12, // Show 12 products on each page.
         })
     );
 }, [
@@ -90,7 +92,6 @@ useEffect(() => {
     maxPrice,
     page,
 ]);
-
     // Reset pagination when the applied filters change.
     // Start at page 1 whenever the applied filters change.
 
