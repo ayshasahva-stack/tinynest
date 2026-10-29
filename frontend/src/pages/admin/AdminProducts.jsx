@@ -147,6 +147,47 @@ useEffect(() => {
             </button>
         </div>
 
+        {/* Total products summary */}
+        <div className="mb-6">
+            <div className="flex items-center gap-4 rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                {/* Product icon */}
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#edf4f0] text-[#436558] dark:bg-gray-700 dark:text-[#a9cfbe]">
+                    {/* Simple package icon */}
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+                        <path d="m3 8 9 5 9-5" />
+                        <path d="M3 8v8l9 5 9-5V8" />
+                        <path d="M12 13v8" />
+                    </svg>
+                </div>
+
+                <div>
+                    <p className="text-sm font-medium text-[#77847d] dark:text-gray-400">
+                        Total Products
+                    </p>
+
+                    <p className="mt-1 text-2xl font-bold text-[#263d32] dark:text-white">
+                        {loading ? "—" : (pagination.totalProducts ?? 0)}
+                    </p>
+
+                    <p className="mt-1 text-xs text-[#77847d] dark:text-gray-400">
+                        Products matching the current filters
+                    </p>
+                </div>
+            </div>
+        </div>
+
         {/* =========================================
             SEARCH
         ========================================== */}
