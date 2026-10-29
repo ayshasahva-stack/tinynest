@@ -72,12 +72,12 @@ function CategoriesSection() {
                 {!loading && !error && categories.length > 0 && (
                     <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
                         {categories.map((category) => (
-                            <Link
-                                key={category._id}
-                                to="/products"
-                                aria-label={`Explore ${category.name}`}
-                                className="group flex flex-col items-center text-center"
-                            >
+                          <Link
+    key={category.id}
+    to={`/products?category=${category._id}`}
+    aria-label={`Explore ${category.name}`}
+    className="group flex flex-col items-center text-center"
+>
                                 {/* Circular category image */}
                                 <div className="aspect-square w-full max-w-[180px] overflow-hidden rounded-full bg-[#EAE6DC]">
                                     {category.image ? (

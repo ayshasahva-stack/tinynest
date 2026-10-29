@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
 import { fetchProducts } from "../../features/products/productThunk";
@@ -23,15 +23,22 @@ import {
 import { selectCategories } from "../../features/categories/categorySelectors";
 
 function Product() {
+    const [searchParams] = useSearchParams();
+
+// Read the category ID selected from the home page.
+const requestedCategory = searchParams.get("category") || "";
+
+// Initialize the category filter using the URL value.
+const [category, setCategory] = useState(requestedCategory);
     // Search text, selected category, current page, and mobile filters.
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [category, setCategory] = useState("");
+
     const [page, setPage] = useState(1);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
     // Additional product filter values.
     const [ageGroup, setAgeGroup] = useState("");
-    
+
     const [brand, setBrand] = useState("");
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
@@ -44,9 +51,11 @@ function Product() {
     const loading = useSelector(selectProductsLoading);
     const error = useSelector(selectProductsError);
 
-
-
-
+    // Update the category when the URL changes.
+useEffect(() => {
+    setCategory(requestedCategory);
+    setPage(1);
+}, [requestedCategory]);
     // Debounce search so we don't request products on every keystroke.
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -58,14 +67,13 @@ function Product() {
 
     // Fetch products when a search, category, or page changes.
     // Fetch products whenever an applied filter or page changes.
-   
-useEffect(() => {
-    // Fetch products using the latest applied filters.
+
+   useEffect(() => {
     dispatch(
         fetchProducts({
             search: debouncedSearch,
-            category,
-             ageGroup: ageGroup.trim(),
+            category: category,
+            ageGroup: ageGroup.trim(),
             brand: brand.trim(),
             minPrice,
             maxPrice,
@@ -76,7 +84,7 @@ useEffect(() => {
     dispatch,
     debouncedSearch,
     category,
-    ageGroup, 
+    ageGroup,
     brand,
     minPrice,
     maxPrice,
@@ -85,18 +93,18 @@ useEffect(() => {
 
     // Reset pagination when the applied filters change.
     // Start at page 1 whenever the applied filters change.
-    
-useEffect(() => {
-    // Return to page 1 when an applied filter changes.
-    setPage(1);
-}, [
-    debouncedSearch,
-    category,
-    ageGroup,
-    brand,
-    minPrice,
-    maxPrice,
-]);
+
+    useEffect(() => {
+        // Return to page 1 when an applied filter changes.
+        setPage(1);
+    }, [
+        debouncedSearch,
+        category,
+        ageGroup,
+        brand,
+        minPrice,
+        maxPrice,
+    ]);
 
     // Load real categories for the chips and sidebar.
     useEffect(() => {
@@ -163,8 +171,8 @@ useEffect(() => {
                             onClick={() => setCategory("")}
                             aria-pressed={!category}
                             className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${!category
-                                    ? "bg-[#436558] text-white dark:bg-[#B5D0AC] dark:text-gray-900"
-                                    : "bg-white text-[#414845] hover:bg-[#EBEEF3] dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                                ? "bg-[#436558] text-white dark:bg-[#B5D0AC] dark:text-gray-900"
+                                : "bg-white text-[#414845] hover:bg-[#EBEEF3] dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                                 }`}
                         >
                             All Categories
@@ -177,8 +185,8 @@ useEffect(() => {
                                 onClick={() => setCategory(item._id)}
                                 aria-pressed={category === item._id}
                                 className={`shrink-0 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${category === item._id
-                                        ? "bg-[#436558] text-white dark:bg-[#B5D0AC] dark:text-gray-900"
-                                        : "bg-white text-[#414845] hover:bg-[#EBEEF3] dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                                    ? "bg-[#436558] text-white dark:bg-[#B5D0AC] dark:text-gray-900"
+                                    : "bg-white text-[#414845] hover:bg-[#EBEEF3] dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                                     }`}
                             >
                                 {item.name}
