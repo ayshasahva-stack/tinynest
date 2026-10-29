@@ -54,6 +54,10 @@ function AdminEditProduct() {
         stock: "",
         tags: "",
     });
+    useEffect(() => {
+    console.log("Selected product category:", formData.category);
+    console.log("Available categories:", categories);
+}, [formData.category, categories]);
 
     // Existing images already stored in MongoDB/Cloudinary.
     const [existingImages, setExistingImages] = useState([]);
@@ -203,20 +207,27 @@ function AdminEditProduct() {
             });
 
             // Dispatch our existing Redux update thunk.
-            const result = await dispatch(
-                updateProductThunk({
-                    productId: id,
-                    formData: data,
-                })
-            );
+           const result = await dispatch(
+    updateProductThunk({
+        productId: id,
+        formData: data,
+    })
+);
 
-            // Check whether Redux update succeeded.
-            if (updateProductThunk.fulfilled.match(result)) {
-                alert("Product updated successfully!");
+// Handle success and failure explicitly.
+if (updateProductThunk.fulfilled.match(result)) {
+    alert("Product updated successfully!");
+    navigate("/admin/products");
+} else {
+    // Show the real backend or validation error.
+    console.error("Product update failed:", result.payload || result.error);
 
-                // Return to product management page.
-                navigate("/admin/products");
-            }
+    alert(
+        result.payload ||
+        result.error?.message ||
+        "Failed to update product."
+    );
+}
         } catch (error) {
             console.error(
                 "Failed to update product:",
@@ -445,24 +456,34 @@ return (
                     </div>
 
                     {/* Age Group */}
-                    <div>
-                        <label
-                            htmlFor="ageGroup"
-                            className="mb-2 block text-sm font-medium text-[#46574e] dark:text-gray-200"
-                        >
-                            Age Group
-                        </label>
+                    
+{/* Age Group dropdown */}
+<div>
+    <label
+        htmlFor="ageGroup"
+        className="mb-2 block text-sm font-medium text-[#46574e] dark:text-gray-200"
+    >
+        Age Group
+    </label>
 
-                        <input
-                            id="ageGroup"
-                            name="ageGroup"
-                            type="text"
-                            value={formData.ageGroup}
-                            onChange={handleChange}
-                            required
-                            className="w-full rounded-lg border border-[#dce3df] bg-white px-4 py-3 text-sm text-[#34443d] outline-none transition focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
-                    </div>
+    <select
+        id="ageGroup"
+        name="ageGroup"
+        value={formData.ageGroup}
+        onChange={handleChange}
+        required
+        className="w-full rounded-lg border border-[#dce3df] bg-white px-4 py-3 text-sm text-[#34443d] outline-none transition focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+    >
+        <option value="">Select age group</option>
+        <option value="0-6 months">0-6 months</option>
+        <option value="0-6 months">0-12 months</option>
+        <option value="6-12 months">6-12 months</option>
+        <option value="1-2 years">1-2 years</option>
+        <option value="2-4 years">2-4 years</option>
+        <option value="4+ years">4+ years</option>
+    </select>
+</div>
+
                 </div>
 
                 {/* Tags */}
