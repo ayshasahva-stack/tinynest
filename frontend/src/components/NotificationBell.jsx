@@ -1,8 +1,8 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
-
+import { Bell } from "lucide-react";
 import api from "../services/api";
 import socket from "../realtime/Socket";
 
@@ -21,6 +21,28 @@ function NotificationBell({ badgeOnly = false }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    // Reference the complete bell and dropdown area.
+const dropdownRef = useRef(null);
+
+// Close the dropdown when the user clicks outside it.
+useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (event) => {
+        if (
+            dropdownRef.current &&
+            !dropdownRef.current.contains(event.target)
+        ) {
+            setIsOpen(false);
+        }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+        document.removeEventListener("mousedown", handleOutsideClick);
+    };
+}, [isOpen]);
     // Detect navigation between the dropdown and full notifications page.
     const location = useLocation();
     // Choose the correct full notifications page for the current role.
@@ -31,7 +53,15 @@ function NotificationBell({ badgeOnly = false }) {
     const unreadCount = notifications.filter(
         (notification) => !notification.isRead
     ).length;
-
+// Sort newest first and display only five in the dropdown.
+// The full notifications page can still show every notification.
+const visibleNotifications = [...notifications]
+    .sort(
+        (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+    )
+    .slice(0, 5);
     // Listen for read/unread changes made on the full notifications page.
     useEffect(() => {
         const handleNotificationUpdated = (event) => {
@@ -270,36 +300,42 @@ function NotificationBell({ badgeOnly = false }) {
     }
 
     return (
-        <div className="relative">
+      <div ref={dropdownRef} className="relative">
             {/* Bell button and unread badge */}
             <button
-                type="button"
-                onClick={() => setIsOpen((open) => !open)}
-                aria-label={`Notifications: ${unreadCount} unread`}
-                aria-expanded={isOpen}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E0D5] bg-white text-lg hover:bg-[#F5E9E7] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
-            >
-                <span aria-hidden="true">🔔</span>
+    type="button"
+    onClick={() => setIsOpen((open) => !open)}
+    aria-label={`Notifications: ${unreadCount} unread`}
+    aria-expanded={isOpen}
+    className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E0D5] bg-white text-lg hover:bg-[#F5E9E7] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
+>
+    {/* New icon; the button's click behavior remains unchanged. */}
+    <Bell
+        size={22}
+        strokeWidth={1.8}
+        className="text-[#a9cfbe]"
+        aria-hidden="true"
+    />
 
-                {/* Hide the badge when there are no unread notifications. */}
-                {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D69BA5] px-1 text-xs font-bold text-white">
-                        {unreadCount}
-                    </span>
-                )}
-            </button>
+    {/* Keep the unread notification count. */}
+    {unreadCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D69BA5] px-1 text-xs font-bold text-white">
+            {unreadCount}
+        </span>
+    )}
+</button>
 
             {/* Notification dropdown */}
             {isOpen && (
-               
-<div className="absolute left-0 z-[100] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white shadow-xl">
+
+                <div className="absolute left-0 z-[100] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white text-stone-800 shadow-xl dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
 
                     {/* Dropdown heading */}
-                    <div className="flex items-center justify-between border-b border-[#E8E0D5] px-4 py-3 dark:border-stone-700">
-                        <h2 className="font-semibold text-stone-800 dark:text-stone-100">
-                            Notifications
-                        </h2>
-                    </div>
+                   <div className="flex items-center justify-between border-b border-[#E8E0D5] px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+    <h2 className="font-semibold text-stone-800 dark:text-gray-100">
+        Notifications
+    </h2>
+</div>
 
                     {/* Notification list */}
                     <div className="max-h-80 overflow-y-auto">
@@ -316,13 +352,14 @@ function NotificationBell({ badgeOnly = false }) {
                                 No notifications yet.
                             </p>
                         ) : (
-                            notifications.map((notification) => (
+                           visibleNotifications.map((notification) => (
                                 <div
                                     key={notification._id}
-                                    className={`border-b border-[#E8E0D5] px-4 py-3 last:border-b-0 dark:border-stone-700 ${notification.isRead
-                                        ? "bg-white dark:bg-stone-900"
-                                        : "bg-[#FFF8F5] dark:bg-stone-800/70"
-                                        }`}
+                                    className={`border-b border-[#E8E0D5] px-4 py-3 last:border-b-0 dark:border-gray-700 ${
+    notification.isRead
+        ? "bg-white dark:bg-gray-900"
+        : "bg-[#FFF8F5] dark:bg-gray-800"
+}`}
                                 >
                                     {/* Open the selected notification on the full page. */}
                                     <Link
@@ -400,15 +437,15 @@ function NotificationBell({ badgeOnly = false }) {
                     {/* Show See All only when not already on the notifications page */}
                     {location.pathname !== "/notifications" &&
                         location.pathname !== "/admin/notifications" && (
-                            <div className="border-t border-[#E8E0D5] p-3 text-center dark:border-stone-700">
-                                <Link
-                                    to={notificationsPath}
-                                    onClick={() => setIsOpen(false)}
-                                    className="text-sm font-semibold text-[#506B52] hover:underline dark:text-[#DCE7D6]"
-                                >
-                                    See All Notifications →
-                                </Link>
-                            </div>
+                           <div className="border-t border-[#E8E0D5] bg-white p-3 text-center dark:border-gray-700 dark:bg-gray-900">
+    <Link
+        to={notificationsPath}
+        onClick={() => setIsOpen(false)}
+        className="text-sm font-semibold text-[#506B52] hover:underline dark:text-[#a9cfbe]"
+    >
+        See All Notifications →
+    </Link>
+</div>
                         )}
                 </div>
             )}
