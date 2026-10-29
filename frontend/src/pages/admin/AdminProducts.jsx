@@ -7,6 +7,11 @@ import {
     deleteProductThunk,
 } from "../../features/products/productThunk";
 
+// Fetch categories from the backend.
+import { fetchCategories } from "../../features/categories/categoryThunk";
+
+// Read categories from Redux.
+import { selectCategories } from "../../features/categories/categorySelectors";
 import {
     selectProducts,
     selectProductsLoading,
@@ -36,19 +41,31 @@ function AdminProducts() {
 
     // Store the current page number.
     const [page, setPage] = useState(1);
+    // Store the selected category ID.
+// An empty string means all categories.
+const [category, setCategory] = useState("");
+
+// Get available categories from Redux.
+const categories = useSelector(selectCategories);
+// Load active categories for the filter dropdown.
+useEffect(() => {
+    dispatch(fetchCategories());
+}, [dispatch]);
 
     // Fetch products whenever page or search changes.
    
+// Fetch products whenever the page, search, or category changes.
 useEffect(() => {
     dispatch(
         fetchProducts({
             page,
             limit: 10,
             search,
-            includeOutOfStock: true, // Include stock-zero products for admins.
+            category, // Send the selected category ID to the backend.
+            includeOutOfStock: true,
         })
     );
-}, [dispatch, page, search]);
+}, [dispatch, page, search, category]);
 
 
     // Delete a product.
@@ -133,61 +150,92 @@ useEffect(() => {
         {/* =========================================
             SEARCH
         ========================================== */}
-        <div className="
-            mb-6
-            rounded-2xl
-            bg-white
-            p-5
-            shadow-sm
-            ring-1 ring-[#e0e7e3]
-            dark:bg-gray-800
-            dark:ring-gray-700
-        ">
-            <label
-                htmlFor="productSearch"
-                className="
-                    mb-2
-                    block
-                    text-sm
-                    font-semibold
-                    text-[#46574e]
-                    dark:text-gray-200
-                "
-            >
-                Search Products
-            </label>
+       
+{/* Search and category filter */}
+<div className="
+    mb-6 grid grid-cols-1 gap-4
+    rounded-2xl bg-white p-5
+    shadow-sm ring-1 ring-[#e0e7e3]
+    sm:grid-cols-2
+    dark:bg-gray-800 dark:ring-gray-700
+">
+    {/* Search by product name */}
+    <div>
+        <label
+            htmlFor="productSearch"
+            className="
+                mb-2 block text-sm font-semibold
+                text-[#46574e] dark:text-gray-200
+            "
+        >
+            Search Products
+        </label>
 
-            <input
-                id="productSearch"
-                type="text"
-                placeholder="Search by product name..."
-                value={search}
-                onChange={(event) => {
-                    // Update the search text.
-                    setSearch(event.target.value);
+        <input
+            id="productSearch"
+            type="text"
+            placeholder="Search by product name..."
+            value={search}
+            onChange={(event) => {
+                // Update the search term and return to page 1.
+                setSearch(event.target.value);
+                setPage(1);
+            }}
+            className="
+                w-full rounded-lg border border-[#d6e0da]
+                bg-white px-4 py-2.5 text-[#263d32]
+                outline-none transition
+                placeholder:text-[#9aa69f]
+                focus:border-[#7a9e8f]
+                focus:ring-2 focus:ring-[#dce7e2]
+                dark:border-gray-600 dark:bg-gray-700
+                dark:text-white
+            "
+        />
+    </div>
 
-                    // Reset pagination when searching.
-                    setPage(1);
-                }}
-                className="
-                    w-full
-                    rounded-lg
-                    border border-[#d6e0da]
-                    bg-white
-                    px-4 py-2.5
-                    text-[#263d32]
-                    outline-none
-                    transition
-                    placeholder:text-[#9aa69f]
-                    focus:border-[#7a9e8f]
-                    focus:ring-2
-                    focus:ring-[#dce7e2]
-                    dark:border-gray-600
-                    dark:bg-gray-700
-                    dark:text-white
-                "
-            />
-        </div>
+    {/* Filter by category */}
+    <div>
+        <label
+            htmlFor="categoryFilter"
+            className="
+                mb-2 block text-sm font-semibold
+                text-[#46574e] dark:text-gray-200
+            "
+        >
+            Filter by Category
+        </label>
+
+        <select
+            id="categoryFilter"
+            value={category}
+            onChange={(event) => {
+                // Update the category ID and reset pagination.
+                setCategory(event.target.value);
+                setPage(1);
+            }}
+            className="
+                w-full rounded-lg border border-[#d6e0da]
+                bg-white px-4 py-2.5 text-[#263d32]
+                outline-none transition
+                focus:border-[#7a9e8f]
+                focus:ring-2 focus:ring-[#dce7e2]
+                dark:border-gray-600 dark:bg-gray-700
+                dark:text-white
+            "
+        >
+            <option value="">All Categories</option>
+
+            {/* Populate options using categories from MongoDB */}
+            {categories.map((item) => (
+                <option key={item._id} value={item._id}>
+                    {item.name}
+                </option>
+            ))}
+        </select>
+    </div>
+</div>
+
 
         {/* =========================================
             ERROR MESSAGE
