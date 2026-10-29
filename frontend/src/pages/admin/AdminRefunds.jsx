@@ -125,29 +125,30 @@ function AdminRefunds() {
 
    
 return (
-    <section className="min-h-screen bg-[#f7f9ff] px-4 py-6 text-[#263d32] dark:bg-slate-950 dark:text-gray-100 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+    <section className="min-h-screen min-w-0 overflow-x-hidden bg-[#f7f9ff] px-3 py-4 text-[#263d32] dark:bg-slate-950 dark:text-gray-100 sm:px-6 sm:py-6 lg:px-8">
+    <div className="mx-auto w-full min-w-0 max-w-6xl">
             {/* Page heading and refresh action */}
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
-                        Refund Management
-                    </h1>
+          {/* Page heading and refresh action */}
+<div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-w-0">
+        <h1 className="font-serif text-2xl font-semibold text-[#263d32] dark:text-white sm:text-3xl">
+            Refund Management
+        </h1>
 
-                    <p className="mt-2 text-sm text-[#77847d] dark:text-gray-400">
-                        Review customer refund requests and manage their status.
-                    </p>
-                </div>
+        <p className="mt-2 text-sm leading-6 text-[#77847d] dark:text-gray-400">
+            Review customer refund requests and manage their status.
+        </p>
+    </div>
 
-                <button
-                    type="button"
-                    onClick={() => dispatch(getAllRefundsThunk())}
-                    disabled={loading}
-                    className="rounded-lg border border-[#d6e0da] bg-white px-4 py-2.5 text-sm font-medium text-[#436558] transition hover:bg-[#edf4f0] disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-[#b7d0c3] dark:hover:bg-gray-700"
-                >
-                    {loading ? "Refreshing..." : "Refresh"}
-                </button>
-            </div>
+    <button
+        type="button"
+        onClick={() => dispatch(getAllRefundsThunk())}
+        disabled={loading}
+        className="w-full shrink-0 rounded-lg border border-[#d6e0da] bg-white px-4 py-2.5 text-sm font-medium text-[#436558] transition hover:bg-[#edf4f0] disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-[#b7d0c3] dark:hover:bg-gray-700 sm:w-auto"
+    >
+        {loading ? "Refreshing..." : "Refresh"}
+    </button>
+</div>
 
             {/* API error messages */}
             {error && (
@@ -198,29 +199,29 @@ return (
                     {refunds.map((refund) => (
                         <article
                             key={refund._id}
-                            className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800 sm:p-6"
-                        >
+                            className="min-w-0 rounded-2xl border border-[#e0e7e3] bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800 sm:p-5 lg:p-6">
                             {/* Refund ID and status */}
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <h2 className="break-all font-serif text-lg font-semibold text-[#263d32] dark:text-white">
-                                        Refund {refund._id}
-                                    </h2>
+                        {/* Refund ID and status */}
+<div className="flex min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="min-w-0 flex-1">
+        <h2 className="break-all font-serif text-base font-semibold text-[#263d32] dark:text-white sm:text-lg">
+            Refund {refund._id}
+        </h2>
 
-                                    <p className="mt-1 break-all text-sm text-[#77847d] dark:text-gray-400">
-                                        Order ID: {refund.order?._id || "Unavailable"}
-                                    </p>
-                                </div>
+        <p className="mt-1 break-all text-xs text-[#77847d] dark:text-gray-400 sm:text-sm">
+            Order ID: {refund.order?._id || "Unavailable"}
+        </p>
+    </div>
 
-                                <span
-                                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                        statusStyles[refund.status] ||
-                                        "bg-[#f1f4f9] text-[#65756c] dark:bg-gray-700 dark:text-gray-200"
-                                    }`}
-                                >
-                                    {statusLabels[refund.status] || refund.status}
-                                </span>
-                            </div>
+    <span
+        className={`max-w-full break-words rounded-full px-3 py-1 text-xs font-semibold ${
+            statusStyles[refund.status] ||
+            "bg-[#f1f4f9] text-[#65756c] dark:bg-gray-700 dark:text-gray-200"
+        }`}
+    >
+        {statusLabels[refund.status] || refund.status}
+    </span>
+</div>
 
                             {/* Refund information */}
                             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

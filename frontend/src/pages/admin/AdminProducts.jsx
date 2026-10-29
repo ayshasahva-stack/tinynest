@@ -110,16 +110,17 @@ useEffect(() => {
     };
 
   return (
-    <div className="min-h-screen bg-[#f7f9ff] p-6 md:p-8 dark:bg-slate-950">
+    
 
+<div className="min-h-screen min-w-0 overflow-x-hidden bg-[#f7f9ff] p-3 sm:p-5 md:p-6 lg:p-8 dark:bg-slate-950">
         {/* =========================================
             PAGE HEADER
         ========================================== */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
-                    Product Management
-                </h1>
+               <h1 className="font-serif text-2xl font-semibold text-[#263d32] dark:text-white sm:text-3xl">
+    Product Management
+</h1>
 
                 <p className="mt-1 text-[#77847d] dark:text-gray-400">
                     Manage TinyNest products.
@@ -643,6 +644,7 @@ useEffect(() => {
             </div>
         </div>
     </div>
+    
 );
 }
 

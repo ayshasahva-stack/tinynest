@@ -12,13 +12,14 @@ import {
     UsersRound,
     Star,
     LogOut,
+    X,
 } from "lucide-react";
 
 import { logout } from "../features/auth/authSlice";
 import NotificationBell from "./NotificationBell";
 
 // Shared sidebar for all admin pages.
-function AdminSidebar() {
+function AdminSidebar({ isOpen = false, onClose = () => {} }) {
     // Preserve the existing routes and active-link behavior.
     const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-lg px-5 py-3 text-sm transition-colors ${
@@ -39,18 +40,29 @@ function AdminSidebar() {
 
     
 return (
-    <aside
-        className="
-            fixed inset-y-0 left-0 z-40
-            flex h-screen w-64 flex-col
-            overflow-visible
-            border-r border-[#e0e7e3]
-            bg-[#f1f4f9] px-2 py-4
-            transition-colors duration-200
-            dark:border-gray-800
-            dark:bg-gray-950
-        "
+   <aside
+    className={`
+        fixed inset-y-0 left-0 z-50
+        flex h-screen w-64 max-w-[85vw] flex-col
+        overflow-visible border-r border-[#e0e7e3]
+        bg-[#f1f4f9] px-2 py-4
+        transition-transform duration-300
+        dark:border-gray-800 dark:bg-gray-950
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0
+    `}
+>
+    {/* Close button: only visible on mobile */}
+<div className="mb-3 flex justify-end lg:hidden">
+    <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close admin menu"
+        className="rounded-lg p-2 hover:bg-white dark:hover:bg-gray-800"
     >
+        <X size={20} />
+    </button>
+</div>
         {/* TinyNest brand */}
         <div className="mb-5 flex items-center justify-between px-2">
             <Link to="/admin" className="flex items-center gap-2">
@@ -67,70 +79,54 @@ return (
         </div>
 
         {/* Notifications */}
-        <div
-            className="
-                relative z-50 mb-4
-                flex shrink-0 items-center justify-between
-                overflow-visible rounded-lg
-                border border-[#e0e3e8]
-                bg-white px-3 py-3
-                transition-colors duration-200
-                dark:border-gray-800 dark:bg-gray-900
-            "
-        >
-            <span className="text-sm font-medium text-[#414845] dark:text-gray-200">
-                Notifications
-            </span>
-
+       
             {/* Preserve existing notification behavior */}
-            <div className="relative z-[60] shrink-0">
+            
                 <NotificationBell />
-            </div>
-        </div>
-
+            
         {/* Navigation: all existing routes preserved */}
         <nav className="relative z-0 flex-1 space-y-1 overflow-y-auto">
-            <NavLink to="/admin" end className={navLinkClass}>
+            <NavLink to="/admin" end className={navLinkClass} onClick={onClose} >
                 <LayoutDashboard size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Dashboard</span>
             </NavLink>
 
-            <NavLink to="/admin/products" className={navLinkClass}>
+            <NavLink to="/admin/products" className={navLinkClass} onClick={onClose}>
                 <Package size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Products</span>
             </NavLink>
 
-            <NavLink to="/admin/categories" className={navLinkClass}>
+            <NavLink to="/admin/categories" className={navLinkClass} onClick={onClose}>
                 <Tags size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Categories</span>
             </NavLink>
 
-            <NavLink to="/admin/orders" className={navLinkClass}>
+            <NavLink to="/admin/orders" className={navLinkClass} onClick={onClose}>
                 <ShoppingBag size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Orders</span>
             </NavLink>
 
-            <NavLink to="/admin/kits" className={navLinkClass}>
+            <NavLink to="/admin/kits" className={navLinkClass} onClick={onClose}>
                 <Gift size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Kits</span>
             </NavLink>
 
-            <NavLink to="/admin/coupons" className={navLinkClass}>
+            <NavLink to="/admin/coupons" className={navLinkClass} onClick={onClose}>
                 <TicketPercent size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Coupons</span>
             </NavLink>
 
-            <NavLink to="/admin/refunds" className={navLinkClass}>
+            <NavLink to="/admin/refunds" className={navLinkClass} onClick={onClose}>
                 <Wallet size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Refunds</span>
             </NavLink>
 
-            <NavLink to="/admin/users" className={navLinkClass}>
+            <NavLink to="/admin/users" className={navLinkClass} onClick={onClose}>
                 <UsersRound size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Users</span>
             </NavLink>
 
-            <NavLink to="/admin/reviews" className={navLinkClass}>
+            <NavLink to="/admin/reviews" className={navLinkClass} onClick={onClose}>
                 <Star size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Reviews &amp; Ratings</span>
             </NavLink>

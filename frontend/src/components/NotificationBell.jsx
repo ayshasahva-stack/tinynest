@@ -302,28 +302,27 @@ function NotificationBell({ badgeOnly = false }) {
     return (
         <div ref={dropdownRef} className="relative">
             {/* Bell button and unread badge */}
-            <button
-                type="button"
-                onClick={() => setIsOpen((open) => !open)}
-                aria-label={`Notifications: ${unreadCount} unread`}
-                aria-expanded={isOpen}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full border border-[#E8E0D5] bg-white text-lg hover:bg-[#F5E9E7] dark:border-stone-700 dark:bg-stone-900 dark:hover:bg-stone-800"
-            >
-                {/* New icon; the button's click behavior remains unchanged. */}
-                <Bell
-                    size={20}
-                    strokeWidth={1.8}
-                    className="text-[#a9cfbe]"
-                    aria-hidden="true"
-                />
+          <button
+    type="button"
+    onClick={() => setIsOpen((previous) => !previous)}
+    aria-expanded={isOpen}
+    aria-label="Open notifications"
+    className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#e0e7e3] bg-white px-3 py-2.5 text-left transition hover:bg-[#edf4f0] focus:outline-none focus:ring-2 focus:ring-[#a8c2b5] dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+>
+    {/* Clicking anywhere in this area opens or closes the dropdown */}
+    <span className="font-medium text-[#436558] dark:text-[#b7d0c3]">
+        Notifications
+    </span>
 
-                {/* Keep the unread notification count. */}
-                {unreadCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#D69BA5] px-1 text-xs font-bold text-white">
-                        {unreadCount}
-                    </span>
-                )}
-            </button>
+    <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e0e7e3] dark:border-gray-600">
+        <Bell className="h-5 w-5 text-[#8fb9a5]" />
+
+        {/* Notification count badge */}
+        <span className="absolute -right-1 -top-1 rounded-full bg-[#d995a2] px-1.5 py-0.5 text-xs font-semibold text-white">
+            {unreadCount}
+        </span>
+    </span>
+</button>
 
             {/* Notification dropdown */}
             {isOpen && (
