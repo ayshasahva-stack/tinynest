@@ -146,13 +146,13 @@ function ProductDetails() {
     // Get selected product from Redux
     const product = useSelector(selectSelectedProduct);
     // TEMP: Check how many images the backend returned.
-useEffect(() => {
-    if (product) {
-        console.log("Product title:", product.title);
-        console.log("Product images:", product.images);
-        console.log("Image count:", product.images?.length);
-    }
-}, [product]);
+    useEffect(() => {
+        if (product) {
+            console.log("Product title:", product.title);
+            console.log("Product images:", product.images);
+            console.log("Image count:", product.images?.length);
+        }
+    }, [product]);
 
     // Get product loading state
     const productLoading = useSelector(
@@ -475,7 +475,7 @@ useEffect(() => {
 
                     {/* Product image gallery */}
                     <div className="lg:col-span-6">
-                        <div className="relative flex min-h-[350px] items-center justify-center overflow-hidden rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900 sm:min-h-[500px] sm:p-8">
+                        <div className="relative flex min-h-[350px] items-center justify-center sm:min-h-[500px]">
                             {product.discount > 0 && (
                                 <span className="absolute left-4 top-4 z-10 rounded-full bg-[#FFC9B2] px-3 py-2 text-xs font-semibold text-[#623E2D]">
                                     {product.discount}% OFF
@@ -507,8 +507,8 @@ useEffect(() => {
                                         aria-label={`View product image ${index + 1}`}
                                         aria-pressed={selectedImage === image}
                                         className={`h-[76px] w-[76px] overflow-hidden rounded-xl border-2 bg-white p-1 transition dark:bg-gray-900 ${selectedImage === image
-                                                ? "border-[#436558] ring-2 ring-[#C5EBDA]"
-                                                : "border-[#E0E3E8] hover:border-[#7A9E8F] dark:border-gray-700"
+                                            ? "border-[#436558] ring-2 ring-[#C5EBDA]"
+                                            : "border-[#E0E3E8] hover:border-[#7A9E8F] dark:border-gray-700"
                                             }`}
                                     >
                                         <img
@@ -562,7 +562,8 @@ useEffect(() => {
                         </div>
 
                         {/* Newsreader-style serif heading, matching the reference. */}
-                        <h1 className="font-serif text-4xl font-normal leading-tight tracking-tight text-[#181C20] dark:text-white sm:text-5xl">
+                        {/* Product title with a smaller, responsive font size */}
+                        <h1 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#181C20] dark:text-white sm:text-3xl lg:text-4xl">
                             {product.title}
                         </h1>
 
@@ -626,8 +627,8 @@ useEffect(() => {
                             </div>
 
                             <p className={`mt-4 flex items-center gap-2 text-sm ${product.stock > 0
-                                    ? "text-[#436558] dark:text-[#C5EBDA]"
-                                    : "text-red-600 dark:text-red-400"
+                                ? "text-[#436558] dark:text-[#C5EBDA]"
+                                : "text-red-600 dark:text-red-400"
                                 }`}>
                                 <span className={`h-2.5 w-2.5 rounded-full ${product.stock > 0 ? "bg-[#436558]" : "bg-red-500"
                                     }`} />
@@ -731,8 +732,8 @@ useEffect(() => {
                                     aria-controls={`panel-${tab.id}`}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`shrink-0 rounded-xl px-4 py-3 text-sm font-semibold transition sm:px-6 ${activeTab === tab.id
-                                            ? "bg-[#436558] text-white"
-                                            : "text-[#414845] hover:bg-[#F1F4F9] dark:text-gray-300 dark:hover:bg-gray-800"
+                                        ? "bg-[#436558] text-white"
+                                        : "text-[#414845] hover:bg-[#F1F4F9] dark:text-gray-300 dark:hover:bg-gray-800"
                                         }`}
                                 >
                                     {tab.label}

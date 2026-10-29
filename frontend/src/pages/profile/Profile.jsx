@@ -69,13 +69,6 @@ const user = useSelector((state) => state.auth.user);
                     {phone}
                   </p>
                 </div>
-
-                <Link
-                  to="/profile"
-                  className="inline-flex items-center justify-center rounded-full border border-[#436558] px-5 py-2.5 text-sm font-medium text-[#436558] transition hover:bg-[#436558] hover:text-white dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900"
-                >
-                  Account Settings
-                </Link>
               </div>
             </div>
 

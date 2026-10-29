@@ -193,12 +193,7 @@ function Wishlist() {
                             </p>
                         </div>
 
-                        <Link
-                            to="/products"
-                            className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-[#436558] transition hover:underline dark:text-[#C5EBDA]"
-                        >
-                            Explore Essentials <span aria-hidden="true">→</span>
-                        </Link>
+                       
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-3">
