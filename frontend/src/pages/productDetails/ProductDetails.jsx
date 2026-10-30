@@ -638,34 +638,6 @@ function ProductDetails() {
                             </p>
                         </div>
 
-                        {/* Quantity selector; it cannot exceed current stock. */}
-                        <div className="mt-6 flex flex-wrap items-center gap-4">
-                            <span className="text-sm font-semibold">Quantity</span>
-                            <div className="flex items-center overflow-hidden rounded-full border border-[#C1C8C3] bg-white dark:border-gray-700 dark:bg-gray-900">
-                                <button
-                                    type="button"
-                                    aria-label="Decrease quantity"
-                                    disabled={quantity <= 1}
-                                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-                                    className="h-11 w-11 text-lg transition hover:bg-[#F1F4F9] disabled:opacity-40 dark:hover:bg-gray-800"
-                                >
-                                    −
-                                </button>
-                                <span aria-live="polite" className="min-w-10 text-center text-sm font-semibold">
-                                    {quantity}
-                                </span>
-                                <button
-                                    type="button"
-                                    aria-label="Increase quantity"
-                                    disabled={quantity >= product.stock}
-                                    onClick={() => setQuantity((current) => Math.min(product.stock, current + 1))}
-                                    className="h-11 w-11 text-lg transition hover:bg-[#F1F4F9] disabled:opacity-40 dark:hover:bg-gray-800"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-
                         {cartError && (
                             <p role="alert" className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
                                 {cartError}
@@ -689,7 +661,7 @@ function ProductDetails() {
                                 {cartLoading
                                     ? "Adding to Cart…"
                                     : product.stock > 0
-                                        ? `Add ${quantity} to Cart`
+                                        ? `Add to Cart`
                                         : "Out of Stock"}
                             </button>
 

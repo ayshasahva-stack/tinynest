@@ -361,47 +361,6 @@ function KitDetails() {
                             )}
                         </div>
 
-                        {/* Quantity selector keeps the existing kit purchase feature. */}
-                        <div className="mt-6">
-                            <p className="mb-3 text-sm font-medium text-[#414845] dark:text-gray-300">
-                                Quantity
-                            </p>
-
-                            <div className="inline-flex items-center rounded-full border border-[#D9E1DC] bg-white dark:border-gray-700 dark:bg-gray-900">
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setQuantity((current) =>
-                                            Math.max(1, current - 1)
-                                        )
-                                    }
-                                    disabled={quantity <= 1}
-                                    aria-label="Decrease quantity"
-                                    className="h-11 w-11 rounded-full text-lg text-[#436558] disabled:opacity-40 dark:text-[#C5EBDA]"
-                                >
-                                    −
-                                </button>
-
-                                <span
-                                    aria-live="polite"
-                                    className="min-w-8 text-center text-sm font-semibold"
-                                >
-                                    {quantity}
-                                </span>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setQuantity((current) => current + 1)
-                                    }
-                                    aria-label="Increase quantity"
-                                    className="h-11 w-11 rounded-full text-lg text-[#436558] dark:text-[#C5EBDA]"
-                                >
-                                    +
-                                </button>
-                            </div>
-                        </div>
-
                         {/* Same large pill buttons and spacing as ProductDetails. */}
                         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                             <button
@@ -412,7 +371,7 @@ function KitDetails() {
                             >
                                 {cartLoading
                                     ? "Adding to Cart…"
-                                    : `Add ${quantity} to Cart`}
+                                    : `Add to Cart`}
                             </button>
 
                             <button
