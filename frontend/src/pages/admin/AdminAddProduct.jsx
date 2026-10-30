@@ -2,7 +2,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { productSchema } from "../../validations/admin/productSchema";
 import { createProductThunk } from "../../features/products/productThunk";
 
 import {
@@ -30,7 +32,25 @@ function AdminAddProduct() {
     const categoriesError = useSelector(selectCategoriesError);
 
     // Existing form state.
-    const [formData, setFormData] = useState({
+    
+    // Store selected image files.
+    const [images, setImages] = useState([]);
+    const [imageError, setImageError] = useState("");
+
+    // Fetch categories for the dropdown.
+    useEffect(() => {
+        dispatch(fetchCategories());
+    }, [dispatch]);
+
+    // Handle text and select inputs.
+ const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+} = useForm({
+    resolver: yupResolver(productSchema),
+    defaultValues: {
         title: "",
         description: "",
         price: "",
@@ -40,87 +60,94 @@ function AdminAddProduct() {
         ageGroup: "",
         stock: "",
         tags: "",
+    },
+});
+    // Store all selected image files, up to five.
+   // Handle product image selection.
+const handleImageChange = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+
+    // Allow only JPEG, PNG and WebP images.
+    const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+    ];
+
+    const invalidFiles = selectedFiles.filter(
+        (file) => !allowedTypes.includes(file.type)
+    );
+
+    if (invalidFiles.length > 0) {
+        setImageError("Only JPEG, PNG and WebP images are allowed.");
+        e.target.value = "";
+        return;
+    }
+
+    setImages((previousImages) => {
+        const combinedImages = [...previousImages, ...selectedFiles];
+
+        // Maximum five product images.
+        if (combinedImages.length > 5) {
+            setImageError("You can upload a maximum of 5 images.");
+            return previousImages;
+        }
+
+        setImageError("");
+        return combinedImages;
     });
 
-    // Store selected image files.
-    const [images, setImages] = useState([]);
-
-    // Fetch categories for the dropdown.
-    useEffect(() => {
-        dispatch(fetchCategories());
-    }, [dispatch]);
-
-    // Handle text and select inputs.
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-
-        setFormData((previous) => ({
-            ...previous,
-            [name]: value,
-        }));
-    };
-    // Store all selected image files, up to five.
-    const handleImageChange = (e) => {
-        const selectedFiles = Array.from(e.target.files || []);
-
-        setImages((previousImages) => {
-            // Combine existing images with the newly selected images.
-            const combinedImages = [...previousImages, ...selectedFiles];
-
-            // Keep no more than five images.
-            return combinedImages.slice(0, 5);
-        });
-
-        // Allow selecting the same file again if needed.
-        e.target.value = "";
-    };
+    // Allow selecting the same file again.
+    e.target.value = "";
+};
     // Remove a selected image.
-    const handleRemoveImage = (indexToRemove) => {
-        setImages((previousImages) =>
-            previousImages.filter(
-                (_, index) => index !== indexToRemove
-            )
-        );
-    };
+   // Remove a selected product image.
+const handleRemoveImage = (indexToRemove) => {
+    setImages((previousImages) =>
+        previousImages.filter((_, index) => index !== indexToRemove)
+    );
+
+    setImageError("");
+};
 
     // Submit the product form.
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+   // Handle valid product form submission.
+const onSubmit = async (values) => {
+    // Images are required, but they are managed separately from React Hook Form.
+    if (images.length === 0) {
+        setImageError("Please select at least one product image.");
+        return;
+    }
 
-        // Require at least one product image.
-        if (images.length === 0) {
-            alert("Please select at least one product image.");
-            return;
-        }
+    setImageError("");
 
-        // Send text fields and files using FormData.
-        const data = new FormData();
+    // FormData is required because the request contains image files.
+    const data = new FormData();
 
-        data.append("title", formData.title);
-        data.append("description", formData.description);
-        data.append("price", formData.price);
-        data.append("discount", formData.discount);
-        data.append("category", formData.category);
-        data.append("brand", formData.brand);
-        data.append("ageGroup", formData.ageGroup);
-        data.append("stock", formData.stock);
+    data.append("title", values.title);
+    data.append("description", values.description);
+    data.append("price", values.price);
+    data.append("discount", values.discount ?? 0);
+    data.append("category", values.category);
+    data.append("brand", values.brand);
+    data.append("ageGroup", values.ageGroup);
+    data.append("stock", values.stock);
+    data.append("tags", values.tags || "");
 
-        // The backend converts the comma-separated string into an array.
-        data.append("tags", formData.tags);
+    // Append every selected image using the backend field name.
+    images.forEach((image) => {
+        data.append("images", image);
+    });
 
-        // Use the same "images" field for every selected file.
-        images.forEach((image) => {
-            data.append("images", image);
-        });
+    // Keep the existing Redux thunk and success navigation.
+    const result = await dispatch(createProductThunk(data));
 
-        // Existing Redux thunk.
-        const result = await dispatch(createProductThunk(data));
-
-        // Navigate to the product list after successful creation.
-        if (createProductThunk.fulfilled.match(result)) {
-            navigate("/admin/products");
-        }
-    };
+    if (createProductThunk.fulfilled.match(result)) {
+        reset();
+        setImages([]);
+        navigate("/admin/products");
+    }
+};
 
     // Shared styles use the TinyNest sage-green palette.
     const inputClass = `
@@ -187,7 +214,7 @@ function AdminAddProduct() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
                     {/* Basic Information */}
                     <section className={cardClass}>
@@ -212,16 +239,20 @@ function AdminAddProduct() {
                                 Product Name
                             </label>
 
-                            <input
-                                id="title"
-                                name="title"
-                                type="text"
-                                value={formData.title}
-                                onChange={handleChange}
-                                placeholder="Enter product name"
-                                required
-                                className={inputClass}
-                            />
+                           <input
+    id="title"
+    type="text"
+    placeholder="Enter product name"
+    {...register("title")}
+    className={inputClass}
+/>
+
+{/* Display validation error */}
+{errors.title && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.title.message}
+    </p>
+)}
                         </div>
 
                         {/* Description */}
@@ -230,16 +261,20 @@ function AdminAddProduct() {
                                 Description
                             </label>
 
-                            <textarea
-                                id="description"
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Enter product description"
-                                rows="5"
-                                required
-                                className={`${inputClass} resize-none`}
-                            />
+                           <textarea
+    id="description"
+    placeholder="Enter product description"
+    rows="5"
+    {...register("description")}
+    className={`${inputClass} resize-none`}
+/>
+
+{/* Display validation error */}
+{errors.description && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.description.message}
+    </p>
+)}
                         </div>
 
                         {/* Price and discount */}
@@ -254,17 +289,21 @@ function AdminAddProduct() {
                                         ₹
                                     </span>
 
-                                    <input
-                                        id="price"
-                                        name="price"
-                                        type="number"
-                                        min="1"
-                                        value={formData.price}
-                                        onChange={handleChange}
-                                        placeholder="699"
-                                        required
-                                        className={`${inputClass} pl-9`}
-                                    />
+                                 <input
+    id="price"
+    type="number"
+    min="0"
+    placeholder="699"
+    {...register("price")}
+    className={`${inputClass} pl-9`}
+/>
+
+{/* Display validation error */}
+{errors.price && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.price.message}
+    </p>
+)}
                                 </div>
                             </div>
 
@@ -273,24 +312,28 @@ function AdminAddProduct() {
                                     Discount (%)
                                 </label>
 
-                                <div className="relative">
-                                    <input
-                                        id="discount"
-                                        name="discount"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        value={formData.discount}
-                                        onChange={handleChange}
-                                        className={`${inputClass} pr-10`}
-                                    />
+                                <input
+    id="discount"
+    type="number"
+    min="0"
+    max="100"
+    {...register("discount")}
+    className={`${inputClass} pr-10`}
+/>
+
+{/* Display validation error */}
+{errors.discount && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.discount.message}
+    </p>
+)}
 
                                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#7a9e8f]">
                                         %
                                     </span>
                                 </div>
                             </div>
-                        </div>
+                     
                     </section>
 
                     {/* Product Details */}
@@ -318,36 +361,37 @@ function AdminAddProduct() {
                                     Category
                                 </label>
 
-                                <select
-                                    id="category"
-                                    name="category"
-                                    value={formData.category}
-                                    onChange={handleChange}
-                                    required
-                                    disabled={categoriesLoading}
-                                    className={inputClass}
-                                >
-                                    <option value="">
-                                        {categoriesLoading
-                                            ? "Loading categories..."
-                                            : "Select category"}
-                                    </option>
+                              <select
+    id="category"
+    disabled={categoriesLoading}
+    {...register("category")}
+    className={inputClass}
+>
+    <option value="">
+        {categoriesLoading ? "Loading categories..." : "Select category"}
+    </option>
 
-                                    {categories.map((category) => (
-                                        <option
-                                            key={category._id}
-                                            value={category._id}
-                                        >
-                                            {category.name}
-                                        </option>
-                                    ))}
-                                </select>
+    {categories.map((category) => (
+        <option key={category._id} value={category._id}>
+            {category.name}
+        </option>
+    ))}
+</select>
 
-                                {categoriesError && (
-                                    <p className="mt-2 text-sm text-red-600">
-                                        {categoriesError}
-                                    </p>
-                                )}
+{/* Yup validation error */}
+{errors.category && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.category.message}
+    </p>
+)}
+
+{/* Existing category API error */}
+{categoriesError && (
+    <p className="mt-2 text-sm text-red-600">
+        {categoriesError}
+    </p>
+)}
+
                             </div>
 
                             {/* Brand */}
@@ -357,15 +401,18 @@ function AdminAddProduct() {
                                 </label>
 
                                 <input
-                                    id="brand"
-                                    name="brand"
-                                    type="text"
-                                    value={formData.brand}
-                                    onChange={handleChange}
-                                    placeholder="TinyNest"
-                                    required
-                                    className={inputClass}
-                                />
+    id="brand"
+    type="text"
+    placeholder="TinyNest"
+    {...register("brand")}
+    className={inputClass}
+/>
+
+{errors.brand && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.brand.message}
+    </p>
+)}
                             </div>
 
                             {/* Age group */}
@@ -374,22 +421,25 @@ function AdminAddProduct() {
                                     Age Group
                                 </label>
 
-                                <select
-                                    id="ageGroup"
-                                    name="ageGroup"
-                                    value={formData.ageGroup}
-                                    onChange={handleChange}
-                                    required
-                                    className={inputClass}
-                                >
-                                    <option value="">Select age group</option>
-                                    <option value="0-6 months">0-6 months</option>
-                                    <option value="0-12 months">0-12 months</option>
-                                    <option value="6-12 months">6-12 months</option>
-                                    <option value="1-2 years">1-2 years</option>
-                                    <option value="2-4 years">2-4 years</option>
-                                    <option value="4+ years">4+ years</option>
-                                </select>
+                              <select
+    id="ageGroup"
+    {...register("ageGroup")}
+    className={inputClass}
+>
+    <option value="">Select age group</option>
+    <option value="0-6 months">0-6 months</option>
+    <option value="0-12 months">0-12 months</option>
+    <option value="6-12 months">6-12 months</option>
+    <option value="1-2 years">1-2 years</option>
+    <option value="2-4 years">2-4 years</option>
+    <option value="4+ years">4+ years</option>
+</select>
+
+{errors.ageGroup && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.ageGroup.message}
+    </p>
+)}
                             </div>
 
                             {/* Stock */}
@@ -398,17 +448,20 @@ function AdminAddProduct() {
                                     Stock
                                 </label>
 
-                                <input
-                                    id="stock"
-                                    name="stock"
-                                    type="number"
-                                    min="0"
-                                    value={formData.stock}
-                                    onChange={handleChange}
-                                    placeholder="10"
-                                    required
-                                    className={inputClass}
-                                />
+                              <input
+    id="stock"
+    type="number"
+    min="0"
+    placeholder="10"
+    {...register("stock")}
+    className={inputClass}
+/>
+
+{errors.stock && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.stock.message}
+    </p>
+)}
                             </div>
                         </div>
 
@@ -418,19 +471,25 @@ function AdminAddProduct() {
                                 Tags
                             </label>
 
-                            <input
-                                id="tags"
-                                name="tags"
-                                type="text"
-                                value={formData.tags}
-                                onChange={handleChange}
-                                placeholder="romper, baby clothing, cotton"
-                                className={inputClass}
-                            />
+                           <input
+    id="tags"
+    type="text"
+    placeholder="romper, baby clothing, cotton"
+    {...register("tags")}
+    className={inputClass}
+/>
 
-                            <p className="mt-2 text-xs text-[#89958e]">
-                                Separate tags with commas.
-                            </p>
+<p className="mt-2 text-xs text-[#89958e]">
+    Separate tags with commas.
+</p>
+
+{errors.tags && (
+    <p className="mt-1 text-sm text-red-600">
+        {errors.tags.message}
+    </p>
+)}
+
+                           
                         </div>
                     </section>
 
@@ -477,6 +536,12 @@ function AdminAddProduct() {
                                 className="sr-only"
                             />
                         </label>
+                        {/* Display image validation error */}
+{imageError && (
+    <p className="mt-2 text-sm text-red-600">
+        {imageError}
+    </p>
+)}
 
                         {/* Existing image previews and remove behaviour */}
                         {images.length > 0 && (
