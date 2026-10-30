@@ -28,6 +28,7 @@ TinyNest is a full-stack MERN e-commerce application for shopping baby essential
 - User registration and login
 - Email OTP verification
 - Forgot password and password reset
+- Show/hide password functionality
 - Browse products and view product details
 - Shopping cart and wishlist
 - Baby kits
@@ -76,31 +77,58 @@ TinyNest is a full-stack MERN e-commerce application for shopping baby essential
 
 ## 📁 Project Structure
 
-The following is a simplified overview. Update it if your actual folder names differ.
+The following structure represents the current TinyNest project organization.
 
 ```text
-TinyNest/
+tinynest/
+│
 ├── backend/
-│   └── src/
-│       ├── config/
-│       ├── controllers/
-│       ├── middleware/
-│       ├── models/
-│       ├── routes/
-│       ├── utils/
-│       └── validations/
+│   ├── src/
+│   │   ├── config/
+│   │   ├── integrations/
+│   │   ├── middleware/
+│   │   ├── modules/
+│   │   ├── realtime/
+│   │   ├── scripts/
+│   │   └── utils/
+│   │
+│   ├── app.js
+│   ├── server.js
+│   ├── package.json
+│   └── package-lock.json
+│
 ├── frontend/
-│   └── src/
-│       ├── assets/
-│       ├── components/
-│       ├── context/
-│       ├── pages/
-│       ├── redux/
-│       ├── services/
-│       └── validations/
-├── screenshots/
+│   ├── public/
+│   │
+│   ├── src/
+│   │   ├── app/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   ├── features/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   ├── realtime/
+│   │   ├── services/
+│   │   ├── validations/
+│   │   │
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── .gitignore
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── README.md
+│   └── vite.config.js
+│
+├── .gitignore
 └── README.md
 ```
+
+**Note:** The `.env` files, `node_modules/`, and `frontend/dist/` are local or generated items visible in your VS Code Explorer. They are not included in the main project tree above. Do not commit environment secrets or dependency folders to GitHub.
 
 ## ⚙️ Getting Started
 
@@ -115,7 +143,7 @@ TinyNest/
 
 ```bash
 git clone YOUR_GITHUB_REPOSITORY_URL
-cd TinyNest
+cd tinynest
 ```
 
 ### 2. Install dependencies
@@ -136,7 +164,9 @@ npm install
 
 ### 3. Configure environment variables
 
-Create the backend `.env` file and provide the variables used by your backend configuration. Example names:
+Create a backend `.env` file and provide the variables used by your backend configuration.
+
+Example:
 
 ```env
 PORT=5000
@@ -154,7 +184,9 @@ RAZORPAY_KEY_ID=your_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 ```
 
-If your frontend reads the API base URL from an environment variable, create the frontend `.env` file too. For example:
+If your frontend reads the API base URL from an environment variable, create a frontend `.env` file too.
+
+Example:
 
 ```env
 VITE_API_URL=http://localhost:5000/api
@@ -166,7 +198,9 @@ VITE_API_URL=http://localhost:5000/api
 
 Start the backend using the development script defined in `backend/package.json`.
 
-Start the frontend using the script defined in `frontend/package.json`. For a typical Vite setup:
+Start the frontend using the script defined in `frontend/package.json`.
+
+For a typical Vite setup:
 
 ```bash
 npm run dev
