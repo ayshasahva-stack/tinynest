@@ -15,11 +15,16 @@ const PORT = process.env.PORT || 3000;
 // Create an HTTP server using the Express app
 const httpServer = createServer(app);
 
-// Attach Socket.IO to the HTTP server
-// Attach Socket.IO to the HTTP server
+// Allow Socket.IO connections from the configured frontends.
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
 const io = new Server(httpServer, {
     cors: {
-        origin: "*",
+        origin: allowedOrigins,
+        credentials: true,
     },
 });
 // Store the Socket.IO instance so other modules can access it

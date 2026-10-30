@@ -23,11 +23,16 @@ import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 
 const app = express();
+// Read the allowed frontend URLs from environment variables.
+const allowedOrigins = [
+    "http://localhost:5173",
+    process.env.FRONTEND_URL,
+].filter(Boolean);
 
-// Allow requests from the TinyNest frontend and accept cookies.
+// Allow requests from local and deployed TinyNest frontends.
 app.use(
     cors({
-        origin: "http://localhost:5173",
+        origin: allowedOrigins,
         credentials: true,
     })
 );

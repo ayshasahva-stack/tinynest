@@ -3,8 +3,9 @@ import axios from "axios";
 
 // Create a reusable Axios instance for TinyNest API requests.
 const api = axios.create({
-    // Backend API base URL.
-    baseURL: "http://localhost:3000/api",
+    // Use the deployed backend URL in production
+    // and localhost during local development.
+    baseURL: `${import.meta.env.VITE_API_URL || "http://localhost:3000"}/api`,
 
     // Allow the browser to send the HttpOnly refresh-token cookie.
     withCredentials: true,
