@@ -17,7 +17,7 @@ import {
 import Loading from "../../components/Loading";
 import ErrorMessage from "../../components/ErrorMessage";
 import OrderStatusTimeline from "./components/OrderStatusTimeline";
-import socket from "../../realtime/Socket";
+import socket from "../../realtime/socket";
 
 // Format currency consistently throughout the page.
 const formatPrice = (value) =>

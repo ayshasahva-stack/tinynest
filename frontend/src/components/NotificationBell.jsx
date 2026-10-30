@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { Bell } from "lucide-react";
 import api from "../services/api";
-import socket from "../realtime/Socket";
+import socket from "../realtime/socket";
 
 import {
     selectAuthUser,

@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
-import socket from "./Socket";
+import socket from "./socket";
 import {
     selectIsAuthenticated,
     selectAuthUser,
