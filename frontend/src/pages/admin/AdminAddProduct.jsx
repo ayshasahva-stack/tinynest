@@ -32,7 +32,7 @@ function AdminAddProduct() {
     const categoriesError = useSelector(selectCategoriesError);
 
     // Existing form state.
-    
+
     // Store selected image files.
     const [images, setImages] = useState([]);
     const [imageError, setImageError] = useState("");
@@ -43,111 +43,111 @@ function AdminAddProduct() {
     }, [dispatch]);
 
     // Handle text and select inputs.
- const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-} = useForm({
-    resolver: yupResolver(productSchema),
-    defaultValues: {
-        title: "",
-        description: "",
-        price: "",
-        discount: "0",
-        category: "",
-        brand: "",
-        ageGroup: "",
-        stock: "",
-        tags: "",
-    },
-});
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(productSchema),
+        defaultValues: {
+            title: "",
+            description: "",
+            price: "",
+            discount: "0",
+            category: "",
+            brand: "",
+            ageGroup: "",
+            stock: "",
+            tags: "",
+        },
+    });
     // Store all selected image files, up to five.
-   // Handle product image selection.
-const handleImageChange = (e) => {
-    const selectedFiles = Array.from(e.target.files || []);
+    // Handle product image selection.
+    const handleImageChange = (e) => {
+        const selectedFiles = Array.from(e.target.files || []);
 
-    // Allow only JPEG, PNG and WebP images.
-    const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-    ];
+        // Allow only JPEG, PNG and WebP images.
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        ];
 
-    const invalidFiles = selectedFiles.filter(
-        (file) => !allowedTypes.includes(file.type)
-    );
+        const invalidFiles = selectedFiles.filter(
+            (file) => !allowedTypes.includes(file.type)
+        );
 
-    if (invalidFiles.length > 0) {
-        setImageError("Only JPEG, PNG and WebP images are allowed.");
+        if (invalidFiles.length > 0) {
+            setImageError("Only JPEG, PNG and WebP images are allowed.");
+            e.target.value = "";
+            return;
+        }
+
+        setImages((previousImages) => {
+            const combinedImages = [...previousImages, ...selectedFiles];
+
+            // Maximum five product images.
+            if (combinedImages.length > 5) {
+                setImageError("You can upload a maximum of 5 images.");
+                return previousImages;
+            }
+
+            setImageError("");
+            return combinedImages;
+        });
+
+        // Allow selecting the same file again.
         e.target.value = "";
-        return;
-    }
+    };
+    // Remove a selected image.
+    // Remove a selected product image.
+    const handleRemoveImage = (indexToRemove) => {
+        setImages((previousImages) =>
+            previousImages.filter((_, index) => index !== indexToRemove)
+        );
 
-    setImages((previousImages) => {
-        const combinedImages = [...previousImages, ...selectedFiles];
+        setImageError("");
+    };
 
-        // Maximum five product images.
-        if (combinedImages.length > 5) {
-            setImageError("You can upload a maximum of 5 images.");
-            return previousImages;
+    // Submit the product form.
+    // Handle valid product form submission.
+    const onSubmit = async (values) => {
+        // Images are required, but they are managed separately from React Hook Form.
+        if (images.length === 0) {
+            setImageError("Please select at least one product image.");
+            return;
         }
 
         setImageError("");
-        return combinedImages;
-    });
 
-    // Allow selecting the same file again.
-    e.target.value = "";
-};
-    // Remove a selected image.
-   // Remove a selected product image.
-const handleRemoveImage = (indexToRemove) => {
-    setImages((previousImages) =>
-        previousImages.filter((_, index) => index !== indexToRemove)
-    );
+        // FormData is required because the request contains image files.
+        const data = new FormData();
 
-    setImageError("");
-};
+        data.append("title", values.title);
+        data.append("description", values.description);
+        data.append("price", values.price);
+        data.append("discount", values.discount ?? 0);
+        data.append("category", values.category);
+        data.append("brand", values.brand);
+        data.append("ageGroup", values.ageGroup);
+        data.append("stock", values.stock);
+        data.append("tags", values.tags || "");
 
-    // Submit the product form.
-   // Handle valid product form submission.
-const onSubmit = async (values) => {
-    // Images are required, but they are managed separately from React Hook Form.
-    if (images.length === 0) {
-        setImageError("Please select at least one product image.");
-        return;
-    }
+        // Append every selected image using the backend field name.
+        images.forEach((image) => {
+            data.append("images", image);
+        });
 
-    setImageError("");
+        // Keep the existing Redux thunk and success navigation.
+        const result = await dispatch(createProductThunk(data));
 
-    // FormData is required because the request contains image files.
-    const data = new FormData();
-
-    data.append("title", values.title);
-    data.append("description", values.description);
-    data.append("price", values.price);
-    data.append("discount", values.discount ?? 0);
-    data.append("category", values.category);
-    data.append("brand", values.brand);
-    data.append("ageGroup", values.ageGroup);
-    data.append("stock", values.stock);
-    data.append("tags", values.tags || "");
-
-    // Append every selected image using the backend field name.
-    images.forEach((image) => {
-        data.append("images", image);
-    });
-
-    // Keep the existing Redux thunk and success navigation.
-    const result = await dispatch(createProductThunk(data));
-
-    if (createProductThunk.fulfilled.match(result)) {
-        reset();
-        setImages([]);
-        navigate("/admin/products");
-    }
-};
+        if (createProductThunk.fulfilled.match(result)) {
+            reset();
+            setImages([]);
+            navigate("/admin/products");
+        }
+    };
 
     // Shared styles use the TinyNest sage-green palette.
     const inputClass = `
@@ -214,7 +214,7 @@ const onSubmit = async (values) => {
                     </div>
                 )}
 
-               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
                     {/* Basic Information */}
                     <section className={cardClass}>
@@ -239,20 +239,20 @@ const onSubmit = async (values) => {
                                 Product Name
                             </label>
 
-                           <input
-    id="title"
-    type="text"
-    placeholder="Enter product name"
-    {...register("title")}
-    className={inputClass}
-/>
+                            <input
+                                id="title"
+                                type="text"
+                                placeholder="Enter product name"
+                                {...register("title")}
+                                className={inputClass}
+                            />
 
-{/* Display validation error */}
-{errors.title && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.title.message}
-    </p>
-)}
+                            {/* Display validation error */}
+                            {errors.title && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.title.message}
+                                </p>
+                            )}
                         </div>
 
                         {/* Description */}
@@ -261,20 +261,20 @@ const onSubmit = async (values) => {
                                 Description
                             </label>
 
-                           <textarea
-    id="description"
-    placeholder="Enter product description"
-    rows="5"
-    {...register("description")}
-    className={`${inputClass} resize-none`}
-/>
+                            <textarea
+                                id="description"
+                                placeholder="Enter product description"
+                                rows="5"
+                                {...register("description")}
+                                className={`${inputClass} resize-none`}
+                            />
 
-{/* Display validation error */}
-{errors.description && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.description.message}
-    </p>
-)}
+                            {/* Display validation error */}
+                            {errors.description && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.description.message}
+                                </p>
+                            )}
                         </div>
 
                         {/* Price and discount */}
@@ -289,21 +289,21 @@ const onSubmit = async (values) => {
                                         ₹
                                     </span>
 
-                                 <input
-    id="price"
-    type="number"
-    min="0"
-    placeholder="699"
-    {...register("price")}
-    className={`${inputClass} pl-9`}
-/>
+                                    <input
+                                        id="price"
+                                        type="number"
+                                        min="0"
+                                        placeholder="699"
+                                        {...register("price")}
+                                        className={`${inputClass} pl-9`}
+                                    />
 
-{/* Display validation error */}
-{errors.price && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.price.message}
-    </p>
-)}
+                                    {/* Display validation error */}
+                                    {errors.price && (
+                                        <p className="mt-1 text-sm text-red-600">
+                                            {errors.price.message}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -313,27 +313,27 @@ const onSubmit = async (values) => {
                                 </label>
 
                                 <input
-    id="discount"
-    type="number"
-    min="0"
-    max="100"
-    {...register("discount")}
-    className={`${inputClass} pr-10`}
-/>
+                                    id="discount"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    {...register("discount")}
+                                    className={`${inputClass} pr-10`}
+                                />
 
-{/* Display validation error */}
-{errors.discount && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.discount.message}
-    </p>
-)}
+                                {/* Display validation error */}
+                                {errors.discount && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.discount.message}
+                                    </p>
+                                )}
 
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#7a9e8f]">
-                                        %
-                                    </span>
-                                </div>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[#7a9e8f]">
+                                    %
+                                </span>
                             </div>
-                     
+                        </div>
+
                     </section>
 
                     {/* Product Details */}
@@ -361,36 +361,36 @@ const onSubmit = async (values) => {
                                     Category
                                 </label>
 
-                              <select
-    id="category"
-    disabled={categoriesLoading}
-    {...register("category")}
-    className={inputClass}
->
-    <option value="">
-        {categoriesLoading ? "Loading categories..." : "Select category"}
-    </option>
+                                <select
+                                    id="category"
+                                    disabled={categoriesLoading}
+                                    {...register("category")}
+                                    className={inputClass}
+                                >
+                                    <option value="">
+                                        {categoriesLoading ? "Loading categories..." : "Select category"}
+                                    </option>
 
-    {categories.map((category) => (
-        <option key={category._id} value={category._id}>
-            {category.name}
-        </option>
-    ))}
-</select>
+                                    {categories.map((category) => (
+                                        <option key={category._id} value={category._id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
 
-{/* Yup validation error */}
-{errors.category && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.category.message}
-    </p>
-)}
+                                {/* Yup validation error */}
+                                {errors.category && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.category.message}
+                                    </p>
+                                )}
 
-{/* Existing category API error */}
-{categoriesError && (
-    <p className="mt-2 text-sm text-red-600">
-        {categoriesError}
-    </p>
-)}
+                                {/* Existing category API error */}
+                                {categoriesError && (
+                                    <p className="mt-2 text-sm text-red-600">
+                                        {categoriesError}
+                                    </p>
+                                )}
 
                             </div>
 
@@ -401,18 +401,18 @@ const onSubmit = async (values) => {
                                 </label>
 
                                 <input
-    id="brand"
-    type="text"
-    placeholder="TinyNest"
-    {...register("brand")}
-    className={inputClass}
-/>
+                                    id="brand"
+                                    type="text"
+                                    placeholder="TinyNest"
+                                    {...register("brand")}
+                                    className={inputClass}
+                                />
 
-{errors.brand && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.brand.message}
-    </p>
-)}
+                                {errors.brand && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.brand.message}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Age group */}
@@ -421,25 +421,25 @@ const onSubmit = async (values) => {
                                     Age Group
                                 </label>
 
-                              <select
-    id="ageGroup"
-    {...register("ageGroup")}
-    className={inputClass}
->
-    <option value="">Select age group</option>
-    <option value="0-6 months">0-6 months</option>
-    <option value="0-12 months">0-12 months</option>
-    <option value="6-12 months">6-12 months</option>
-    <option value="1-2 years">1-2 years</option>
-    <option value="2-4 years">2-4 years</option>
-    <option value="4+ years">4+ years</option>
-</select>
+                                <select
+                                    id="ageGroup"
+                                    {...register("ageGroup")}
+                                    className={inputClass}
+                                >
+                                    <option value="">Select age group</option>
+                                    <option value="0-6 months">0-6 months</option>
+                                    <option value="0-12 months">0-12 months</option>
+                                    <option value="6-12 months">6-12 months</option>
+                                    <option value="1-2 years">1-2 years</option>
+                                    <option value="2-4 years">2-4 years</option>
+                                    <option value="4+ years">4+ years</option>
+                                </select>
 
-{errors.ageGroup && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.ageGroup.message}
-    </p>
-)}
+                                {errors.ageGroup && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.ageGroup.message}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Stock */}
@@ -448,20 +448,20 @@ const onSubmit = async (values) => {
                                     Stock
                                 </label>
 
-                              <input
-    id="stock"
-    type="number"
-    min="0"
-    placeholder="10"
-    {...register("stock")}
-    className={inputClass}
-/>
+                                <input
+                                    id="stock"
+                                    type="number"
+                                    min="0"
+                                    placeholder="10"
+                                    {...register("stock")}
+                                    className={inputClass}
+                                />
 
-{errors.stock && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.stock.message}
-    </p>
-)}
+                                {errors.stock && (
+                                    <p className="mt-1 text-sm text-red-600">
+                                        {errors.stock.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -471,25 +471,25 @@ const onSubmit = async (values) => {
                                 Tags
                             </label>
 
-                           <input
-    id="tags"
-    type="text"
-    placeholder="romper, baby clothing, cotton"
-    {...register("tags")}
-    className={inputClass}
-/>
+                            <input
+                                id="tags"
+                                type="text"
+                                placeholder="romper, baby clothing, cotton"
+                                {...register("tags")}
+                                className={inputClass}
+                            />
 
-<p className="mt-2 text-xs text-[#89958e]">
-    Separate tags with commas.
-</p>
+                            <p className="mt-2 text-xs text-[#89958e]">
+                                Separate tags with commas.
+                            </p>
 
-{errors.tags && (
-    <p className="mt-1 text-sm text-red-600">
-        {errors.tags.message}
-    </p>
-)}
+                            {errors.tags && (
+                                <p className="mt-1 text-sm text-red-600">
+                                    {errors.tags.message}
+                                </p>
+                            )}
 
-                           
+
                         </div>
                     </section>
 
@@ -537,11 +537,11 @@ const onSubmit = async (values) => {
                             />
                         </label>
                         {/* Display image validation error */}
-{imageError && (
-    <p className="mt-2 text-sm text-red-600">
-        {imageError}
-    </p>
-)}
+                        {imageError && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {imageError}
+                            </p>
+                        )}
 
                         {/* Existing image previews and remove behaviour */}
                         {images.length > 0 && (
