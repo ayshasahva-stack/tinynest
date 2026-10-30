@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 import User from './auth.model.js'
 import transporter from '../../integrations/email/mail.js'
-import ApiError from '../../utils/Apierror.js'
+import ApiError from '../../utils/ApiError.js'
 import sendSuccessResponse from '../../utils/ApiResponse.js'
 // Save admin notifications.
 import Notification from "../notifications/notification.model.js";

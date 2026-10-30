@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Product from "./product.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import { deleteCloudinaryImage } from "../../utils/cloudinary.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import Category from "../categories/category.model.js";

@@ -1,4 +1,4 @@
-import ApiError from "../utils/Apierror.js";
+import ApiError from "../utils/ApiError.js";
 
 // Allow access only to admin users
 const authorizeAdmin = (req, res, next) => {

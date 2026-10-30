@@ -1,7 +1,7 @@
 
 import User from "../auth/auth.model.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 
 // Fields that must never be sent to the frontend
 const SENSITIVE_FIELDS = [

@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import User from "../modules/auth/auth.model.js";
-import ApiError from "../utils/Apierror.js";
 
 // Authenticates a Socket.IO connection using the user's JWT
 const authenticateSocket = async (socket, next) => {

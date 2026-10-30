@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../modules/auth/auth.model.js";
-import ApiError from "../utils/Apierror.js";
+import ApiError from "../utils/ApiError.js";
 
 // Protect routes that require a logged-in user
 const protect = async (req, res, next) => {

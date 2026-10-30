@@ -5,7 +5,7 @@ import Payment from "../payments/payment.model.js";
 import Product from "../products/product.model.js";
 import Coupon from "../coupons/coupon.model.js";
 import Kit from "../kits/kit.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { getProductOfferPrice } from "../offers/offer.service.js";
 import { createOrderCancellationRefund } from "../refund/refund.controller.js";

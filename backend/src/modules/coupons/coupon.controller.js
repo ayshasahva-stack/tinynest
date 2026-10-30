@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Coupon from "./coupon.model.js";
 import Cart from "../cart/cart.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { getProductOfferPrice } from "../offers/offer.service.js";
 import {

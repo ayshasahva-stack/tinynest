@@ -4,7 +4,7 @@ import Refund from "./refund.model.js";
 import Order from "../orders/order.model.js";
 import Payment from "../payments/payment.model.js";
 
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import razorpay from "../../config/razorpay.js";
 

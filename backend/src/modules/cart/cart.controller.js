@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import Cart from "./cart.model.js";
 import Product from "../products/product.model.js";
 import Kit from "../kits/kit.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { getProductOfferPrice } from "../offers/offer.service.js";
 import {

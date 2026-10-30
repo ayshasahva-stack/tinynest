@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Category from "./category.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import {
     validateCategory,

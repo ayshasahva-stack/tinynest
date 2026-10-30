@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Review from "./review.model.js";
 import Product from "../products/product.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import Order from "../orders/order.model.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { updateProductRating } from "./review.helper.js";

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Kit from "./kit.model.js";
 import Product from "../products/product.model.js";
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 import { validateKit } from "./kit.validation.js";
 

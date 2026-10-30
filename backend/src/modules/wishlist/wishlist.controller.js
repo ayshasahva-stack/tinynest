@@ -5,7 +5,7 @@ import Wishlist from "./wishlist.model.js";
 import Product from "../products/product.model.js";
 import Kit from "../kits/kit.model.js";
 
-import ApiError from "../../utils/Apierror.js";
+import ApiError from "../../utils/ApiError.js";
 import sendSuccessResponse from "../../utils/ApiResponse.js";
 
 // Populate both types whenever a wishlist is returned.
