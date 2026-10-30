@@ -1,6 +1,9 @@
 
 import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useDispatch, useSelector } from "react-redux";
+import { addressSchema } from "../../validations/address/addressSchema";
 
 import Input from "../../components/Input";
 import Loading from "../../components/Loading";
@@ -80,17 +83,26 @@ function Addresses() {
     const addresses = useSelector(selectAddresses) ?? [];
     const loading = useSelector(selectAddressLoading);
     const error = useSelector(selectAddressError);
-const user = useSelector((state) => state.auth.user);
+    const user = useSelector((state) => state.auth.user);
 
     // Read the authenticated user for the shared account sidebar.
 
     // Local state for the address form and search field.
     const [showForm, setShowForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
-    const [formData, setFormData] = useState(initialForm);
     const [formError, setFormError] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
-
+    const {
+        control,
+        register,
+        handleSubmit: handleFormSubmit,
+        reset,
+        formState: { errors: validationErrors },
+    } = useForm({
+        resolver: yupResolver(addressSchema),
+        mode: "onChange",
+        defaultValues: initialForm,
+    });
     // Fetch the user's saved addresses when the page opens.
     useEffect(() => {
         dispatch(getMyAddressesThunk());
@@ -121,28 +133,22 @@ const user = useSelector((state) => state.auth.user);
     }, [addresses, searchTerm]);
 
     // Handle input changes, including the default-address checkbox.
-    const handleChange = (event) => {
-        const { name, value, type, checked } = event.target;
 
-        setFormData((previous) => ({
-            ...previous,
-            [name]: type === "checkbox" ? checked : value,
-        }));
-    };
 
     // Open a clean form for adding a new address.
-    const handleAddNew = () => {
-        setEditingAddress(null);
-        setFormData(initialForm);
-        setFormError("");
-        setShowForm(true);
-    };
+  const handleAddNew = () => {
+    setEditingAddress(null);
+    reset(initialForm);
+    setFormError("");
+    setShowForm(true);
+};
 
     // Fill the form with the selected address for editing.
     const handleEdit = (address) => {
         setEditingAddress(address);
 
-        setFormData({
+        // Fill the form with the selected saved address.
+        reset({
             fullName: address.fullName || "",
             phone: address.phone || "",
             addressLine: address.addressLine || "",
@@ -161,65 +167,43 @@ const user = useSelector((state) => state.auth.user);
     const handleCancel = () => {
         setShowForm(false);
         setEditingAddress(null);
-        setFormData(initialForm);
+
+        // Clear all form values and validation errors.
+        reset(initialForm);
+
         setFormError("");
     };
 
-    // Validate required fields before making an API request.
-    const validateForm = () => {
-        const requiredFields = [
-            ["fullName", "Full name"],
-            ["phone", "Phone"],
-            ["addressLine", "Address"],
-            ["city", "City"],
-            ["state", "State"],
-            ["postalCode", "Postal code"],
-            ["country", "Country"],
-        ];
-
-        for (const [field, label] of requiredFields) {
-            if (!String(formData[field] ?? "").trim()) {
-                return `${label} is required.`;
-            }
-        }
-
-        return "";
-    };
 
     // Create a new address or update the selected address.
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-
-        const validationError = validateForm();
-
-        if (validationError) {
-            setFormError(validationError);
-            return;
-        }
-
+    const handleAddressSubmit = async (data) => {
         setFormError("");
 
         try {
+            // Use validated form data for both create and update.
             if (editingAddress) {
                 // Update the existing saved address.
                 await dispatch(
                     updateAddressThunk({
                         addressId: editingAddress._id,
-                        addressData: formData,
+                        addressData: data,
                     })
                 ).unwrap();
             } else {
                 // Create a new saved address.
                 await dispatch(
-                    createAddressThunk(formData)
+                    createAddressThunk(data)
                 ).unwrap();
             }
 
+            // Close and reset the form after successful saving.
             handleCancel();
 
-            // Refresh the address list after a successful save.
+            // Refresh the saved address list.
             await dispatch(getMyAddressesThunk()).unwrap();
+
         } catch (err) {
+            // Display backend errors separately from Yup errors.
             setFormError(
                 typeof err === "string"
                     ? err
@@ -373,77 +357,173 @@ const user = useSelector((state) => state.auth.user);
                             )}
 
                             <form
-                                onSubmit={handleSubmit}
+                                onSubmit={handleFormSubmit(handleAddressSubmit)}
                                 className="space-y-4"
                             >
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <Input
-                                        label="Full Name"
+                                    <Controller
                                         name="fullName"
-                                        value={formData.fullName}
-                                        onChange={handleChange}
-                                        placeholder="Enter full name"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="Full Name"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter full name"
+                                                />
+                                                {validationErrors.fullName && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.fullName.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
 
-                                    <Input
-                                        label="Phone"
+                                    <Controller
                                         name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="Enter phone number"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="Phone"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter phone number"
+                                                />
+                                                {validationErrors.phone && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.phone.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
                                 </div>
 
-                                <Input
-                                    label="Address"
+                                <Controller
                                     name="addressLine"
-                                    value={formData.addressLine}
-                                    onChange={handleChange}
-                                    placeholder="House, street, area or landmark"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <div>
+                                            <Input
+                                                label="Address"
+                                                name={field.name}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                onBlur={field.onBlur}
+                                                placeholder="House, street, area or landmark"
+                                            />
+                                            {validationErrors.addressLine && (
+                                                <p className="mt-1 text-xs text-red-600">
+                                                    {validationErrors.addressLine.message}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
                                 />
 
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <Input
-                                        label="City"
+                                    <Controller
                                         name="city"
-                                        value={formData.city}
-                                        onChange={handleChange}
-                                        placeholder="Enter city"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="City"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter city"
+                                                />
+                                                {validationErrors.city && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.city.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
 
-                                    <Input
-                                        label="State"
+                                    <Controller
                                         name="state"
-                                        value={formData.state}
-                                        onChange={handleChange}
-                                        placeholder="Enter state"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="State"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter state"
+                                                />
+                                                {validationErrors.state && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.state.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
                                 </div>
 
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <Input
-                                        label="Postal Code"
+                                    <Controller
                                         name="postalCode"
-                                        value={formData.postalCode}
-                                        onChange={handleChange}
-                                        placeholder="Enter postal code"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="Postal Code"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter postal code"
+                                                />
+                                                {validationErrors.postalCode && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.postalCode.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
 
-                                    <Input
-                                        label="Country"
+                                    <Controller
                                         name="country"
-                                        value={formData.country}
-                                        onChange={handleChange}
-                                        placeholder="Enter country"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <div>
+                                                <Input
+                                                    label="Country"
+                                                    name={field.name}
+                                                    value={field.value}
+                                                    onChange={field.onChange}
+                                                    onBlur={field.onBlur}
+                                                    placeholder="Enter country"
+                                                />
+                                                {validationErrors.country && (
+                                                    <p className="mt-1 text-xs text-red-600">
+                                                        {validationErrors.country.message}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
                                     />
                                 </div>
 
                                 <label className="flex cursor-pointer items-center gap-3 rounded-lg bg-[#f1f4f9] p-4 text-sm text-[#414845] dark:bg-gray-800 dark:text-gray-200">
                                     <input
                                         type="checkbox"
-                                        name="isDefault"
-                                        checked={formData.isDefault}
-                                        onChange={handleChange}
+                                        {...register("isDefault")}
                                         className="h-4 w-4 accent-[#436558]"
                                     />
 
@@ -467,8 +547,8 @@ const user = useSelector((state) => state.auth.user);
                                         {loading
                                             ? "Saving..."
                                             : editingAddress
-                                              ? "Update Address"
-                                              : "Save Address"}
+                                                ? "Update Address"
+                                                : "Save Address"}
                                     </button>
 
                                     <button
