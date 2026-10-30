@@ -1,5 +1,5 @@
 import app from "./src/app.js";
-import dotenv from "dotenv";
+
 import connectDb from "./src/config/db.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -7,8 +7,8 @@ import { setIo } from "./src/realtime/io.js";
 import handleSocketConnection, {
     authenticateSocket
 } from "./src/realtime/socket.js";
+import "dotenv/config";
 
-dotenv.config();
 
 const PORT = process.env.PORT || 3000;
 
@@ -16,10 +16,14 @@ const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 
 // Allow Socket.IO connections from the configured frontends.
+// Allow Socket.IO connections from local and deployed frontends.
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.FRONTEND_URL,
-].filter(Boolean);
+    ...(process.env.FRONTEND_URL || "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+];
 
 const io = new Server(httpServer, {
     cors: {

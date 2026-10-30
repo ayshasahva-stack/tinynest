@@ -24,10 +24,15 @@ import notificationRoutes from "./modules/notifications/notification.routes.js";
 
 const app = express();
 // Read the allowed frontend URLs from environment variables.
+// Read all allowed frontend URLs from the environment variable.
+// Multiple URLs can be separated by commas.
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.FRONTEND_URL,
-].filter(Boolean);
+    ...(process.env.FRONTEND_URL || "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+];
 
 // Allow requests from local and deployed TinyNest frontends.
 app.use(
