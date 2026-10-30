@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { forgotPasswordSchema } from "../../validations/auth/forgotPasswordSchema";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 import { clearAuthError } from "../../features/auth/authSlice";
@@ -12,11 +15,17 @@ import {
 } from "../../features/auth/authSelectors";
 
 function ForgotPassword() {
-    // Store the email entered by the user.
-    const [email, setEmail] = useState("");
-
-    // Store client-side validation errors separately.
-    const [validationError, setValidationError] = useState("");
+    // Initialize React Hook Form with Yup validation.
+const {
+    control,
+    handleSubmit,
+    formState: { errors },
+} = useForm({
+    resolver: yupResolver(forgotPasswordSchema),
+    defaultValues: {
+        email: "",
+    },
+});
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -30,38 +39,28 @@ function ForgotPassword() {
     const error = useSelector(selectAuthError);
 
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setValidationError("");
+   // Request password reset OTP after successful validation.
+const handleForgotPassword = async (data) => {
+    const cleanedEmail = data.email.trim();
 
-        const cleanedEmail = email.trim();
+    try {
+        // Send the email through the existing Redux thunk.
+        await dispatch(
+            forgotPasswordThunk(cleanedEmail)
+        ).unwrap();
 
-        if (!cleanedEmail) {
-            setValidationError("Please enter your email address.");
-            return;
-        }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedEmail)) {
-            setValidationError("Please enter a valid email address.");
-            return;
-        }
-
-        try {
-            // unwrap() throws if the Redux thunk is rejected.
-            await dispatch(forgotPasswordThunk(cleanedEmail)).unwrap();
-
-            // Navigate only after a successful response.
-            navigate(
-                `/verify-reset-otp?email=${encodeURIComponent(cleanedEmail)}`
-            );
-        } catch (error) {
-            // Stay on this page and let the Redux error selector display the error.
-            console.error("Forgot password failed:", error);
-        }
-    };
+        // Navigate to reset OTP verification after success.
+        navigate(
+            `/verify-reset-otp?email=${encodeURIComponent(cleanedEmail)}`
+        );
+    } catch (error) {
+        // Redux stores the backend error for display.
+        console.error("Forgot password failed:", error);
+    }
+};
 
     // Show validation errors first, otherwise show the API error.
-    const displayedError = validationError || error;
+    // const displayedError = validationError || error;
 
    
 return (
@@ -186,48 +185,68 @@ return (
                     </div>
 
                     {/* Preserve existing validation and backend errors. */}
-                    {displayedError && (
-                        <p
-                            role="alert"
-                            className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
-                        >
-                            {typeof displayedError === "string"
-                                ? displayedError
-                                : "We couldn't request a password reset. Please try again."}
-                        </p>
-                    )}
+                    {/* Display backend errors from Redux. */}
+{error && (
+    <p
+        role="alert"
+        className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+    >
+        {typeof error === "string"
+            ? error
+            : "We couldn't request a password reset. Please try again."}
+    </p>
+)}
 
-                    {/* Existing form and input handlers are preserved. */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <Input
-                            label="Registered email address"
-                            type="email"
-                            name="email"
-                            value={email}
-                            onChange={(event) => {
-                                // Keep the existing state and error-clearing logic.
-                                setEmail(event.target.value);
-                                setValidationError("");
-                                dispatch(clearAuthError());
-                            }}
-                            placeholder="you@example.com"
-                            disabled={loading}
-                        />
+                    
+<form
+    onSubmit={handleSubmit(handleForgotPassword)}
+    className="space-y-5"
+>
+    {/* Registered email field */}
+    <div>
+        <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    {...field}
+                    onChange={(event) => {
+                        // Clear an old backend error when editing.
+                        dispatch(clearAuthError());
+                        field.onChange(event);
+                    }}
+                    label="Registered email address"
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    disabled={loading}
+                />
+            )}
+        />
 
-                        {/* Existing submit action and loading state. */}
-                        <div className="pt-1">
-                            <Button
-                                type="submit"
-                                variant="auth"
-                                fullWidth
-                                disabled={loading}
-                            >
-                                {loading
-                                    ? "Sending reset OTP..."
-                                    : "Send reset OTP →"}
-                            </Button>
-                        </div>
-                    </form>
+        {/* Display Yup validation error. */}
+        {errors.email && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.email.message}
+            </p>
+        )}
+    </div>
+
+    {/* Existing submit button */}
+    <div className="pt-1">
+        <Button
+            type="submit"
+            variant="auth"
+            fullWidth
+            disabled={loading}
+        >
+            {loading
+                ? "Sending reset OTP..."
+                : "Send reset OTP →"}
+        </Button>
+    </div>
+</form>
+
 
                     {/* Existing return-to-login navigation. */}
                     <div className="mt-6 border-t border-[#e0e3e8] pt-5 text-center dark:border-gray-700">

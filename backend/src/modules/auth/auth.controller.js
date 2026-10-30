@@ -573,6 +573,15 @@ export const forgotPassword = async (req, res, next) => {
                 new ApiError(404, "No account found with this email address")
             );
         }
+        // Check whether the user's email has been verified.
+if (!user.isVerified) {
+    return next(
+        new ApiError(
+            403,
+            "Please verify your email before resetting your password."
+        )
+    );
+}
 
         // Generate a random 6-digit OTP
         const resetOtp = crypto
