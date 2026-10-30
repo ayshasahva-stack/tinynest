@@ -1,8 +1,10 @@
-
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { useState } from "react";
+import { resetPasswordSchema } from "../../validations/auth/resetPasswordSchema";
+import { clearAuthError } from "../../features/auth/authSlice";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
 
@@ -13,14 +15,20 @@ import {
 } from "../../features/auth/authSelectors";
 
 function ResetPassword() {
-    // Store the new password and its confirmation.
-    const [newPassword, setNewPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
+const [validationError, setValidationError] = useState("");
+const [apiError, setApiError] = useState("");
 
-    // Keep client-side validation messages separate from API errors.
-    const [validationError, setValidationError] = useState("");
-    const [apiError, setApiError] = useState("");
-
+const {
+    handleSubmit: handleFormSubmit,
+    control,
+    formState: { errors },
+} = useForm({
+    resolver: yupResolver(resetPasswordSchema),
+    defaultValues: {
+        newPassword: "",
+        confirmPassword: "",
+    },
+});
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -32,67 +40,46 @@ function ResetPassword() {
     const resetToken = useSelector((state) => state.auth.resetToken);
 
     // Validate the form and submit the new password.
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const handleResetPassword = async (data) => {
+    setValidationError("");
+    setApiError("");
 
-        setValidationError("");
-        setApiError("");
+    // A reset token is required to authorize this operation.
+    if (!resetToken) {
+        setValidationError(
+            "Your password reset session has expired. Please request a new reset OTP."
+        );
+        return;
+    }
 
-        // A reset token is required to authorize this operation.
-        if (!resetToken) {
-            setValidationError(
-                "Your password reset session has expired. Please request a new reset OTP."
-            );
-            return;
-        }
+    try {
+        // Send the reset token and validated password to the backend.
+        await dispatch(
+            resetPasswordThunk({
+                resetToken,
+                newPassword: data.newPassword,
+            })
+        ).unwrap();
 
-        // Require both password fields.
-        if (!newPassword || !confirmPassword) {
-            setValidationError("Please fill in both password fields.");
-            return;
-        }
+        // Navigate to login after successful password reset.
+        navigate("/login", {
+            replace: true,
+            state: {
+                message:
+                    "Password reset successfully. Please sign in with your new password.",
+            },
+        });
+    } catch (error) {
+        // Display the backend error.
+        const message =
+            typeof error === "string"
+                ? error
+                : error?.message ||
+                  "We couldn't reset your password. Please try again.";
 
-        // Keep the password confirmation consistent.
-        if (newPassword !== confirmPassword) {
-            setValidationError("Passwords do not match.");
-            return;
-        }
-
-        // Enforce a minimum password length.
-        if (newPassword.length < 8) {
-            setValidationError(
-                "Your password must contain at least 8 characters."
-            );
-            return;
-        }
-
-        try {
-            // Send the reset token and new password to the backend.
-            await dispatch(
-                resetPasswordThunk({
-                    resetToken,
-                    newPassword,
-                })
-            ).unwrap();
-
-            // Return to login after a successful password reset.
-            navigate("/login", {
-                replace: true,
-                state: {
-                    message: "Password reset successfully. Please sign in with your new password.",
-                },
-            });
-        } catch (error) {
-            // Show the rejected thunk message on the page.
-            const message =
-                typeof error === "string"
-                    ? error
-                    : error?.message ||
-                      "We couldn't reset your password. Please try again.";
-
-            setApiError(message);
-        }
-    };
+        setApiError(message);
+    }
+};
 
     // Prefer local validation and submission errors.
     const displayedError = validationError || apiError || error;
@@ -231,37 +218,71 @@ return (
                     )}
 
                     {/* Existing form state and handlers remain unchanged. */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <Input
-                            label="New password"
-                            type="password"
-                            name="newPassword"
-                            value={newPassword}
-                            onChange={(event) => {
-                                setNewPassword(event.target.value);
-                                setValidationError("");
-                                setApiError("");
-                            }}
-                            placeholder="Enter your new password"
-                            disabled={loading}
-                            autoComplete="new-password"
-                        />
+                    <form
+    onSubmit={handleFormSubmit(handleResetPassword)}
+    className="space-y-5"
+>
+                       <Controller
+    name="newPassword"
+    control={control}
+    render={({ field }) => (
+        <Input
+            label="New password"
+            type="password"
+            name={field.name}
+            value={field.value}
+            onChange={(event) => {
+                field.onChange(event);
 
-                        <Input
-                            label="Confirm new password"
-                            type="password"
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(event) => {
-                                setConfirmPassword(event.target.value);
-                                setValidationError("");
-                                setApiError("");
-                            }}
-                            placeholder="Re-enter your new password"
-                            disabled={loading}
-                            autoComplete="new-password"
-                        />
+                // Clear previous backend errors while editing.
+                setApiError("");
+                dispatch(clearAuthError());
+            }}
+            onBlur={field.onBlur}
+            placeholder="Enter your new password"
+            disabled={loading}
+            autoComplete="new-password"
+        />
+    )}
+/>
 
+{/* Display Yup validation error */}
+{errors.newPassword && (
+    <p className="mt-1 text-xs text-red-600" role="alert">
+        {errors.newPassword.message}
+    </p>
+)}
+
+                       <Controller
+    name="confirmPassword"
+    control={control}
+    render={({ field }) => (
+        <Input
+            label="Confirm new password"
+            type="password"
+            name={field.name}
+            value={field.value}
+            onChange={(event) => {
+                field.onChange(event);
+
+                // Clear previous backend errors while editing.
+                setApiError("");
+                dispatch(clearAuthError());
+            }}
+            onBlur={field.onBlur}
+            placeholder="Re-enter your new password"
+            disabled={loading}
+            autoComplete="new-password"
+        />
+    )}
+/>
+
+{/* Display Yup validation error */}
+{errors.confirmPassword && (
+    <p className="mt-1 text-xs text-red-600" role="alert">
+        {errors.confirmPassword.message}
+    </p>
+)}
                         {/* Password guidance uses the shared muted text color. */}
                         <p className="text-xs leading-5 text-[#707771] dark:text-[#B5BDB7]">
                             Use at least 8 characters. Avoid using a password
