@@ -1,6 +1,6 @@
 // Import the components required for routing
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ProtectedRoute from "../../components/ProtectedRoute";
+import ProtectedRoute from "./ProtectedRoute";
 
 import ScrollToTop from "../../components/ScrollToTop";
 // Import the pages

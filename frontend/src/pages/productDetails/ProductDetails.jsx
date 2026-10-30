@@ -644,11 +644,7 @@ function ProductDetails() {
                             </p>
                         )}
 
-                        {wishlistLoading && (
-                            <p className="mt-3 text-sm text-[#717974] dark:text-gray-400">
-                                Updating wishlist…
-                            </p>
-                        )}
+                       
 
                         {/* Primary Add to Cart and secondary Wishlist actions. */}
                         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -668,14 +664,21 @@ function ProductDetails() {
                             <button
                                 type="button"
                                 onClick={handleWishlistToggle}
-                                disabled={wishlistLoading}
-                                aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
-                                className="flex min-h-14 items-center justify-center gap-2 rounded-full border border-[#C1C8C3] bg-white px-6 py-4 font-semibold text-[#436558] transition hover:bg-[#F1F4F9] disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-[#C5EBDA] dark:hover:bg-gray-800"
+                                aria-pressed={isInWishlist}
+                                disabled={!isAuthenticated}
+                                aria-label={
+                                    isInWishlist
+                                        ? "Remove kit from wishlist"
+                                        : "Add kit to wishlist"
+                                }
+                                className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-full border border-[#C1C8C3] bg-white px-6 py-4 font-semibold text-[#436558] transition hover:bg-[#F1F4F9] disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-[#C5EBDA] dark:hover:bg-gray-800"
                             >
                                 <span aria-hidden="true" className="text-xl">
                                     {isInWishlist ? "♥" : "♡"}
                                 </span>
-                                {isInWishlist ? "Saved to Wishlist" : "Add to Wishlist"}
+                                {isInWishlist
+                                    ? "Saved to Wishlist"
+                                    : "Add to Wishlist"}
                             </button>
                         </div>
                     </div>

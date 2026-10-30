@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useForm, Controller } from "react-hook-form";
@@ -18,6 +18,8 @@ import {
 } from "../../features/auth/authThunk";
 
 function Login() {
+    // Controls whether the password is visible or hidden.
+    const [showPassword, setShowPassword] = useState(false);
     // Initialize React Hook Form with Yup validation.
     const {
         control,
@@ -276,18 +278,65 @@ function Login() {
                                     name="password"
                                     control={control}
                                     render={({ field }) => (
-                                        <Input
-                                            {...field}
-                                            onChange={(e) => {
-                                                dispatch(clearAuthError());
-                                                field.onChange(e);
-                                            }}
-                                            label="Password"
-                                            type="password"
-                                            placeholder="Enter your password"
-                                            autoComplete="current-password"
-                                            disabled={loading}
-                                        />
+                                        <div className="relative">
+                                            <Input
+                                                {...field}
+                                                onChange={(e) => {
+                                                    dispatch(clearAuthError());
+                                                    field.onChange(e);
+                                                }}
+                                                label="Password"
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="Enter your password"
+                                                autoComplete="current-password"
+                                                disabled={loading}
+                                            />
+
+                                            {/* Show/Hide password button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword((prev) => !prev)}
+                                                disabled={loading}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                                className="absolute right-4 top-[45px] text-gray-500 transition hover:text-[#436558] dark:text-gray-400 dark:hover:text-[#a9cfbe]"
+                                            >
+                                                {showPassword ? (
+                                                    // Eye-off icon
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        width="20"
+                                                        height="20"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M3 3l18 18" />
+                                                        <path d="M10.58 10.58a2 2 0 0 0 2.83 2.83" />
+                                                        <path d="M9.88 5.09A10.8 10.8 0 0 1 12 4.87c5 0 9 5.13 10 7.13a13.2 13.2 0 0 1-3.17 4.11" />
+                                                        <path d="M6.61 6.61C3.92 8.05 2.45 10.2 2 12c1 2 5 7.13 10 7.13a10.8 10.8 0 0 0 4.11-.81" />
+                                                    </svg>
+                                                ) : (
+                                                    // Eye icon
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        width="20"
+                                                        height="20"
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M2 12s3.64-7 10-7 10 7 10 7-3.64 7-10 7-10-7-10-7z" />
+                                                        <circle cx="12" cy="12" r="3" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
                                     )}
                                 />
 
