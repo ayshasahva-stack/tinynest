@@ -1,6 +1,8 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useForm } from "react-hook-form";
+
+import { kitSchema } from "../../validations/admin/kitSchema";
 
 import {
     fetchAllKitsForAdminThunk,
@@ -21,6 +23,7 @@ import {
 import { clearKitSaveFeedback } from "../../features/kits/kitSlice";
 
 import { fetchProducts } from "../../features/products/productThunk";
+
 import {
     selectProducts,
     selectProductsLoading,
@@ -67,6 +70,16 @@ function AdminKits() {
     const [form, setForm] = useState(emptyForm);
     const [formError, setFormError] = useState("");
 
+    // React Hook Form manages validation errors.
+    // The actual form values remain in the existing useState.
+    const {
+        setError,
+        clearErrors,
+        formState: { errors },
+    } = useForm({
+        defaultValues: emptyForm,
+    });
+
     // Searchable product dropdown state.
     const [productSearch, setProductSearch] = useState("");
     const [isProductDropdownOpen, setIsProductDropdownOpen] =
@@ -100,6 +113,9 @@ function AdminKits() {
     const updateField = (event) => {
         const { name, value, type, checked } = event.target;
 
+        // Clear the previous error for the edited field.
+        clearErrors(name);
+
         setForm((previous) => ({
             ...previous,
             [name]: type === "checkbox" ? checked : value,
@@ -109,6 +125,8 @@ function AdminKits() {
     // Reset the form and open create mode.
     const handleAddKit = () => {
         dispatch(clearKitSaveFeedback());
+
+        clearErrors();
         setEditingKitId(null);
         setForm({ ...emptyForm, items: [] });
         setFormError("");
@@ -121,6 +139,7 @@ function AdminKits() {
     const handleEditKit = (kit) => {
         dispatch(clearKitSaveFeedback());
 
+        clearErrors();
         setEditingKitId(kit._id);
 
         setForm({
@@ -150,7 +169,8 @@ function AdminKits() {
     const handleAddProduct = (productId) => {
         if (!productId) return;
 
-        // Store product IDs consistently as strings.
+        clearErrors("items");
+
         const normalizedId = String(productId);
 
         setForm((previous) => {
@@ -165,9 +185,9 @@ function AdminKits() {
                     items: previous.items.map((item) =>
                         String(item.product) === normalizedId
                             ? {
-                                  ...item,
-                                  quantity: Number(item.quantity || 0) + 1,
-                              }
+                                ...item,
+                                quantity: Number(item.quantity || 0) + 1,
+                            }
                             : item
                     ),
                 };
@@ -189,6 +209,8 @@ function AdminKits() {
 
     // Change the quantity of a selected product.
     const handleQuantityChange = (productId, quantity) => {
+        clearErrors("items");
+
         const normalizedId = String(productId);
 
         setForm((previous) => ({
@@ -203,6 +225,8 @@ function AdminKits() {
 
     // Remove a product from the kit.
     const handleRemoveProduct = (productId) => {
+        clearErrors("items");
+
         const normalizedId = String(productId);
 
         setForm((previous) => ({
@@ -236,8 +260,8 @@ function AdminKits() {
             (product) => String(product._id) === String(item.product)
         );
 
-        // When editing, the kit may contain a populated product that
-        // isn't present in the currently loaded product list.
+        // When editing, the kit may contain a populated product
+        // that isn't present in the currently loaded product list.
         const savedItem = kits
             .find((kit) => String(kit._id) === String(editingKitId))
             ?.items?.find(
@@ -260,67 +284,37 @@ function AdminKits() {
         };
     });
 
-    // Validate form fields before saving.
-    const validateForm = () => {
-        if (!form.name.trim()) {
-            return "Please enter a kit name.";
-        }
-
-        if (!form.description.trim()) {
-            return "Please enter a kit description.";
-        }
-
-        if (!form.image.trim()) {
-            return "Please enter a kit image URL.";
-        }
-
-        if (form.items.length === 0) {
-            return "Please add at least one product.";
-        }
-
-        if (
-            form.items.some(
-                (item) =>
-                    !item.product ||
-                    !Number.isInteger(Number(item.quantity)) ||
-                    Number(item.quantity) < 1
-            )
-        ) {
-            return "Each product must have a quantity of at least 1.";
-        }
-
-        const price = Number(form.price);
-        const discount = Number(form.discount);
-
-        if (!Number.isFinite(price) || price < 0) {
-            return "Please enter a valid kit price.";
-        }
-
-        if (
-            !Number.isFinite(discount) ||
-            discount < 0 ||
-            discount > 100
-        ) {
-            return "Discount must be between 0 and 100.";
-        }
-
-        return "";
-    };
-
-    // Create or update the kit using the existing Redux thunks.
+    // Validate form fields using the Yup schema.
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        const validationError = validateForm();
+        setFormError("");
+        clearErrors();
 
-        if (validationError) {
-            setFormError(validationError);
+        try {
+            // Validate all fields, including products and quantities
+            // that are currently managed through useState.
+            await kitSchema.validate(form, {
+                abortEarly: false,
+            });
+        } catch (validationError) {
+            // Display all validation errors through React Hook Form.
+            validationError.inner.forEach((error) => {
+                if (error.path) {
+                    setError(error.path, {
+                        type: "manual",
+                        message: error.message,
+                    });
+                }
+            });
+
             return;
         }
 
-        setFormError("");
         dispatch(clearKitSaveFeedback());
 
+        // Prepare the existing API payload.
+        // Product IDs and quantities are sent, not populated objects.
         const kitData = {
             name: form.name.trim(),
             description: form.description.trim(),
@@ -346,13 +340,16 @@ function AdminKits() {
                 await dispatch(createKitThunk(kitData)).unwrap();
             }
 
+            // Refresh the kit list after saving.
             await dispatch(fetchAllKitsForAdminThunk()).unwrap();
 
+            // Reset and close the form after successful saving.
             setShowForm(false);
             setEditingKitId(null);
             setForm({ ...emptyForm, items: [] });
             setProductSearch("");
             setIsProductDropdownOpen(false);
+            clearErrors();
         } catch {
             // The existing Redux error state displays API errors.
         }
@@ -383,8 +380,7 @@ function AdminKits() {
             // The existing Redux error state displays API errors.
         }
     };
-
-    return (
+        return (
         <div className="min-h-screen bg-[#f7f9ff] p-4 dark:bg-slate-950 md:p-8">
             {/* Page heading */}
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -601,6 +597,7 @@ function AdminKits() {
                 <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 py-8">
                     <form
                         onSubmit={handleSubmit}
+                        noValidate
                         className="my-auto w-full max-w-3xl space-y-5 rounded-2xl border border-[#e0e7e3] bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800"
                     >
                         <div className="flex items-start justify-between gap-4">
@@ -651,6 +648,12 @@ function AdminKits() {
                                     required
                                     className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 />
+
+                                {errors.name?.message && (
+                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        {errors.name.message}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
@@ -671,6 +674,12 @@ function AdminKits() {
                                     placeholder="https://..."
                                     className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 />
+
+                                {errors.image?.message && (
+                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        {errors.image.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -691,8 +700,15 @@ function AdminKits() {
                                 rows={3}
                                 className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                             />
+
+                            {errors.description?.message && (
+                                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {errors.description.message}
+                                </p>
+                            )}
                         </div>
 
+                        {/* Price and discount */}
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label
@@ -713,6 +729,12 @@ function AdminKits() {
                                     required
                                     className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 />
+
+                                {errors.price?.message && (
+                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        {errors.price.message}
+                                    </p>
+                                )}
                             </div>
 
                             <div>
@@ -735,6 +757,12 @@ function AdminKits() {
                                     required
                                     className="w-full rounded-lg border border-[#d6e0da] bg-white px-3 py-2 text-[#263d32] outline-none focus:border-[#7a9e8f] focus:ring-2 focus:ring-[#dce7e2] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                 />
+
+                                {errors.discount?.message && (
+                                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        {errors.discount.message}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -821,6 +849,13 @@ function AdminKits() {
                                 )}
                             </div>
 
+                            {/* Products validation message */}
+                            {errors.items?.message && (
+                                <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                                    {errors.items.message}
+                                </p>
+                            )}
+
                             {/* Selected products and quantities */}
                             {selectedProducts.length === 0 ? (
                                 <p className="rounded-lg bg-[#f1f4f9] p-4 text-sm text-[#77847d] dark:bg-gray-700/50 dark:text-gray-400">
@@ -828,7 +863,7 @@ function AdminKits() {
                                 </p>
                             ) : (
                                 <div className="space-y-3">
-                                    {selectedProducts.map((item) => (
+                                    {selectedProducts.map((item, index) => (
                                         <div
                                             key={item.product}
                                             className="flex flex-col gap-3 rounded-lg border border-[#e0e7e3] p-3 dark:border-gray-700 sm:flex-row sm:items-center"
@@ -852,7 +887,7 @@ function AdminKits() {
                                                 </p>
                                             </div>
 
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex flex-wrap items-center gap-2">
                                                 <label
                                                     htmlFor={`quantity-${item.product}`}
                                                     className="text-sm text-[#65756c] dark:text-gray-300"
@@ -874,6 +909,12 @@ function AdminKits() {
                                                     }
                                                     className="w-20 rounded-lg border border-[#d6e0da] bg-white px-2 py-1.5 text-[#263d32] focus:border-[#7a9e8f] dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                                 />
+
+                                                {errors.items?.[index]?.quantity?.message && (
+                                                    <p className="w-full text-sm text-red-600 dark:text-red-400">
+                                                        {errors.items[index].quantity.message}
+                                                    </p>
+                                                )}
 
                                                 <button
                                                     type="button"
