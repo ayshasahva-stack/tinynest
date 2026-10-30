@@ -56,7 +56,7 @@ function Register() {
                     email: cleanedEmail,
                     phone: cleanedPhone,
                     password: data.password,
-                    // confirmPassword: data.confirmPassword,
+                    confirmPassword: data.confirmPassword,
                 })
             ).unwrap();
 
