@@ -81,8 +81,18 @@ return (
         {/* Notifications */}
        
             {/* Preserve existing notification behavior */}
-            
-                <NotificationBell />
+            <div
+            className="
+                relative z-50 mb-4
+                flex shrink-0 items-center justify-between
+                overflow-visible rounded-lg
+                
+               
+                transition-colors duration-200
+                dark:border-gray-800 dark:bg-gray-900
+            "
+        > <NotificationBell /></div>
+               
             
         {/* Navigation: all existing routes preserved */}
         <nav className="relative z-0 flex-1 space-y-1 overflow-y-auto">
@@ -90,6 +100,7 @@ return (
                 <LayoutDashboard size={18} strokeWidth={1.7} aria-hidden="true" />
                 <span>Dashboard</span>
             </NavLink>
+            
 
             <NavLink to="/admin/products" className={navLinkClass} onClick={onClose}>
                 <Package size={18} strokeWidth={1.7} aria-hidden="true" />

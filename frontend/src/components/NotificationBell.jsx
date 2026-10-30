@@ -300,29 +300,29 @@ function NotificationBell({ badgeOnly = false }) {
     }
 
     return (
-        <div ref={dropdownRef} className="relative">
+        <div ref={dropdownRef} className="relative w-full">
             {/* Bell button and unread badge */}
-          <button
-    type="button"
-    onClick={() => setIsOpen((previous) => !previous)}
-    aria-expanded={isOpen}
-    aria-label="Open notifications"
-    className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#e0e7e3] bg-white px-3 py-2.5 text-left transition hover:bg-[#edf4f0] focus:outline-none focus:ring-2 focus:ring-[#a8c2b5] dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
->
-    {/* Clicking anywhere in this area opens or closes the dropdown */}
-    <span className="font-medium text-[#436558] dark:text-[#b7d0c3]">
-        Notifications
-    </span>
+            <button
+                type="button"
+                onClick={() => setIsOpen((previous) => !previous)}
+                aria-expanded={isOpen}
+                aria-label="Open notifications"
+                className="flex w-full box-border items-center gap-3 rounded-lg px-4 py-3 text-left text-[#52675c] transition-colors duration-200 hover:bg-[#dce7e2] hover:text-[#263d32] dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white">
+                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center dark:border-gray-600">
+                    <Bell className="h-5 w-5 text-[#8fb9a5]" />
 
-    <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#e0e7e3] dark:border-gray-600">
-        <Bell className="h-5 w-5 text-[#8fb9a5]" />
+                    {/* Notification count badge */}
+                    <span className="absolute -right-1 -top-1 rounded-full bg-[#d995a2] px-1.5 py-0.5 text-xs font-semibold text-white">
+                        {unreadCount}
+                    </span>
+                </span>
+                {/* Clicking anywhere in this area opens or closes the dropdown */}
+                <span className="font-medium text-[#436558] dark:text-[#b7d0c3]">
+                    Notifications
+                </span>
 
-        {/* Notification count badge */}
-        <span className="absolute -right-1 -top-1 rounded-full bg-[#d995a2] px-1.5 py-0.5 text-xs font-semibold text-white">
-            {unreadCount}
-        </span>
-    </span>
-</button>
+
+            </button>
 
             {/* Notification dropdown */}
             {isOpen && (
@@ -355,8 +355,8 @@ function NotificationBell({ badgeOnly = false }) {
                                 <div
                                     key={notification._id}
                                     className={`border-b border-[#E8E0D5] px-4 py-3 last:border-b-0 dark:border-gray-700 ${notification.isRead
-                                            ? "bg-white dark:bg-gray-900"
-                                            : "bg-[#FFF8F5] dark:bg-gray-800"
+                                        ? "bg-white dark:bg-gray-900"
+                                        : "bg-[#FFF8F5] dark:bg-gray-800"
                                         }`}
                                 >
                                     {/* Open the selected notification on the full page. */}
