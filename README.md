@@ -2,7 +2,7 @@
 
 TinyNest is a full-stack MERN e-commerce application for shopping baby essentials. It provides customers with a simple shopping experience and includes an admin area for managing the store.
 
-## 📸 Screenshots
+## Screenshots
 
 ### Home Page
 ![TinyNest Home Page](docs/screenshots/home.png)
@@ -22,7 +22,7 @@ TinyNest is a full-stack MERN e-commerce application for shopping baby essential
 ### Admin Dashboard
 ![TinyNest Admin Dashboard](docs/screenshots/adminDashboard.png)
 
-## ✨ Features
+##  Features
 
 ### Customer
 - User registration and login
@@ -50,7 +50,7 @@ TinyNest is a full-stack MERN e-commerce application for shopping baby essential
 - User management
 - Product image uploads using Cloudinary
 
-## 🧰 Tech Stack
+## Tech Stack
 
 ### Frontend
 - React.js
@@ -75,7 +75,7 @@ TinyNest is a full-stack MERN e-commerce application for shopping baby essential
 - Cloudinary
 - Razorpay
 
-## 📁 Project Structure
+## Project Structure
 
 The following structure represents the current TinyNest project organization.
 
@@ -130,7 +130,7 @@ tinynest/
 
 **Note:** The `.env` files, `node_modules/`, and `frontend/dist/` are local or generated items visible in your VS Code Explorer. They are not included in the main project tree above. Do not commit environment secrets or dependency folders to GitHub.
 
-## ⚙️ Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js and npm
@@ -208,7 +208,7 @@ npm run dev
 
 Open the local URL printed by Vite in your browser.
 
-## 🔒 Security Notes
+## Security Notes
 
 - Keep `.env` files out of version control.
 - Configure production CORS to allow only your frontend domain.
@@ -216,11 +216,11 @@ Open the local URL printed by Vite in your browser.
 - Do not expose secret keys in frontend code.
 - Restrict admin routes and APIs to authorized admin users.
 
-## 🎨 Design
+## Design
 
 TinyNest uses a soft sage-green visual identity, clean layouts, and a responsive shopping interface designed around baby and family essentials.
 
-## 👩‍💻 Developer
+## Developer
 
 **Aysha Sahva K**
 
