@@ -5,7 +5,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { clearAuthError } from "../../features/auth/authSlice";
 import Input from "../../components/Input";
 import Button from "../../components/Button";
-
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { registerSchema } from "../../validations/auth/registerSchema";
 import { registerUserThunk } from "../../features/auth/authThunk";
 import {
     selectAuthLoading,
@@ -13,14 +15,22 @@ import {
 } from "../../features/auth/authSelectors";
 
 function Register() {
-    // Store the values entered in the registration form.
-    const [email, setEmail] = useState("");
-    const [phone, setPhone] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Store client-side validation errors separately from API errors.
-    const [validationError, setValidationError] = useState("");
+
+// Initialize React Hook Form with Yup validation.
+const {
+    control,
+    handleSubmit,
+    formState: { errors },
+} = useForm({
+    resolver: yupResolver(registerSchema),
+    defaultValues: {
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+    },
+});
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -34,57 +44,33 @@ function Register() {
     const error = useSelector(selectAuthError);
 
     // Validate the form, register the user, and navigate to OTP verification.
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+   // Called only when all registration fields pass Yup validation.
+const handleRegister = async (data) => {
+    const cleanedEmail = data.email.trim();
+    const cleanedPhone = data.phone.trim();
 
-        // Remove any previous client-side validation message.
-        setValidationError("");
+    try {
+        // Submit valid registration data through the existing Redux thunk.
+        await dispatch(
+            registerUserThunk({
+                email: cleanedEmail,
+                phone: cleanedPhone,
+                password: data.password,
+                confirmPassword: data.confirmPassword,
+            })
+        ).unwrap();
 
-        // Trim whitespace from email and phone before submitting.
-        const cleanedEmail = email.trim();
-        const cleanedPhone = phone.trim();
+        // Navigate to OTP verification after successful registration.
+        navigate(
+            `/verify-otp?email=${encodeURIComponent(cleanedEmail)}`
+        );
+    } catch {
+        // Redux handles and stores the API error.
+    }
+};
 
-        // Check required values before making an API request.
-        if (!cleanedEmail || !cleanedPhone || !password || !confirmPassword) {
-            setValidationError("Please fill in all fields.");
-            return;
-        }
-        // Ensure the password contains at least 8 characters.
-        if (password.length < 8) {
-            setValidationError("Password must be at least 8 characters.");
-            return;
-        }
-
-
-        // Check that both password fields match.
-        if (password !== confirmPassword) {
-            setValidationError("Passwords do not match.");
-            return;
-        }
-
-        try {
-            // Send registration data to the backend through Redux.
-            await dispatch(
-                registerUserThunk({
-                    email: cleanedEmail,
-                    phone: cleanedPhone,
-                    password,
-                    confirmPassword,
-                })
-            ).unwrap();
-
-            // Continue to OTP verification after successful registration.
-            navigate(
-                `/verify-otp?email=${encodeURIComponent(cleanedEmail)}`
-            );
-        } catch {
-            // Redux stores the API error, which is displayed below.
-            // No console-only error handling is needed here.
-        }
-    };
-
-    // Prefer a local validation message when one exists.
-    const displayedError = validationError || error;
+// Display errors returned by the backend through Redux.
+const displayedError = error;
 
 
 
@@ -240,73 +226,114 @@ return (
                     )}
 
                     {/* Existing form logic is preserved. */}
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <Input
-                            label="Email address"
-                            type="email"
-                            name="email"
-                            value={email}
-                            onChange={(event) => {
-                                setEmail(event.target.value);
-                                setValidationError("");
-                                dispatch(clearAuthError());
-                            }}
-                            placeholder="you@example.com"
-                        />
+                    <form
+    onSubmit={handleSubmit(handleRegister)}
+    className="space-y-5"
+>
+    {/* Email field */}
+    <div>
+        <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    {...field}
+                    label="Email address"
+                    type="email"
+                    placeholder="you@example.com"
+                    disabled={loading}
+                />
+            )}
+        />
 
-                        <Input
-                            label="Phone number"
-                            type="tel"
-                            name="phone"
-                            value={phone}
-                            onChange={(event) => {
-                                setPhone(event.target.value);
-                                setValidationError("");
-                                dispatch(clearAuthError());
-                            }}
-                            placeholder="Enter your phone number"
-                        />
+        {errors.email && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.email.message}
+            </p>
+        )}
+    </div>
 
-                        <Input
-                            label="Password"
-                            type="password"
-                            name="password"
-                            value={password}
-                            onChange={(event) => {
-                                setPassword(event.target.value);
-                                setValidationError("");
-                                dispatch(clearAuthError());
-                            }}
-                            placeholder="Create a password"
-                        />
+    {/* Phone field */}
+    <div>
+        <Controller
+            name="phone"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    {...field}
+                    label="Phone number"
+                    type="tel"
+                    placeholder="Enter your phone number"
+                    disabled={loading}
+                />
+            )}
+        />
 
-                        <Input
-                            label="Confirm password"
-                            type="password"
-                            name="confirmPassword"
-                            value={confirmPassword}
-                            onChange={(event) => {
-                                setConfirmPassword(event.target.value);
-                                setValidationError("");
-                                dispatch(clearAuthError());
-                            }}
-                            placeholder="Enter your password again"
-                        />
+        {errors.phone && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.phone.message}
+            </p>
+        )}
+    </div>
 
-                        {/* Keep the existing button component and loading state. */}
-                        <div className="pt-1">
-                            <Button
-                                type="submit"
-                                variant="auth"
-                                fullWidth
-                                disabled={loading}
-                            >
-                                {loading
-                                    ? "Creating account..."
-                                    : "Create My Account →"}
-                            </Button>
-                        </div>
-                    </form>
+    {/* Password field */}
+    <div>
+        <Controller
+            name="password"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    {...field}
+                    label="Password"
+                    type="password"
+                    placeholder="Create a password"
+                    disabled={loading}
+                />
+            )}
+        />
+
+        {errors.password && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.password.message}
+            </p>
+        )}
+    </div>
+
+    {/* Confirm password field */}
+    <div>
+        <Controller
+            name="confirmPassword"
+            control={control}
+            render={({ field }) => (
+                <Input
+                    {...field}
+                    label="Confirm password"
+                    type="password"
+                    placeholder="Enter your password again"
+                    disabled={loading}
+                />
+            )}
+        />
+
+        {errors.confirmPassword && (
+            <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.confirmPassword.message}
+            </p>
+        )}
+    </div>
+
+    {/* Existing TinyNest button */}
+    <div className="pt-1">
+        <Button
+            type="submit"
+            variant="auth"
+            fullWidth
+            disabled={loading}
+        >
+            {loading ? "Creating account..." : "Create My Account →"}
+        </Button>
+    </div>
+</form>
 
                     {/* Footer text from the reference. */}
                     <p className="mt-6 text-center text-xs leading-5 text-[#717974] dark:text-gray-500">
