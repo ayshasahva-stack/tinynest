@@ -2,7 +2,9 @@ import crypto, { randomBytes, createHash } from 'crypto'
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken";
 
-import User from './auth.model.js'
+// User stores verified accounts.
+// PendingRegistration stores accounts waiting for OTP verification.
+import User, { PendingRegistration } from "./auth.model.js";
 import transporter from '../../integrations/email/mail.js'
 import ApiError from '../../utils/ApiError.js'
 import sendSuccessResponse from '../../utils/ApiResponse.js'
@@ -22,140 +24,174 @@ import {
 } from './auth.validation.js'
 
 
+
 export const register = async (req, res, next) => {
-
     try {
+        // Validate the registration details.
+        const { error, data } = validateRegistration(req.body);
 
-        const { error, data } = validateRegistration(req.body)
-
-        if (error) {
-            return next(new ApiError(400, error))
-        }
-
-        const { email, password, phone } = data;
-        const existinguser = await User.findOne({ email })
-
-        if (existinguser) {
-            return next(new ApiError(409, "Email is already registerd "))
-        }
-
-        const otp = crypto.randomInt(100000, 1000000).toString()
-
-        const hashedOtp = await bcrypt.hash(otp, 10);
-
-        const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
-
-        const user = new User({
-            email,
-            password,
-            phone,
-            otp: hashedOtp,
-            otpExpire,
-            isVerified: false
-        })
-
-        await user.save()
-
-        await transporter.sendMail({
-            from: process.env.EMAIL,
-            to: email,
-            subject: "Verify your tinynest account",
-            text: `Your verification OTP is ${otp}. It expires in 10 minutes.`
-        })
-        sendSuccessResponse(res, 201, null, "Registration successful. Please verify the OTP sent to your email.")
-
-
-    } catch (error) {
-        next(error);
-    }
-
-}
-
-// Verify the OTP sent to the user's email
-export const verifyOtp = async (req, res, next) => {
-    try {
-        // Validate the email and OTP
-        const error = validateVerifyOtp(req.body);
-
-        // Stop if validation fails
         if (error) {
             return next(new ApiError(400, error));
         }
 
-        // Get email and OTP from the request
-        const { email, otp } = req.body;
+        const email = data.email.trim().toLowerCase();
+        const { password, phone } = data;
 
-        // Find the user using their email
-        const user = await User.findOne({ email });
+        // Check whether this email already belongs to a verified user.
+        const existingUser = await User.findOne({ email });
 
-        // Check whether the user exists
-        if (!user) {
-            return next(new ApiError(404, "User not found"));
-        }
-
-        // Check whether the user is already verified
-        if (user.isVerified) {
-            return next(new ApiError(400, "User is already verified"));
-        }
-
-        // Check whether an OTP exists
-        if (!user.otp || !user.otpExpire) {
-            return next(new ApiError(400, "Please request a new OTP"));
-        }
-
-        // Check whether the OTP has expired
-        if (new Date() > user.otpExpire) {
-
-            // Remove the expired OTP
-            user.otp = null;
-            user.otpExpire = null;
-
-            // Save the changes
-            await user.save();
-
+        if (existingUser) {
             return next(
-                new ApiError(400, "OTP expired. Please request a new OTP")
+                new ApiError(409, "Email is already registered")
             );
         }
 
-        // Compare the entered OTP with the hashed OTP in MongoDB
-        const isOtpCorrect = await bcrypt.compare(otp, user.otp);
+        // Generate a six-digit OTP.
+        const otp = crypto.randomInt(100000, 1000000).toString();
 
-        // Stop if the OTP is incorrect
+        // Hash the OTP before storing it.
+        const hashedOtp = await bcrypt.hash(otp, 10);
+
+        // Hash the password before storing it temporarily.
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // OTP expires after 10 minutes.
+        const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Save or update the pending registration.
+        // This does NOT create a document in the User collection.
+        await PendingRegistration.findOneAndUpdate(
+            { email },
+            {
+                $set: {
+                    email,
+                    password: hashedPassword,
+                    phone,
+                    otp: hashedOtp,
+                    otpExpire
+                }
+            },
+            {
+                upsert: true,
+                new: true,
+                runValidators: true,
+                setDefaultsOnInsert: true
+            }
+        );
+
+        try {
+            // Send the OTP using the existing email transporter.
+            await transporter.sendMail({
+                from: process.env.EMAIL,
+                to: email,
+                subject: "Verify your TinyNest account",
+                text: `Your verification OTP is ${otp}. It expires in 10 minutes.`
+            });
+        } catch (emailError) {
+            // Remove the pending registration if email delivery fails.
+            await PendingRegistration.deleteOne({ email });
+
+            throw emailError;
+        }
+
+        return sendSuccessResponse(
+            res,
+            201,
+            null,
+            "Registration successful. Please verify the OTP sent to your email."
+        );
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+// Verify the OTP sent to the user's email
+
+export const verifyOtp = async (req, res, next) => {
+    try {
+        // Validate the email and OTP.
+        const error = validateVerifyOtp(req.body);
+
+        if (error) {
+            return next(new ApiError(400, error));
+        }
+
+        // Normalize the email.
+        const email = req.body.email.trim().toLowerCase();
+        const { otp } = req.body;
+
+        // Find the temporary registration.
+        const pendingUser = await PendingRegistration.findOne({ email });
+
+        if (!pendingUser) {
+            return next(
+                new ApiError(404, "Registration not found. Please register again.")
+            );
+        }
+
+        // Check OTP expiry.
+        if (new Date() > pendingUser.otpExpire) {
+            await PendingRegistration.deleteOne({ _id: pendingUser._id });
+
+            return next(
+                new ApiError(400, "OTP expired. Please register again.")
+            );
+        }
+
+        // Compare the submitted OTP with the stored hashed OTP.
+        const isOtpCorrect = await bcrypt.compare(otp, pendingUser.otp);
+
         if (!isOtpCorrect) {
             return next(new ApiError(400, "Invalid OTP"));
         }
 
-        // Mark the user's email as verified
-        user.isVerified = true;
+        // Check whether an account was already created.
+        const existingUser = await User.findOne({ email });
 
-        // Remove the OTP after successful verification
-        user.otp = null;
-        user.otpExpire = null;
+        if (existingUser) {
+            await PendingRegistration.deleteOne({ _id: pendingUser._id });
 
-        // Save the updated user
+            return next(
+                new ApiError(409, "An account with this email already exists.")
+            );
+        }
+
+        // Create the actual verified user.
+        const user = new User({
+            email: pendingUser.email,
+            password: pendingUser.password,
+            phone: pendingUser.phone,
+            isVerified: true
+        });
+
+        // The pending password is already hashed.
+        // Tell the pre-save hook not to hash it a second time.
+        user.$locals.passwordAlreadyHashed = true;
+
         await user.save();
 
-        // Notify admins after the user's email is verified.
+        // Delete the temporary registration after successful creation.
+        await PendingRegistration.deleteOne({ _id: pendingUser._id });
+
+        // Preserve your existing admin notification functionality.
         try {
-            // Find admins who are not blocked.
             const admins = await User.find({
                 role: "admin",
-                isBlocked: { $ne: true },
+                isBlocked: { $ne: true }
             }).select("_id");
 
             if (admins.length > 0) {
-                // Save a notification for each admin.
                 const notifications = await Notification.insertMany(
                     admins.map((admin) => ({
                         recipient: admin._id,
                         type: "new-user",
                         title: "New user registered",
-                        message: `A new user (${user.email}) has registered successfully.`,
+                        message: `A new user (${user.email}) has registered successfully.`
                     }))
                 );
 
-                // Notify connected admin clients immediately.
                 const io = getIo();
 
                 notifications.forEach((notification) => {
@@ -166,16 +202,14 @@ export const verifyOtp = async (req, res, next) => {
                 });
             }
         } catch (notificationError) {
-            // Don't turn successful email verification into a failure
-            // if notification creation or delivery fails.
+            // A notification failure must not undo successful verification.
             console.error(
                 "Failed to create new-user notification:",
                 notificationError.message
             );
         }
 
-        // Send a successful response
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             null,
@@ -183,10 +217,10 @@ export const verifyOtp = async (req, res, next) => {
         );
 
     } catch (error) {
-        // Pass unexpected errors to the error handler
         next(error);
     }
 };
+
 
 // Login an existing user
 
@@ -483,58 +517,50 @@ export const updateProfile = async (req, res, next) => {
     }
 };
 // Resend a new OTP to the user's email
+
 export const resendOtp = async (req, res, next) => {
     try {
-        // Validate the email
+        // Validate the email.
         const error = validateResendOtp(req.body);
 
-        // Stop if validation fails
         if (error) {
             return next(new ApiError(400, error));
         }
 
-        // Get and normalize the email
         const email = req.body.email.trim().toLowerCase();
 
-        // Find the user by email
-        const user = await User.findOne({ email });
+        // Find the pending registration instead of a User.
+        const pendingUser = await PendingRegistration.findOne({ email });
 
-        // Check whether the user exists
-        if (!user) {
-            return next(new ApiError(404, "User not found"));
+        if (!pendingUser) {
+            return next(
+                new ApiError(404, "Pending registration not found. Please register again.")
+            );
         }
 
-        // Don't send OTP to an already verified user
-        if (user.isVerified) {
-            return next(new ApiError(400, "Email is already verified"));
-        }
-
-        // Generate a new 6-digit OTP
+        // Generate a new six-digit OTP.
         const otp = crypto.randomInt(100000, 1000000).toString();
 
-        // Hash the new OTP before storing it
+        // Hash the OTP before saving.
         const hashedOtp = await bcrypt.hash(otp, 10);
 
-        // Set the new OTP expiry to 10 minutes
+        // Set the new OTP expiry.
         const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
 
-        // Update the user's OTP information
-        user.otp = hashedOtp;
-        user.otpExpire = otpExpire;
+        pendingUser.otp = hashedOtp;
+        pendingUser.otpExpire = otpExpire;
 
-        // Save the updated user
-        await user.save();
+        await pendingUser.save();
 
-        // Send the new OTP to the user's email
+        // Send the new OTP.
         await transporter.sendMail({
             from: process.env.EMAIL,
             to: email,
-            subject: "Your new tinynest verification OTP",
+            subject: "Your new TinyNest verification OTP",
             text: `Your new verification OTP is ${otp}. It expires in 10 minutes.`
         });
 
-        // Send a successful response
-        sendSuccessResponse(
+        return sendSuccessResponse(
             res,
             200,
             null,
@@ -542,10 +568,10 @@ export const resendOtp = async (req, res, next) => {
         );
 
     } catch (error) {
-        // Pass unexpected errors to the error handler
         next(error);
     }
 };
+
 
 // Send a password-reset OTP to the user's email
 export const forgotPassword = async (req, res, next) => {

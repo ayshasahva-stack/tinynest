@@ -77,19 +77,21 @@ const userSchema = new mongoose.Schema(
         timestamps: true
     }
 )
-
-// Hash the password before saving the user
 userSchema.pre("save", async function () {
 
-    // If the password wasn't changed, don't hash it again
+    // Skip hashing when transferring an already-hashed password
+    // from PendingRegistration to the verified User document.
+    if (this.$locals.passwordAlreadyHashed) {
+        return;
+    }
+
+    // Don't hash the password again if it hasn't changed.
     if (!this.isModified("password")) {
         return;
     }
 
-    // Hash the plain-text password
+    // Hash a new or changed plain-text password.
     this.password = await bcrypt.hash(this.password, 10);
-
-
 });
 
 // Check whether the entered password matches the stored hash
@@ -98,7 +100,63 @@ userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
+
+// Temporary storage for users who haven't verified their email.
+const pendingRegistrationSchema = new mongoose.Schema(
+    {
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true
+        },
+
+        // This password is already hashed before being stored here.
+        password: {
+            type: String,
+            required: true
+        },
+
+        phone: {
+            type: String,
+            required: true,
+            trim: true
+        },
+
+        // Store only the hashed OTP.
+        otp: {
+            type: String,
+            required: true
+        },
+
+        otpExpire: {
+            type: Date,
+            required: true
+        }
+    },
+    {
+        timestamps: true
+    }
+);
+
+// Automatically delete pending registrations 24 hours after creation.
+// OTP itself still expires after 10 minutes.
+pendingRegistrationSchema.index(
+    { createdAt: 1 },
+    { expireAfterSeconds: 86400 }
+);
+
+
+// Main collection: verified user accounts.
 const User = mongoose.model("User", userSchema);
 
+// Temporary collection: registrations awaiting OTP verification.
+const PendingRegistration = mongoose.model(
+    "PendingRegistration",
+    pendingRegistrationSchema
+);
 
-export default User
+export { PendingRegistration };
+
+export default User;
