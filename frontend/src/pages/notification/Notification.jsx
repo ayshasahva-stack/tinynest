@@ -10,7 +10,6 @@ import AccountSidebar from "../../components/AccounSidebar";
 import api from "../../services/api";
 import { selectAuthUser } from "../../features/auth/authSelectors";
 
-// // Reusable account navigation icon.
 function AccountIcon({ type }) {
     const common = {
         fill: "none",
@@ -73,9 +72,7 @@ function AccountIcon({ type }) {
     );
 }
 
-// Same customer sidebar used throughout the account pages.
 
-// Main notifications page.
 function Notifications() {
     const user = useSelector(selectAuthUser);
     const isAdmin = user?.role === "admin";
@@ -89,7 +86,6 @@ function Notifications() {
     const [updatingId, setUpdatingId] = useState(null);
     const [isClearing, setIsClearing] = useState(false);
 
-    // Load notifications from the existing backend API.
     useEffect(() => {
         let isMounted = true;
 
@@ -125,7 +121,6 @@ function Notifications() {
         };
     }, []);
 
-    // Keep the notification bell synchronized after reading a notification.
     const notifyBell = (notification) => {
         window.dispatchEvent(
             new CustomEvent("tinynest:notification-updated", {
@@ -134,7 +129,6 @@ function Notifications() {
         );
     };
 
-    // Toggle read/unread using the existing backend endpoint.
     const handleToggleRead = async (notification) => {
         if (updatingId || isClearing) return;
 
@@ -159,7 +153,6 @@ function Notifications() {
                 )
             );
 
-            // Update the bell without requiring a page refresh.
             notifyBell(updatedNotification);
         } catch (err) {
             console.error("Failed to update notification:", err);
@@ -171,7 +164,6 @@ function Notifications() {
         }
     };
 
-    // Delete all notifications using the existing API.
     const handleClearAll = async () => {
         if (notifications.length === 0 || isClearing || updatingId) {
             return;
@@ -184,7 +176,6 @@ function Notifications() {
             await api.delete("/notifications");
             setNotifications([]);
 
-            // Refresh the bell's unread count.
             window.dispatchEvent(
                 new CustomEvent("tinynest:notifications-cleared")
             );
@@ -198,7 +189,6 @@ function Notifications() {
         }
     };
 
-    // Format dates safely.
     const formatDate = (date) => {
         if (!date) return "Date unavailable";
 
@@ -224,7 +214,6 @@ function Notifications() {
     return (
         <main className="min-h-screen bg-[#f7f9ff] px-4 py-7 text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1400px]">
-                {/* Page heading */}
                 <header className="mb-7 rounded-2xl bg-gradient-to-r from-white via-[#f1f4f9] to-[#e5f4ed] p-6 dark:from-gray-900 dark:via-gray-900 dark:to-emerald-950/30 sm:p-8">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#436558] dark:text-emerald-300">
                         Your TinyNest updates
@@ -250,7 +239,6 @@ function Notifications() {
                     </p>
                 </header>
 
-                {/* Customer sidebar is only shown for customer accounts. */}
                 <div
                     className={`grid items-start gap-6 ${
                         isAdmin
@@ -261,7 +249,6 @@ function Notifications() {
                     {!isAdmin && <AccountSidebar user={user} />}
 
                     <section className="min-w-0 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-7 lg:p-8">
-                        {/* Notification section heading and actions */}
                         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#edf0f5] pb-5 dark:border-gray-800">
                             <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#436558] dark:text-emerald-300">
@@ -304,7 +291,6 @@ function Notifications() {
                             </button>
                         </div>
 
-                        {/* API error */}
                         {error && (
                             <div
                                 role="alert"
@@ -314,7 +300,6 @@ function Notifications() {
                             </div>
                         )}
 
-                        {/* Loading state */}
                         {isLoading ? (
                             <div className="flex min-h-64 flex-col items-center justify-center rounded-xl bg-[#f7f9ff] dark:bg-gray-800">
                                 <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#dce7e2] border-t-[#436558]" />
@@ -323,7 +308,6 @@ function Notifications() {
                                 </p>
                             </div>
                         ) : notifications.length === 0 ? (
-                            /* Empty state */
                             <div className="flex min-h-72 flex-col items-center justify-center rounded-xl bg-[#f7f9ff] px-5 py-10 text-center dark:bg-gray-800">
                                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#dce7e2] text-[#436558] dark:bg-emerald-950 dark:text-emerald-300">
                                     <AccountIcon type="notifications" />
@@ -349,7 +333,6 @@ function Notifications() {
                                 )}
                             </div>
                         ) : (
-                            /* Notification cards */
                             <div className="space-y-4">
                                 {notifications.map((notification) => {
                                     const isSelected =
@@ -370,13 +353,11 @@ function Notifications() {
                                                     : "bg-[#f3f8f5] dark:bg-emerald-950/20"
                                             }`}
                                         >
-                                            {/* Unread indicator */}
                                             {!notification.isRead && (
                                                 <span className="absolute bottom-0 left-0 top-0 w-1 bg-[#436558]" />
                                             )}
 
                                             <div className="flex items-start gap-3 sm:gap-4">
-                                                {/* Notification icon */}
                                                 <div
                                                     className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
                                                         notification.isRead

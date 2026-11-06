@@ -29,7 +29,6 @@ import {
     selectProductsLoading,
 } from "../../features/products/productSelectors";
 
-// Initial values for creating a new kit.
 const emptyForm = {
     name: "",
     description: "",
@@ -40,7 +39,6 @@ const emptyForm = {
     items: [],
 };
 
-// Format prices using Indian currency formatting.
 const formatPrice = (amount) =>
     `₹${Number(amount || 0).toLocaleString("en-IN", {
         minimumFractionDigits: 2,
@@ -50,7 +48,6 @@ const formatPrice = (amount) =>
 function AdminKits() {
     const dispatch = useDispatch();
 
-    // Kit data and loading/error states from Redux.
     const kits = useSelector(selectAdminKits);
     const loading = useSelector(selectAdminKitsLoading);
     const error = useSelector(selectAdminKitsError);
@@ -58,11 +55,9 @@ function AdminKits() {
     const saveError = useSelector(selectKitSaveError);
     const saveSuccess = useSelector(selectKitSaveSuccess);
 
-    // Available products for the kit selector.
     const products = useSelector(selectProducts);
     const productsLoading = useSelector(selectProductsLoading);
 
-    // Page and form state.
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [showForm, setShowForm] = useState(false);
@@ -70,8 +65,6 @@ function AdminKits() {
     const [form, setForm] = useState(emptyForm);
     const [formError, setFormError] = useState("");
 
-    // React Hook Form manages validation errors.
-    // The actual form values remain in the existing useState.
     const {
         setError,
         clearErrors,
@@ -80,18 +73,14 @@ function AdminKits() {
         defaultValues: emptyForm,
     });
 
-    // Searchable product dropdown state.
     const [productSearch, setProductSearch] = useState("");
     const [isProductDropdownOpen, setIsProductDropdownOpen] =
         useState(false);
-
-    // Fetch kits and products when this page mounts.
     useEffect(() => {
         dispatch(fetchAllKitsForAdminThunk());
         dispatch(fetchProducts({ page: 1, limit: 100, search: "" }));
     }, [dispatch]);
 
-    // Filter kits by name and status.
     const filteredKits = useMemo(() => {
         const searchText = search.trim().toLowerCase();
 
@@ -109,11 +98,8 @@ function AdminKits() {
         });
     }, [kits, search, statusFilter]);
 
-    // Update ordinary form fields.
     const updateField = (event) => {
         const { name, value, type, checked } = event.target;
-
-        // Clear the previous error for the edited field.
         clearErrors(name);
 
         setForm((previous) => ({
@@ -122,7 +108,6 @@ function AdminKits() {
         }));
     };
 
-    // Reset the form and open create mode.
     const handleAddKit = () => {
         dispatch(clearKitSaveFeedback());
 
@@ -150,7 +135,6 @@ function AdminKits() {
             discount: String(kit.discount ?? 0),
             isActive: Boolean(kit.isActive),
             items: (kit.items || []).map((item) => ({
-                // Support populated products and plain product IDs.
                 product:
                     typeof item.product === "object"
                         ? String(item.product?._id || "")

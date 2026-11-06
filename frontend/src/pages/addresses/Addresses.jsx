@@ -28,7 +28,6 @@ import {
     selectAddressError,
 } from "../../features/addresses/addressSelectors";
 
-// Initial values for a new address.
 const initialForm = {
     fullName: "",
     phone: "",
@@ -40,7 +39,6 @@ const initialForm = {
     isDefault: false,
 };
 
-// Inline SVG icons used by the address page.
 function InlineIcon({ name, className = "h-5 w-5" }) {
     const common = {
         className,
@@ -79,15 +77,12 @@ function InlineIcon({ name, className = "h-5 w-5" }) {
 function Addresses() {
     const dispatch = useDispatch();
 
-    // Read saved addresses and request state from Redux.
     const addresses = useSelector(selectAddresses) ?? [];
     const loading = useSelector(selectAddressLoading);
     const error = useSelector(selectAddressError);
     const user = useSelector((state) => state.auth.user);
 
-    // Read the authenticated user for the shared account sidebar.
 
-    // Local state for the address form and search field.
     const [showForm, setShowForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState(null);
     const [formError, setFormError] = useState("");
@@ -103,12 +98,10 @@ function Addresses() {
         mode: "onChange",
         defaultValues: initialForm,
     });
-    // Fetch the user's saved addresses when the page opens.
     useEffect(() => {
         dispatch(getMyAddressesThunk());
     }, [dispatch]);
 
-    // Filter addresses by the customer's actual saved information.
     const filteredAddresses = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
 
@@ -132,10 +125,8 @@ function Addresses() {
         });
     }, [addresses, searchTerm]);
 
-    // Handle input changes, including the default-address checkbox.
 
 
-    // Open a clean form for adding a new address.
   const handleAddNew = () => {
     setEditingAddress(null);
     reset(initialForm);
@@ -143,11 +134,9 @@ function Addresses() {
     setShowForm(true);
 };
 
-    // Fill the form with the selected address for editing.
     const handleEdit = (address) => {
         setEditingAddress(address);
 
-        // Fill the form with the selected saved address.
         reset({
             fullName: address.fullName || "",
             phone: address.phone || "",
@@ -163,26 +152,21 @@ function Addresses() {
         setShowForm(true);
     };
 
-    // Close the form and reset its local state.
     const handleCancel = () => {
         setShowForm(false);
         setEditingAddress(null);
 
-        // Clear all form values and validation errors.
         reset(initialForm);
 
         setFormError("");
     };
 
 
-    // Create a new address or update the selected address.
     const handleAddressSubmit = async (data) => {
         setFormError("");
 
         try {
-            // Use validated form data for both create and update.
             if (editingAddress) {
-                // Update the existing saved address.
                 await dispatch(
                     updateAddressThunk({
                         addressId: editingAddress._id,
@@ -190,20 +174,16 @@ function Addresses() {
                     })
                 ).unwrap();
             } else {
-                // Create a new saved address.
                 await dispatch(
                     createAddressThunk(data)
                 ).unwrap();
             }
 
-            // Close and reset the form after successful saving.
             handleCancel();
 
-            // Refresh the saved address list.
             await dispatch(getMyAddressesThunk()).unwrap();
 
         } catch (err) {
-            // Display backend errors separately from Yup errors.
             setFormError(
                 typeof err === "string"
                     ? err
@@ -212,7 +192,6 @@ function Addresses() {
         }
     };
 
-    // Delete an address only after customer confirmation.
     const handleDelete = async (addressId) => {
         if (
             !window.confirm(
@@ -235,7 +214,6 @@ function Addresses() {
         }
     };
 
-    // Set the selected address as the default delivery address.
     const handleSetDefault = async (addressId) => {
         try {
             await dispatch(
@@ -252,15 +230,11 @@ function Addresses() {
 
     return (
         <main className="min-h-screen bg-[#f7f9ff] px-4 pb-12 pt-6 font-sans text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8 lg:pt-8">
-            {/* Match the Profile page's fixed-width sidebar layout. */}
             <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 lg:grid-cols-[290px_minmax(0,1fr)]">
 
-                {/* Shared sidebar used by Profile, Orders and Addresses. */}
                 <AccountSidebar user={user} />
 
-                {/* Main saved-address content. */}
                 <section className="min-w-0 space-y-5">
-                    {/* Page heading and Add Address button. */}
                     <header className="flex flex-col justify-between gap-4 rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(24,28,32,0.035)] dark:bg-gray-900 sm:p-6 md:flex-row md:items-center">
                         <div>
                             <span className="mb-2 inline-flex rounded-full bg-[#e5f4ed] px-2.5 py-1 text-[10px] font-semibold text-[#315e4d] dark:bg-emerald-950 dark:text-emerald-200">
@@ -291,10 +265,8 @@ function Addresses() {
                         )}
                     </header>
 
-                    {/* Show errors returned by the address API. */}
                     {error && <ErrorMessage message={error} />}
 
-                    {/* Search the customer's saved addresses. */}
                     {!showForm && addresses.length > 0 && (
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-2">
@@ -331,7 +303,6 @@ function Addresses() {
                         </div>
                     )}
 
-                    {/* Add/edit form uses the existing address fields and thunks. */}
                     {showForm && (
                         <section className="rounded-xl border border-[#edf0f5] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
                             <div className="mb-6">
@@ -564,14 +535,12 @@ function Addresses() {
                         </section>
                     )}
 
-                    {/* Loading state. */}
                     {loading && !showForm && (
                         <div className="rounded-xl bg-white p-8 dark:bg-gray-900">
                             <Loading />
                         </div>
                     )}
 
-                    {/* Empty state when no addresses have been saved. */}
                     {!loading &&
                         addresses.length === 0 &&
                         !showForm && (
@@ -591,7 +560,6 @@ function Addresses() {
                             </section>
                         )}
 
-                    {/* Empty state when the search returns no matches. */}
                     {!loading &&
                         addresses.length > 0 &&
                         filteredAddresses.length === 0 &&
@@ -607,7 +575,6 @@ function Addresses() {
                             </section>
                         )}
 
-                    {/* Saved address cards. */}
                     {!loading &&
                         filteredAddresses.length > 0 &&
                         !showForm && (
@@ -622,7 +589,6 @@ function Addresses() {
                                     />
                                 ))}
 
-                                {/* Add-address card; this is not a saved address. */}
                                 <button
                                     type="button"
                                     onClick={handleAddNew}
@@ -650,7 +616,6 @@ function Addresses() {
                             </div>
                         )}
 
-                    {/* Delivery reassurance panel. */}
                     {!showForm && (
                         <section className="flex flex-col gap-4 rounded-xl bg-gradient-to-r from-[#e5f4ed] via-[#f1f4f9] to-[#f8eeec] p-5 dark:from-emerald-950/50 dark:via-gray-900 dark:to-[#382925] sm:flex-row sm:items-center">
                             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#436558] text-white">

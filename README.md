@@ -128,8 +128,6 @@ tinynest/
 └── README.md
 ```
 
-**Note:** The `.env` files, `node_modules/`, and `frontend/dist/` are local or generated items visible in your VS Code Explorer. They are not included in the main project tree above. Do not commit environment secrets or dependency folders to GitHub.
-
 ## Getting Started
 
 ### Prerequisites
@@ -224,7 +222,7 @@ TinyNest uses a soft sage-green visual identity, clean layouts, and a responsive
 
 **Aysha Sahva K**
 
-MERN Stack Development
+MERN Stack Developer
 
 ---
 

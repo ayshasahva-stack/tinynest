@@ -15,7 +15,6 @@ import {
 } from "../../features/cart/cartSelectors";
 
 import Loading from "../../components/Loading";
-import EmptyState from "../../components/EmptyState";
 import ErrorMessage from "../../components/ErrorMessage";
 import CartItem from "./components/CartItem";
 
@@ -23,17 +22,14 @@ function Cart() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Read cart data and request status from Redux.
     const items = useSelector(selectCartItems);
     const loading = useSelector(selectCartLoading);
     const error = useSelector(selectCartError);
 
-    // Fetch the logged-in customer's cart when the page opens.
     useEffect(() => {
         dispatch(getMyCartThunk());
     }, [dispatch]);
 
-    // Calculate discounted prices consistently for products and kits.
     const getSellingPrice = (item) => {
         const entry =
             item.itemType === "kit" ? item.kit : item.product;
@@ -46,12 +42,10 @@ function Cart() {
         return Math.max(0, price - (price * discount) / 100);
     };
 
-    // Subtotal is the sum of discounted item prices.
     const subtotal = items.reduce((total, item) => {
         return total + getSellingPrice(item) * item.quantity;
     }, 0);
 
-    // Calculate total savings against original prices.
     const totalSavings = items.reduce((total, item) => {
         const entry =
             item.itemType === "kit" ? item.kit : item.product;
@@ -64,13 +58,11 @@ function Cart() {
         return total + (originalPrice - sellingPrice) * item.quantity;
     }, 0);
 
-    // Count individual units rather than distinct cart rows.
     const itemCount = items.reduce(
         (total, item) => total + (Number(item.quantity) || 0),
         0
     );
 
-    // Keep the existing clear-cart Redux action.
     const handleClearCart = () => {
         dispatch(clearCartThunk());
     };
@@ -79,7 +71,6 @@ function Cart() {
         <main className="min-h-screen bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 dark:text-white sm:px-6 lg:px-8 lg:py-12">
             <div className="mx-auto max-w-7xl">
 
-                {/* Breadcrumb and item count */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-7 flex flex-wrap items-center gap-2 text-sm text-[#626c68] dark:text-gray-400"
@@ -105,10 +96,8 @@ function Cart() {
                     )}
                 </nav>
 
-                {/* Loading state */}
                 {loading && <Loading />}
 
-                {/* Error state */}
                 {!loading && error && (
                     <ErrorMessage
                         title="Unable to load cart"
@@ -116,7 +105,6 @@ function Cart() {
                     />
                 )}
 
-                {/* Empty cart */}
                 {!loading && !error && items.length === 0 && (
                     <section className="rounded-3xl bg-white px-5 py-12 text-center shadow-sm dark:bg-gray-900 sm:py-16">
                         <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#dce7e2] text-3xl text-[#436558] dark:bg-gray-800">
@@ -146,7 +134,6 @@ function Cart() {
                     </section>
                 )}
 
-                {/* Shopping bag and order summary */}
                 {!loading && !error && items.length > 0 && (
                     <>
                         <header className="mb-7">
@@ -178,7 +165,6 @@ function Cart() {
 
                         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_350px] lg:gap-8 xl:grid-cols-[minmax(0,1fr)_390px]">
 
-                            {/* Cart item cards */}
                             <section
                                 aria-label="Items in your shopping bag"
                                 className="min-w-0 space-y-4"
@@ -195,7 +181,6 @@ function Cart() {
                                     />
                                 ))}
 
-                                {/* Brand reassurance panel */}
                                 <div className="grid grid-cols-1 gap-4 rounded-2xl bg-[#f1f4f9] p-5 dark:bg-gray-900 sm:grid-cols-3">
                                     <div className="flex items-start gap-3">
                                         <span
@@ -256,7 +241,6 @@ function Cart() {
                                 </div>
                             </section>
 
-                            {/* Order summary */}
                             <aside className="lg:sticky lg:top-6">
                                 <div className="rounded-3xl bg-white p-5 shadow-[0_4px_24px_-8px_rgba(43,47,51,0.12)] dark:bg-gray-900 dark:ring-1 dark:ring-gray-800 sm:p-6">
                                     <div className="flex items-center justify-between border-b border-[#edf0f5] pb-4 dark:border-gray-800">

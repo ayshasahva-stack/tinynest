@@ -32,43 +32,36 @@ function KitDetails() {
     const navigate = useNavigate();
     const { kitId } = useParams();
 
-    // Read the selected kit and request states from Redux.
     const kit = useSelector(selectSelectedKit);
     const loading = useSelector(selectKitLoading);
     const error = useSelector(selectKitError);
     const cartLoading = useSelector(selectCartLoading);
 
-    // Read authentication and saved kits.
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const wishlistKits = useSelector(selectWishlistKits);
 
-    // Local state for the gallery, quantity, and visible errors.
     const [selectedImage, setSelectedImage] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [cartError, setCartError] = useState("");
     const [wishlistError, setWishlistError] = useState("");
 
-    // Fetch the selected kit whenever its route ID changes.
     useEffect(() => {
         if (kitId) {
             dispatch(fetchKitByIdThunk(kitId));
         }
     }, [dispatch, kitId]);
 
-    // Fetch the user's wishlist when authenticated.
     useEffect(() => {
         if (isAuthenticated) {
             dispatch(getMyWishlistThunk());
         }
     }, [dispatch, isAuthenticated]);
 
-    // Reset gallery and quantity when a different kit loads.
     useEffect(() => {
         setSelectedImage(kit?.image || "");
         setQuantity(1);
     }, [kit?._id, kit?.image]);
 
-    // Convert kit prices safely and calculate the discounted price.
     const price = Number(kit?.price) || 0;
     const discount = Math.min(
         100,
@@ -76,23 +69,18 @@ function KitDetails() {
     );
     const finalPrice = price - (price * discount) / 100;
 
-    // Kit items may contain populated product objects.
     const kitItems = Array.isArray(kit?.items) ? kit.items : [];
 
-    // Format prices using Indian number formatting.
     const formatPrice = (amount) =>
         Number(amount).toLocaleString("en-IN", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         });
 
-    // Compare IDs as strings to support populated and unpopulated records.
     const isInWishlist = wishlistKits.some((item) => {
         const savedKitId = item?._id || item?.kit?._id || item?.kit || item;
         return String(savedKitId) === String(kit?._id);
     });
-
-    // Add the selected kit quantity to the cart.
     const handleAddToCart = async () => {
         if (!kit?._id || cartLoading) return;
 
@@ -112,7 +100,6 @@ function KitDetails() {
                 })
             ).unwrap();
 
-            // Navigate only after the cart request succeeds.
             navigate("/cart");
         } catch (requestError) {
             setCartError(
@@ -124,7 +111,6 @@ function KitDetails() {
         }
     };
 
-    // Add or remove this kit from the user's wishlist.
     const handleWishlistToggle = async () => {
         if (!isAuthenticated) {
             setWishlistError("Please log in to use your wishlist.");
@@ -154,7 +140,6 @@ function KitDetails() {
         }
     };
 
-    // Loading state.
     if (loading) {
         return (
             <main className="min-h-screen bg-[#F7F9FF] px-4 py-10 dark:bg-gray-950 sm:px-6">
@@ -165,7 +150,6 @@ function KitDetails() {
         );
     }
 
-    // Error state.
     if (error) {
         return (
             <main className="min-h-screen bg-[#F7F9FF] px-4 py-10 dark:bg-gray-950 sm:px-6">
@@ -179,7 +163,6 @@ function KitDetails() {
         );
     }
 
-    // Missing-kit state.
     if (!kit) {
         return (
             <main className="min-h-screen bg-[#F7F9FF] px-4 py-10 dark:bg-gray-950 sm:px-6">
@@ -202,8 +185,6 @@ function KitDetails() {
     return (
         <main className="min-h-screen bg-[#F7F9FF] px-4 py-7 text-[#181C20] transition-colors dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:py-10">
             <div className="mx-auto max-w-[1240px]">
-
-                {/* Breadcrumb spacing and typography match ProductDetails. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[#414845] dark:text-gray-400"
@@ -231,10 +212,8 @@ function KitDetails() {
                     </span>
                 </nav>
 
-                {/* Main layout: gallery on the left, kit information on the right. */}
                 <section className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12 lg:gap-10">
 
-                    {/* Kit image gallery — same proportions and spacing as products. */}
                     <div className="lg:col-span-6">
                         <div className="relative flex min-h-[350px] items-center justify-center sm:min-h-[500px]">
                             {discount > 0 && (
@@ -260,7 +239,6 @@ function KitDetails() {
                             )}
                         </div>
 
-                        {/* Show a thumbnail only if the kit actually has extra images. */}
                         {Array.isArray(kit.images) && kit.images.length > 1 && (
                             <div className="mt-4 flex flex-wrap gap-3">
                                 {kit.images.map((image, index) => (
@@ -285,7 +263,6 @@ function KitDetails() {
                             </div>
                         )}
 
-                        {/* Same compact information-card styling as ProductDetails. */}
                         <div className="mt-4 grid grid-cols-2 gap-3">
                             <div className="rounded-xl bg-[#F1F4F9] p-4 dark:bg-gray-900">
                                 <p className="font-semibold text-[#436558] dark:text-[#C5EBDA]">
@@ -313,7 +290,6 @@ function KitDetails() {
                         </div>
                     </div>
 
-                    {/* Kit information and purchase actions. */}
                     <div className="flex flex-col py-2 lg:col-span-6 lg:pt-4">
 
                         <div className="mb-5 flex flex-wrap gap-2">
@@ -329,18 +305,15 @@ function KitDetails() {
                             </span>
                         </div>
 
-                        {/* Product title with a smaller, responsive font size */}
                         <h1 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#181C20] dark:text-white sm:text-3xl lg:text-4xl">
                             {kit.name}
                         </h1>
-                        {/* Use the saved kit description. */}
                         {kit.description && (
                             <p className="mt-6 whitespace-pre-line text-[15px] leading-7 text-[#414845] dark:text-gray-300">
                                 {kit.description}
                             </p>
                         )}
 
-                        {/* Same price divider and padding as ProductDetails. */}
                         <div className="mt-7 border-y border-[#E0E3E8] py-6 dark:border-gray-800">
                             <div className="flex flex-wrap items-center gap-3">
                                 <span className="font-serif text-4xl font-normal text-[#436558] dark:text-[#C5EBDA]">
@@ -361,7 +334,6 @@ function KitDetails() {
                             )}
                         </div>
 
-                        {/* Same large pill buttons and spacing as ProductDetails. */}
                         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                             <button
                                 type="button"
@@ -415,7 +387,6 @@ function KitDetails() {
                     </div>
                 </section>
 
-                {/* Kit contents section uses the same spacious product-detail rhythm. */}
                 <section className="mt-12 scroll-mt-6 sm:mt-16">
                     <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-gray-900">
 
@@ -494,7 +465,6 @@ function KitDetails() {
                     </div>
                 </section>
 
-                {/* Keep the existing recommendations section. */}
                 <div className="mt-12 sm:mt-16">
                     <FeaturedProducts />
                 </div>

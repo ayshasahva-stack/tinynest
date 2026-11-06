@@ -22,7 +22,6 @@ import {
 
 import { clearCouponFeedback } from "../../features/coupons/couponSlice";
 
-// Empty form used when creating a new coupon.
 const emptyForm = {
     code: "",
     discountType: "percentage",
@@ -35,13 +34,11 @@ const emptyForm = {
     isActive: true,
 };
 
-// Convert an ISO date into the format required by datetime-local.
 const toDateTimeLocal = (date) => {
     if (!date) return "";
 
     const parsed = new Date(date);
 
-    // Adjust for the browser's local timezone.
     const localDate = new Date(
         parsed.getTime() - parsed.getTimezoneOffset() * 60000
     );
@@ -52,7 +49,6 @@ const toDateTimeLocal = (date) => {
 function AdminCoupons() {
     const dispatch = useDispatch();
 
-    // Read coupon data and request states from Redux.
     const coupons = useSelector(selectCoupons);
     const loading = useSelector(selectCouponsLoading);
     const error = useSelector(selectCouponsError);
@@ -66,8 +62,6 @@ function AdminCoupons() {
     const [formData, setFormData] = useState(emptyForm);
     const [formError, setFormError] = useState("");
 
-    // React Hook Form manages validation errors.
-    // Form values continue to be managed using useState.
     const {
         setError,
         clearErrors,
@@ -76,12 +70,9 @@ function AdminCoupons() {
         defaultValues: emptyForm,
     });
 
-    // Load all coupons when the page opens.
     useEffect(() => {
         dispatch(fetchAdminCouponsThunk());
     }, [dispatch]);
-
-    // Filter coupons by code or discount type.
     const filteredCoupons = useMemo(() => {
         const query = search.trim().toLowerCase();
 
@@ -91,11 +82,9 @@ function AdminCoupons() {
         );
     }, [coupons, search]);
 
-    // Update one form field.
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
 
-        // Clear the previous validation error when editing a field.
         clearErrors(name);
 
         setFormData((previous) => ({
@@ -104,7 +93,6 @@ function AdminCoupons() {
         }));
     };
 
-    // Open a clean form for creating a coupon.
     const handleCreate = () => {
         dispatch(clearCouponFeedback());
 
@@ -115,7 +103,6 @@ function AdminCoupons() {
         setShowForm(true);
     };
 
-    // Populate the form with the selected coupon.
     const handleEdit = (coupon) => {
         dispatch(clearCouponFeedback());
 
@@ -144,7 +131,6 @@ function AdminCoupons() {
         setShowForm(true);
     };
 
-    // Close the form and clear old messages.
     const handleCloseForm = () => {
         setShowForm(false);
         setEditingCoupon(null);
@@ -154,20 +140,16 @@ function AdminCoupons() {
         dispatch(clearCouponFeedback());
     };
 
-    // Validate fields and submit create/update request.
     const handleSubmit = async (event) => {
         event.preventDefault();
 
         setFormError("");
         clearErrors();
-
-        // Validate the complete form using Yup.
         try {
             await couponSchema.validate(formData, {
                 abortEarly: false,
             });
         } catch (validationError) {
-            // Display all validation errors below their fields.
             validationError.inner.forEach((error) => {
                 if (error.path) {
                     setError(error.path, {
@@ -180,7 +162,6 @@ function AdminCoupons() {
             return;
         }
 
-        // Convert form values into the types expected by the API.
         const discountValue = Number(formData.discountValue);
         const minOrderAmount = Number(formData.minOrderAmount);
 
@@ -194,7 +175,6 @@ function AdminCoupons() {
                 ? null
                 : Number(formData.usageLimit);
 
-        // Prepare values with correct types for Mongoose.
         const couponData = {
             code: formData.code.trim().toUpperCase(),
             discountType: formData.discountType,
@@ -220,7 +200,6 @@ function AdminCoupons() {
             result = await dispatch(createCouponThunk(couponData));
         }
 
-        // Close and refresh only when the API operation succeeds.
         const succeeded = editingCoupon
             ? updateCouponThunk.fulfilled.match(result)
             : createCouponThunk.fulfilled.match(result);
@@ -233,8 +212,6 @@ function AdminCoupons() {
             dispatch(fetchAdminCouponsThunk());
         }
     };
-
-    // Activate/deactivate using the existing update endpoint.
     const handleToggleStatus = async (coupon) => {
         if (
             coupon.isActive &&
@@ -265,7 +242,6 @@ function AdminCoupons() {
         }
     };
 
-    // Determine whether a coupon is currently within its date range.
     const getDateStatus = (coupon) => {
         const now = Date.now();
 
@@ -287,11 +263,7 @@ function AdminCoupons() {
         return coupon.isActive ? "Active" : "Inactive";
     };
 
-    // Reusable styling for input fields.
-    const inputClass =
-        "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 " +
-        "text-gray-900 outline-none focus:border-blue-500 " +
-        "dark:border-gray-600 dark:bg-gray-700 dark:text-white";
+   
 
     return (
         <div className="min-h-screen bg-[#f7f9ff] p-4 text-[#263d32] dark:bg-slate-950 dark:text-white sm:p-6 lg:p-8">
@@ -323,7 +295,6 @@ function AdminCoupons() {
                 </button>
             </div>
 
-            {/* API feedback */}
             {error && (
                 <p
                     role="alert"

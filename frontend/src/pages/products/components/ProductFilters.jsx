@@ -4,7 +4,6 @@ import { useSelector } from "react-redux";
 import Input from "../../../components/Input";
 import { selectCategories } from "../../../features/categories/categorySelectors";
 
-// Reusable filters for both desktop sidebar and mobile dropdown.
 function ProductFilters({
     search,
     setSearch,
@@ -22,12 +21,10 @@ function ProductFilters({
 }) {
     const categories = useSelector(selectCategories);
 
-    // Find the selected category to show its actual name.
     const selectedCategory = categories.find(
         (item) => item._id === category
     );
 
-    // Check whether any filter is currently active.
     const hasActiveFilters = Boolean(
         search.trim() ||
         category ||
@@ -37,7 +34,6 @@ function ProductFilters({
         maxPrice !== "" 
     );
 
-    // Clear every filter together.
     const clearFilters = () => {
         setSearch("");
         setCategory("");
@@ -47,7 +43,6 @@ function ProductFilters({
         setMaxPrice("");
     };
 
-    // Shared styles for the new filter inputs.
     const inputClass =
         "mt-2 w-full rounded-lg border border-[#DCE1E6] bg-white px-3 py-2.5 text-sm text-[#181C20] outline-none transition focus:border-[#436558] focus:ring-1 focus:ring-[#436558] dark:border-gray-700 dark:bg-gray-800 dark:text-white";
 
@@ -57,7 +52,6 @@ function ProductFilters({
     return (
         <aside className="space-y-4">
 
-            {/* Active filters panel. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div className="flex items-center justify-between gap-2">
                     <h2 className="text-sm font-semibold text-[#181C20] dark:text-white">
@@ -138,7 +132,6 @@ function ProductFilters({
                 </div>
             </section>
 
-            {/* Search panel. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <h3 className="font-serif text-lg text-[#181C20] dark:text-white">
                     Find your essentials
@@ -155,7 +148,6 @@ function ProductFilters({
                 </div>
             </section>
 
-            {/* Category filter uses real categories from Redux. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <h3 className="font-serif text-lg text-[#181C20] dark:text-white">
                     Category
@@ -192,7 +184,6 @@ function ProductFilters({
                 </div>
             </section>
 
-            {/* Age group filter. Enter a value used by your products. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <label className={labelClass} htmlFor="filter-age-group">
                     Baby age group
@@ -208,7 +199,6 @@ function ProductFilters({
                 />
             </section>
 
-            {/* Brand filter. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <label className={labelClass} htmlFor="filter-brand">
                     Brand
@@ -224,7 +214,6 @@ function ProductFilters({
                 />
             </section>
 
-            {/* Minimum and maximum original product prices. */}
             <section className="rounded-xl border border-[#E0E3E8] bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <h3 className="font-serif text-lg text-[#181C20] dark:text-white">
                     Price range

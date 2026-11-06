@@ -36,7 +36,6 @@ const money = (amount) =>
     maximumFractionDigits: 2,
   })}`;
 
-// Return the best available image and title for either a product or a kit.
 const getCartItemDetails = (item) => {
   if (item.itemType === "kit") {
     return {
@@ -92,7 +91,6 @@ function Checkout() {
     dispatch(getMyAddressesThunk());
   }, [dispatch]);
 
-  // Select the default address when available, otherwise the first saved address.
   useEffect(() => {
     if (!addresses.length) {
       setSelectedAddressId("");
@@ -100,7 +98,6 @@ function Checkout() {
     }
 
     setSelectedAddressId((currentId) => {
-      // Keep the user's selection if it still exists in the refreshed address list.
       if (currentId && addresses.some((address) => address._id === currentId)) {
         return currentId;
       }
@@ -112,18 +109,15 @@ function Checkout() {
     (address) => address._id === selectedAddressId
   );
 
-  // Use backend-calculated unit prices where available for consistent totals.
   const subtotal = cartItems.reduce((total, item) => {
     const details = getCartItemDetails(item);
     if (!details.title || (!item.product && !item.kit && !item.title)) return total;
     return total + details.unitPrice * Number(item.quantity || 0);
   }, 0);
 
-  // Keep this rule aligned with the current backend checkout rule.
   const shippingFee = subtotal >= 1000 ? 0 : 50;
   const totalAmount = subtotal + shippingFee;
 
-  // Coupon preview values are calculated and validated by the backend.
   const displaySubtotal = appliedCoupon ? appliedCoupon.subtotal : subtotal;
   const displayDiscount = appliedCoupon ? appliedCoupon.discount : 0;
   const displayShippingFee = appliedCoupon ? appliedCoupon.shippingFee : shippingFee;
@@ -191,7 +185,6 @@ function Checkout() {
     };
 
     try {
-      // COD still creates an order immediately using the existing flow.
       if (paymentMethod === "cod") {
         const orderResult = await dispatch(
           createOrderThunk(checkoutData)
@@ -210,7 +203,6 @@ function Checkout() {
         return;
       }
 
-      // Online payment does NOT create an Order document at this stage.
       if (!razorpayLoaded || !window.Razorpay) {
         throw new Error("Razorpay Checkout has not loaded. Please refresh and try again.");
       }
@@ -233,8 +225,6 @@ function Checkout() {
         order_id: checkoutSession.razorpayOrderId,
         handler: async (response) => {
           try {
-            // The backend verifies the signature and captured status first.
-            // Only then does it create the real order and clear the cart.
             await dispatch(
               verifyRazorpayCheckoutSessionThunk({
                 razorpay_order_id: response.razorpay_order_id,
@@ -256,7 +246,6 @@ function Checkout() {
         },
         modal: {
           ondismiss: () => {
-            // No order exists yet, so the cart remains untouched.
             setValidationError(
               "Payment was not completed. Your cart is unchanged, and no order was placed."
             );
@@ -267,7 +256,6 @@ function Checkout() {
 
       const razorpay = new window.Razorpay(options);
       razorpay.on("payment.failed", (response) => {
-        // A failed attempt does not create an order or clear the cart.
         setValidationError(
           response.error?.description ||
           "Payment failed. Your cart is unchanged, and no order was placed."
@@ -284,7 +272,6 @@ function Checkout() {
     }
   };
 
-  // Load Razorpay's hosted checkout script once this page mounts.
   useEffect(() => {
     if (window.Razorpay) {
       setRazorpayLoaded(true);
@@ -336,7 +323,6 @@ function Checkout() {
   return (
     <main className="checkout-reference min-h-screen bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-[#171b1e] dark:text-gray-100 sm:px-6 lg:py-12">
       <div className="mx-auto max-w-7xl">
-        {/* Breadcrumb keeps checkout connected to the shopping flow. */}
         <nav className="mb-5 flex items-center gap-2 text-sm text-[#626b67] dark:text-gray-400">
           <Link to="/" className="transition hover:text-[#436558]">Home</Link>
           <span>/</span>
@@ -382,7 +368,6 @@ function Checkout() {
           </div>
         )}
 
-        {/* The three-step strip is a visual guide; all steps remain on this page. */}
         <div className="mb-7 rounded-xl border border-[#e5e8ed] bg-white px-4 py-5 shadow-sm dark:border-gray-800 dark:bg-[#20272b] sm:px-7">
           <div className="grid grid-cols-3 gap-2">
             {[
@@ -406,7 +391,6 @@ function Checkout() {
         </div>
 
         <form onSubmit={handleSubmit} className="grid items-start gap-7 lg:grid-cols-12">
-          {/* Left column: saved address and payment choices. */}
           <div className="space-y-6 lg:col-span-8">
             <section className="rounded-xl border border-[#e5e8ed] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#20272b] sm:p-7">
               <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -604,7 +588,6 @@ function Checkout() {
             </section>
           </div>
 
-          {/* Right column: coupon and live order totals. */}
           <aside className="lg:sticky lg:top-6 lg:col-span-4">
             <div className="rounded-xl border border-[#e5e8ed] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-[#20272b] sm:p-6">
               <div className="flex items-center justify-between">

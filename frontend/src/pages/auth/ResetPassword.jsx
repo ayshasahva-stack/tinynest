@@ -17,7 +17,6 @@ import {
 function ResetPassword() {
     const [validationError, setValidationError] = useState("");
     const [apiError, setApiError] = useState("");
-    // Controls visibility of each password field independently.
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -35,19 +34,15 @@ function ResetPassword() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Read the authentication request state from Redux.
     const loading = useSelector(selectAuthLoading);
     const error = useSelector(selectAuthError);
 
-    // The reset token is created after successful reset OTP verification.
     const resetToken = useSelector((state) => state.auth.resetToken);
 
-    // Validate the form and submit the new password.
     const handleResetPassword = async (data) => {
         setValidationError("");
         setApiError("");
 
-        // A reset token is required to authorize this operation.
         if (!resetToken) {
             setValidationError(
                 "Your password reset session has expired. Please request a new reset OTP."
@@ -56,7 +51,6 @@ function ResetPassword() {
         }
 
         try {
-            // Send the reset token and validated password to the backend.
             await dispatch(
                 resetPasswordThunk({
                     resetToken,
@@ -64,7 +58,6 @@ function ResetPassword() {
                 })
             ).unwrap();
 
-            // Navigate to login after successful password reset.
             navigate("/login", {
                 replace: true,
                 state: {
@@ -73,7 +66,6 @@ function ResetPassword() {
                 },
             });
         } catch (error) {
-            // Display the backend error.
             const message =
                 typeof error === "string"
                     ? error
@@ -84,13 +76,11 @@ function ResetPassword() {
         }
     };
 
-    // Prefer local validation and submission errors.
     const displayedError = validationError || apiError || error;
 
 
     return (
         <main className="relative min-h-[calc(100dvh-80px)] overflow-hidden bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-12">
-            {/* Background decorations shared with the other authentication pages. */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#dce7e2]/70 blur-3xl dark:bg-emerald-950/30"
@@ -101,19 +91,15 @@ function ResetPassword() {
                 className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-[#f0bba5]/20 blur-3xl dark:bg-amber-950/20"
             />
 
-            {/* Main authentication card. */}
             <div className="relative mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#e0e3e8] bg-white shadow-[0_8px_40px_-12px_rgba(43,47,51,0.12)] dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[0.9fr_1.1fr]">
 
-                {/* LEFT PANEL: Same TinyNest branding as Forgot Password. */}
                 <aside className="relative flex flex-col justify-between overflow-hidden bg-[#f1f4f9] p-6 dark:bg-gray-800 sm:p-8 lg:p-10">
-                    {/* Decorative circle. */}
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full border-[24px] border-[#dce7e2]/70 dark:border-white/5"
                     />
 
                     <div className="relative z-10">
-                        {/* TinyNest logo. */}
                         <Link
                             to="/"
                             aria-label="TinyNest home"
@@ -123,13 +109,11 @@ function ResetPassword() {
                             <span className="text-[#7d5543]">.</span>
                         </Link>
 
-                        {/* Brand badge. */}
                         <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#dce7e2] px-3 py-2 text-xs font-semibold text-[#315447] dark:bg-emerald-950 dark:text-emerald-200">
                             <span aria-hidden="true">✿</span>
                             Thoughtfully chosen for little ones
                         </div>
 
-                        {/* Brand image. */}
                         <div className="group relative mt-5 h-52 overflow-hidden rounded-xl shadow-sm sm:h-64 lg:h-60">
                             <img
                                 src="https://images.unsplash.com/photo-1510154221590-ff63e90a136f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
@@ -150,7 +134,6 @@ function ResetPassword() {
                             </div>
                         </div>
 
-                        {/* Reset-password introduction. */}
                         <div className="mt-7">
                             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#436558] dark:text-[#a9cfbe]">
                                 LITTLE THINGS, LOTS OF LOVE
@@ -168,7 +151,6 @@ function ResetPassword() {
                         </div>
                     </div>
 
-                    {/* Bottom reassurance section. */}
                     <div className="relative z-10 mt-8 border-t border-[#c1c8c3]/70 pt-5 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl text-[#436558] shadow-sm dark:bg-gray-700 dark:text-[#a9cfbe]">
@@ -188,11 +170,9 @@ function ResetPassword() {
                     </div>
                 </aside>
 
-                {/* RIGHT PANEL: Reset-password form. */}
                 <section className="flex items-center justify-center bg-white p-6 dark:bg-gray-900 sm:p-8 lg:p-12">
                     <div className="w-full max-w-md">
 
-                        {/* Page heading. */}
                         <div className="mb-7">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#7d5543]">
                                 ACCOUNT RECOVERY
@@ -208,7 +188,6 @@ function ResetPassword() {
                             </p>
                         </div>
 
-                        {/* Preserve the existing validation and server errors. */}
                         {displayedError && (
                             <p
                                 role="alert"
@@ -220,7 +199,6 @@ function ResetPassword() {
                             </p>
                         )}
 
-                        {/* Existing form state and handlers remain unchanged. */}
                         <form
                             onSubmit={handleFormSubmit(handleResetPassword)}
                             className="space-y-5"
@@ -238,7 +216,6 @@ function ResetPassword() {
                                             onChange={(event) => {
                                                 field.onChange(event);
 
-                                                // Clear previous backend errors while editing.
                                                 setApiError("");
                                                 dispatch(clearAuthError());
                                             }}
@@ -248,7 +225,6 @@ function ResetPassword() {
                                             autoComplete="new-password"
                                         />
 
-                                        {/* Show/Hide new password */}
                                         <button
                                             type="button"
                                             onClick={() => setShowNewPassword((prev) => !prev)}
@@ -262,7 +238,6 @@ function ResetPassword() {
                                 )}
                             />
 
-                            {/* Display Yup validation error */}
                             {errors.newPassword && (
                                 <p className="mt-1 text-xs text-red-600" role="alert">
                                     {errors.newPassword.message}
@@ -282,7 +257,6 @@ function ResetPassword() {
                                             onChange={(event) => {
                                                 field.onChange(event);
 
-                                                // Clear previous backend errors while editing.
                                                 setApiError("");
                                                 dispatch(clearAuthError());
                                             }}
@@ -292,7 +266,6 @@ function ResetPassword() {
                                             autoComplete="new-password"
                                         />
 
-                                        {/* Show/Hide confirm password */}
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirmPassword((prev) => !prev)}
@@ -310,19 +283,16 @@ function ResetPassword() {
                                 )}
                             />
 
-                            {/* Display Yup validation error */}
                             {errors.confirmPassword && (
                                 <p className="mt-1 text-xs text-red-600" role="alert">
                                     {errors.confirmPassword.message}
                                 </p>
                             )}
-                            {/* Password guidance uses the shared muted text color. */}
                             <p className="text-xs leading-5 text-[#707771] dark:text-[#B5BDB7]">
                                 Use at least 8 characters. Avoid using a password
                                 you already use elsewhere.
                             </p>
 
-                            {/* Existing button, loading state, and submit behavior. */}
                             <div className="pt-1">
                                 <Button
                                     type="submit"
@@ -337,7 +307,6 @@ function ResetPassword() {
                             </div>
                         </form>
 
-                        {/* Return-to-login link. */}
                         <div className="mt-6 border-t border-[#e0e3e8] pt-5 text-center dark:border-gray-700">
                             <p className="text-sm text-[#707771] dark:text-[#B5BDB7]">
                                 Remember your password?{" "}
@@ -361,7 +330,6 @@ function ResetPassword() {
     );
 
 }
-// Eye icon for showing the password.
 function EyeIcon() {
     return (
         <svg
@@ -381,7 +349,6 @@ function EyeIcon() {
     );
 }
 
-// Eye-off icon for hiding the password.
 function EyeOffIcon() {
     return (
         <svg

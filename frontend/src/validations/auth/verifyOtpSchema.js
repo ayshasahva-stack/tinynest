@@ -1,7 +1,6 @@
 
 import * as yup from "yup";
 
-// Validation rules for registration OTP verification.
 export const verifyOtpSchema = yup.object({
     otp: yup
         .string()

@@ -4,13 +4,11 @@ import { useState } from "react";
 import AdminSidebar from "../components/AdminSidebar";
 
 function AdminLayout() {
-    // Controls the sidebar drawer on mobile screens.
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
         <div className="min-h-screen overflow-x-hidden bg-[#f7f9ff] text-[#181c20] dark:bg-gray-950 dark:text-gray-100">
 
-            {/* Mobile header: visible only below the desktop breakpoint */}
             <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#e0e7e3] bg-[#f1f4f9] px-4 dark:border-gray-800 dark:bg-gray-950 lg:hidden">
                 <button
                     type="button"
@@ -19,7 +17,6 @@ function AdminLayout() {
                     aria-expanded={isSidebarOpen}
                     className="rounded-lg p-2 hover:bg-white dark:hover:bg-gray-800"
                 >
-                    {/* Hamburger icon */}
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="24"
@@ -42,7 +39,6 @@ function AdminLayout() {
                 </span>
             </header>
 
-            {/* Dark overlay behind the sidebar on mobile */}
             {isSidebarOpen && (
                 <button
                     type="button"
@@ -52,13 +48,8 @@ function AdminLayout() {
                 />
             )}
 
-            {/* Sidebar: drawer on mobile, fixed navigation on desktop */}
-            <AdminSidebar
-                isOpen={isSidebarOpen}
-                onClose={() => setIsSidebarOpen(false)}
-            />
+            <AdminSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)}   />
 
-            {/* Main content: reserve sidebar space only on desktop */}
             <main className="min-h-[calc(100vh-4rem)] min-w-0 w-full lg:ml-64 lg:w-[calc(100%-16rem)]">
                 <Outlet />
             </main>

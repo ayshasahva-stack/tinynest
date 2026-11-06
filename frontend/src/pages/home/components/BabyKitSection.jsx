@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 
-// Fetch real TinyNest kits from the backend through Redux.
 import { fetchKitsThunk } from "../../../features/kits/kitThunk";
 
 import {
@@ -12,7 +11,6 @@ import {
     selectKitError,
 } from "../../../features/kits/kitSelectors";
 
-// Reuse existing feedback components.
 import Loading from "../../../components/Loading";
 import EmptyState from "../../../components/EmptyState";
 import ErrorMessage from "../../../components/ErrorMessage";
@@ -20,12 +18,10 @@ import ErrorMessage from "../../../components/ErrorMessage";
 function BabyKitSection() {
     const dispatch = useDispatch();
 
-    // Read the available kits and request status from Redux.
     const kits = useSelector(selectKits);
     const loading = useSelector(selectKitLoading);
     const error = useSelector(selectKitError);
 
-    // Fetch kits when this homepage section mounts.
     useEffect(() => {
         dispatch(fetchKitsThunk());
     }, [dispatch]);
@@ -37,7 +33,6 @@ function BabyKitSection() {
         >
             <div className="mx-auto max-w-7xl">
 
-                {/* Section heading based on the Stitch reference. */}
                 <header className="mx-auto mb-10 max-w-2xl text-center">
                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#668875] dark:text-[#B5D0AC]">
                         Mindfully Packaged
@@ -61,7 +56,6 @@ function BabyKitSection() {
                     </Link>
                 </header>
 
-                {/* Preserve the existing loading, error, and empty states. */}
                 {loading ? (
                     <Loading />
                 ) : error ? (
@@ -76,17 +70,14 @@ function BabyKitSection() {
                     />
                 ) : (
                     <>
-                        {/* Display up to three real kits like the reference. */}
                         <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
 
                             {kits.slice(0, 3).map((kit) => {
-                                // Calculate the actual discounted price.
                                 const price = Number(kit.price || 0);
                                 const discount = Number(kit.discount || 0);
                                 const finalPrice =
                                     price - (price * discount) / 100;
 
-                                // Get real included-product names when available.
                                 const includedItems = (kit.items || [])
                                     .slice(0, 4)
                                     .map((item) => {
@@ -106,7 +97,6 @@ function BabyKitSection() {
                                         key={kit._id}
                                         className="flex h-full flex-col rounded-3xl bg-white p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:bg-gray-900 sm:p-4"
                                     >
-                                        {/* Wide kit image with a discount badge. */}
                                         <Link
                                             to={`/kits/${kit._id}`}
                                             aria-label={`View ${kit.name}`}
@@ -134,7 +124,6 @@ function BabyKitSection() {
                                             </div>
                                         </Link>
 
-                                        {/* Kit name, description, and included items. */}
                                         <div className="flex flex-1 flex-col px-1 pt-4">
                                             <Link to={`/kits/${kit._id}`}>
                                                 <h3 className="font-serif text-xl text-[#292D29] transition-colors hover:text-[#52745C] dark:text-white dark:hover:text-[#B5D0AC]">
@@ -148,7 +137,6 @@ function BabyKitSection() {
                                                 </p>
                                             )}
 
-                                            {/* Only show actual item names returned by the API. */}
                                             {includedItems.length > 0 ? (
                                                 <ul className="my-5 space-y-3">
                                                     {includedItems.map(
@@ -178,7 +166,6 @@ function BabyKitSection() {
                                                 </p>
                                             )}
 
-                                            {/* Keep pricing and the action at the bottom. */}
                                             <div className="mt-auto border-t border-[#ECEDE6] pt-4 dark:border-gray-800">
                                                 <div className="mb-4 flex flex-wrap items-baseline gap-2">
                                                     <span className="font-serif text-xl font-semibold text-[#292D29] dark:text-white">

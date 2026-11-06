@@ -1,22 +1,16 @@
 
 import { useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
-// Reuse the existing TinyNest product data from Redux.
 import { selectProducts } from "../../../features/products/productSelectors";
 
-// Reuse the product card with working cart and wishlist actions.
 import ProductCard from "../../products/components/ProductCard";
 
 function NewArrivalsSection() {
-    // Reference to the horizontal scrolling product list.
     const scrollTrackRef = useRef(null);
 
-    // Read products already fetched by the Home page.
     const products = useSelector(selectProducts);
 
-    // Sort newest-first when creation dates are available.
     const newArrivals = useMemo(() => {
         return [...products]
             .sort((a, b) => {
@@ -33,7 +27,6 @@ function NewArrivalsSection() {
             .slice(0, 8);
     }, [products]);
 
-    // Scroll the product row using the reference's arrow buttons.
     const scrollProducts = (direction) => {
         if (scrollTrackRef.current) {
             scrollTrackRef.current.scrollBy({
@@ -47,7 +40,6 @@ function NewArrivalsSection() {
         <section className="w-full bg-[#F7F9FF] px-5 py-14 transition-colors duration-300 dark:bg-gray-950 sm:px-8 sm:py-16 lg:px-10 lg:py-20">
             <div className="mx-auto max-w-7xl">
 
-                {/* Section title and horizontal navigation controls. */}
                 <div className="mb-7 flex items-end justify-between gap-4">
                     <div>
                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#668875] dark:text-[#B5D0AC]">
@@ -86,7 +78,6 @@ function NewArrivalsSection() {
                     </div>
                 ) : (
                     <>
-                        {/* Horizontal product carousel, as in the reference. */}
                         <div
                             ref={scrollTrackRef}
                             className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-4"

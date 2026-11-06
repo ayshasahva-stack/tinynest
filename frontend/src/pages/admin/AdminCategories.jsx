@@ -21,7 +21,6 @@ import {
 
 import { categorySchema } from "../../validations/admin/categorySchema";
 
-// Default values used when adding or resetting a category.
 const initialForm = {
     name: "",
     description: "",
@@ -32,18 +31,15 @@ const initialForm = {
 function AdminCategories() {
     const dispatch = useDispatch();
 
-    // Read category data and request states from Redux.
     const categories = useSelector(selectAdminCategories);
     const loading = useSelector(selectAdminCategoriesLoading);
     const error = useSelector(selectAdminCategoriesError);
     const saving = useSelector(selectCategorySaving);
     const saveError = useSelector(selectCategorySaveError);
 
-    // Local state for editing and success messages.
     const [editingId, setEditingId] = useState(null);
     const [successMessage, setSuccessMessage] = useState("");
 
-    // React Hook Form handles form values and Yup validation.
     const {
         register,
         handleSubmit,
@@ -54,23 +50,19 @@ function AdminCategories() {
         defaultValues: initialForm,
     });
 
-    // Fetch categories when this page first opens.
     useEffect(() => {
         dispatch(fetchAdminCategories());
     }, [dispatch]);
 
-    // Reset the form and leave edit mode.
     const resetForm = () => {
         reset(initialForm);
         setEditingId(null);
         setSuccessMessage("");
     };
 
-    // Populate the form with the selected category.
     const handleEdit = (category) => {
         setEditingId(category._id);
 
-        // Reset fills the form with the selected category values.
         reset({
             name: category.name || "",
             description: category.description || "",
@@ -79,17 +71,11 @@ function AdminCategories() {
         });
 
         setSuccessMessage("");
-
-        // Scroll to the form when editing.
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    // Create a category or update an existing category.
-    // This function runs only after Yup validation succeeds.
     const onSubmit = async (values) => {
         setSuccessMessage("");
-
-        // Prepare clean category data for the existing API.
         const categoryData = {
             name: values.name.trim(),
             description: values.description?.trim() || "",
@@ -99,7 +85,6 @@ function AdminCategories() {
 
         try {
             if (editingId) {
-                // Update the selected category.
                 await dispatch(
                     updateCategory({
                         id: editingId,
@@ -109,7 +94,6 @@ function AdminCategories() {
 
                 setSuccessMessage("Category updated successfully.");
             } else {
-                // Create a new category.
                 await dispatch(
                     createCategory(categoryData)
                 ).unwrap();
@@ -117,14 +101,11 @@ function AdminCategories() {
                 setSuccessMessage("Category created successfully.");
             }
 
-            // Clear the form after successful submission.
             resetForm();
         } catch {
-            // Redux stores the API error for display below.
         }
     };
 
-    // Deactivate an active category without permanently deleting it.
     const handleDeactivate = async (category) => {
         const confirmed = window.confirm(
             `Deactivate "${category.name}"?`
@@ -141,11 +122,9 @@ function AdminCategories() {
 
             setSuccessMessage("Category deactivated successfully.");
         } catch {
-            // Redux stores the API error.
         }
     };
 
-    // Reactivate an inactive category using the update endpoint.
     const handleReactivate = async (category) => {
         setSuccessMessage("");
 
@@ -159,14 +138,12 @@ function AdminCategories() {
 
             setSuccessMessage("Category reactivated successfully.");
         } catch {
-            // Redux stores the API error.
         }
     };
 
     return (
         <div className="min-h-screen bg-[#f7f9ff] p-6 md:p-8 dark:bg-slate-950">
 
-            {/* Page heading */}
             <div className="mb-8">
                 <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
                     Category Management
@@ -177,7 +154,6 @@ function AdminCategories() {
                 </p>
             </div>
 
-            {/* Create/edit category form */}
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 noValidate

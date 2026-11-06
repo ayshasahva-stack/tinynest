@@ -25,38 +25,33 @@ import { selectCategories } from "../../features/categories/categorySelectors";
 function Product() {
     const [searchParams] = useSearchParams();
 
-// Read the category ID selected from the home page.
-const requestedCategory = searchParams.get("category") || "";
+    const requestedCategory = searchParams.get("category") || "";
 
-// Initialize the category filter using the URL value.
-const [category, setCategory] = useState(requestedCategory);
-    // Search text, selected category, current page, and mobile filters.
+    const [category, setCategory] = useState(requestedCategory);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
     const [page, setPage] = useState(1);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
-    // Additional product filter values.
     const [ageGroup, setAgeGroup] = useState("");
 
     const [brand, setBrand] = useState("");
     const [minPrice, setMinPrice] = useState("");
     const [maxPrice, setMaxPrice] = useState("");
+    
     const dispatch = useDispatch();
 
-    // Existing product and category data from Redux.
     const products = useSelector(selectProducts);
     const categories = useSelector(selectCategories);
     const pagination = useSelector(selectProductsPagination);
     const loading = useSelector(selectProductsLoading);
     const error = useSelector(selectProductsError);
 
-    // Update the category when the URL changes.
-useEffect(() => {
-    setCategory(requestedCategory);
-    setPage(1);
-}, [requestedCategory]);
-    // Debounce search so we don't request products on every keystroke.
+    useEffect(() => {
+        setCategory(requestedCategory);
+        setPage(1);
+    }, [requestedCategory]);
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(search);
@@ -65,38 +60,32 @@ useEffect(() => {
         return () => clearTimeout(timer);
     }, [search]);
 
-    // Fetch products when a search, category, or page changes.
-    // Fetch products whenever an applied filter or page changes.
-
- // Fetch 12 products per page while preserving existing filters.
-useEffect(() => {
-    dispatch(
-        fetchProducts({
-            search: debouncedSearch,
-            category,
-            ageGroup: ageGroup.trim(),
-            brand: brand.trim(),
-            minPrice,
-            maxPrice,
-            page,
-            limit: 12, // Show 12 products on each page.
-        })
-    );
-}, [
-    dispatch,
-    debouncedSearch,
-    category,
-    ageGroup,
-    brand,
-    minPrice,
-    maxPrice,
-    page,
-]);
-    // Reset pagination when the applied filters change.
-    // Start at page 1 whenever the applied filters change.
 
     useEffect(() => {
-        // Return to page 1 when an applied filter changes.
+        dispatch(
+            fetchProducts({
+                search: debouncedSearch,
+                category,
+                ageGroup: ageGroup.trim(),
+                brand: brand.trim(),
+                minPrice,
+                maxPrice,
+                page,
+                limit: 12,
+            })
+        );
+    }, [
+        dispatch,
+        debouncedSearch,
+        category,
+        ageGroup,
+        brand,
+        minPrice,
+        maxPrice,
+        page,
+    ]);
+
+    useEffect(() => {
         setPage(1);
     }, [
         debouncedSearch,
@@ -107,7 +96,6 @@ useEffect(() => {
         maxPrice,
     ]);
 
-    // Load real categories for the chips and sidebar.
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
@@ -115,7 +103,6 @@ useEffect(() => {
     const currentPage = pagination.currentPage || page;
     const totalPages = pagination.totalPages || 1;
 
-    // Keep the page title accurate when a category is selected.
     const selectedCategory = categories.find(
         (item) => item._id === category
     );
@@ -125,7 +112,6 @@ useEffect(() => {
 
             <div className="mx-auto max-w-[1440px] px-4 pt-6 sm:px-6 lg:px-8">
 
-                {/* Breadcrumbs use existing app routes. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-5 flex flex-wrap items-center gap-2 text-xs text-[#68716D] dark:text-gray-400"
@@ -139,9 +125,7 @@ useEffect(() => {
                     </span>
                 </nav>
 
-                {/* Catalog hero inspired by the Stitch reference. */}
                 <section className="relative isolate mb-7 overflow-hidden rounded-2xl bg-[#F1F4F9] px-5 py-7 sm:px-8 sm:py-9 dark:bg-gray-900">
-                    {/* Soft decorative shapes stay behind the text. */}
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -right-12 -top-16 -z-10 h-56 w-56 rounded-full bg-[#C5EBDA]/50 blur-3xl dark:bg-[#436558]/20"
@@ -165,7 +149,6 @@ useEffect(() => {
                         one's everyday comfort, care, play, and rest.
                     </p>
 
-                    {/* Category chips use categories loaded from Redux. */}
                     <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
                         <button
                             type="button"
@@ -196,10 +179,8 @@ useEffect(() => {
                     </div>
                 </section>
 
-                {/* Catalog body: filters beside the product grid. */}
                 <div className="flex items-start gap-6 lg:gap-7">
 
-                    {/* Desktop filter sidebar. */}
                     <aside className="sticky top-28 hidden max-h-[calc(100vh-8rem)] w-64 shrink-0 space-y-4 overflow-y-auto pr-1 lg:block">
                         <ProductFilters
                             search={search}
@@ -217,10 +198,8 @@ useEffect(() => {
                         />
                     </aside>
 
-                    {/* Product results and toolbar. */}
                     <section className="min-w-0 flex-1">
 
-                        {/* Results toolbar. */}
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E0E3E8] bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
                             <div>
                                 <p className="text-sm font-medium text-[#414845] dark:text-gray-200">
@@ -236,7 +215,6 @@ useEffect(() => {
                                 )}
                             </div>
 
-                            {/* Filters are collapsible on smaller screens. */}
                             <button
                                 type="button"
                                 onClick={() =>
@@ -251,7 +229,6 @@ useEffect(() => {
                             </button>
                         </div>
 
-                        {/* Mobile filters appear only when requested. */}
                         {showMobileFilters && (
                             <div
                                 id="mobile-product-filters"
@@ -274,7 +251,6 @@ useEffect(() => {
                             </div>
                         )}
 
-                        {/* Loading, error, and empty states remain intact. */}
                         {loading && <Loading />}
 
                         {!loading && error && (
@@ -291,12 +267,10 @@ useEffect(() => {
                             />
                         )}
 
-                        {/* Reuse your existing real-data product cards. */}
                         {!loading && !error && products.length > 0 && (
                             <ProductGrid products={products} />
                         )}
 
-                        {/* Existing backend pagination. */}
                         {!loading && !error && totalPages > 1 && (
                             <nav
                                 aria-label="Product pagination"

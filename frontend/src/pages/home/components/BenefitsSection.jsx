@@ -31,7 +31,6 @@ function BenefitsSection() {
                         key={benefit.title}
                         className="flex flex-col items-center text-center"
                     >
-                        {/* Soft sage icon container matching the reference palette. */}
                         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E1E9DC] text-xl text-[#405B43] dark:bg-[#344638] dark:text-[#E2EBDD]">
                             <span aria-hidden="true">{benefit.icon}</span>
                         </div>

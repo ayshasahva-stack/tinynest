@@ -15,7 +15,6 @@ import Loading from "../../components/Loading";
 import EmptyState from "../../components/EmptyState";
 import ErrorMessage from "../../components/ErrorMessage";
 
-// Statuses included in the "In Progress" filter.
 const IN_PROGRESS_STATUSES = [
     "pending",
     "confirmed",
@@ -23,7 +22,6 @@ const IN_PROGRESS_STATUSES = [
     "shipped",
 ];
 
-// Tailwind classes for each order status.
 const statusStyles = {
     pending: "bg-[#f1f4f9] text-[#414845]",
     confirmed: "bg-[#e5f4ed] text-[#315e4d]",
@@ -33,7 +31,6 @@ const statusStyles = {
     cancelled: "bg-[#ffebe7] text-[#8b4d40]",
 };
 
-// Format amounts using Indian currency formatting.
 function formatCurrency(value) {
     return `₹${Number(value ?? 0).toLocaleString("en-IN", {
         minimumFractionDigits: 0,
@@ -41,7 +38,6 @@ function formatCurrency(value) {
     })}`;
 }
 
-// Format order dates for display.
 function formatDate(value) {
     if (!value) return "Date unavailable";
 
@@ -58,12 +54,10 @@ function formatDate(value) {
     });
 }
 
-// Use the order number when available, otherwise fall back to the ID.
 function orderNumber(order) {
     return order.orderNumber || order.orderId || order._id || "—";
 }
 
-// Small inline SVG icons used in the order cards.
 function InlineIcon({ name, className = "h-5 w-5" }) {
     const common = {
         className,
@@ -102,7 +96,6 @@ function InlineIcon({ name, className = "h-5 w-5" }) {
     return <svg {...common}>{paths[name]}</svg>;
 }
 
-// Friendly message based on the order's current status.
 function getStatusMessage(status) {
     switch (status) {
         case "shipped":
@@ -150,23 +143,19 @@ function Orders() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Read orders and request state from Redux.
     const orders = useSelector(selectOrders) ?? [];
     const loading = useSelector(selectOrdersLoading);
     const error = useSelector(selectOrdersError);
     const user = useSelector(selectAuthUser);
 
-    // Local state for the order filters and search input.
     const [activeFilter, setActiveFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [period, setPeriod] = useState("all");
 
-    // Fetch the current user's orders when this page mounts.
     useEffect(() => {
         dispatch(getMyOrdersThunk());
     }, [dispatch]);
 
-    // Calculate the order totals shown in the page header and filter tabs.
     const counts = useMemo(
         () => ({
             all: orders.length,
@@ -190,7 +179,6 @@ function Orders() {
         [orders]
     );
 
-    // Apply the status, search, and date filters together.
     const filteredOrders = useMemo(() => {
         const query = searchTerm.trim().toLowerCase();
         const now = new Date();
@@ -200,14 +188,12 @@ function Orders() {
                 order.status ?? "pending"
             ).toLowerCase();
 
-            // Check the selected status tab.
             const matchesFilter =
                 activeFilter === "all" ||
                 (activeFilter === "progress" &&
                     IN_PROGRESS_STATUSES.includes(status)) ||
                 status === activeFilter;
 
-            // Search by order number, ID, status, or item title.
             const itemText = (order.items ?? [])
                 .map((item) => item.title ?? "")
                 .join(" ");
@@ -215,8 +201,6 @@ function Orders() {
             const searchable =
                 `${orderNumber(order)} ${order._id ?? ""} ${status} ${itemText}`
                     .toLowerCase();
-
-            // Check the selected date range.
             const orderDate = order.createdAt
                 ? new Date(order.createdAt)
                 : null;
@@ -246,7 +230,6 @@ function Orders() {
         });
     }, [orders, activeFilter, searchTerm, period]);
 
-    // Filter tabs display their corresponding order counts.
     const filterTabs = [
         { id: "all", label: "All Orders", count: counts.all },
         {
@@ -267,7 +250,6 @@ function Orders() {
         },
     ];
 
-    // Loading state while the order request is being processed.
     if (loading) {
         return (
             <main className="min-h-[60vh] bg-[#f7f9ff] px-4 py-10 text-[#181c20] dark:bg-gray-950 dark:text-gray-100">
@@ -282,16 +264,12 @@ function Orders() {
         <main className="min-h-screen bg-[#f7f9ff] px-4 pb-12 pt-6 font-sans text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8 lg:pt-8">
             <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-8 lg:grid-cols-[290px_minmax(0,1fr)]">
 
-                {/* Shared customer sidebar used on Profile and Addresses too. */}
                 <AccountSidebar
                     user={user}
                     
                 />
-
-                {/* Main orders content. */}
               <section className="min-w-0 space-y-5">
 
-                    {/* Orders heading and summary counts. */}
                     <header className="flex flex-col justify-between gap-4 rounded-xl bg-white p-5 shadow-[0_1px_3px_rgba(24,28,32,0.035)] dark:bg-gray-900 sm:p-6 md:flex-row md:items-end">
                         <div>
                             <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#e5f4ed] px-2.5 py-1 text-[10px] font-semibold text-[#315e4d] dark:bg-emerald-950 dark:text-emerald-200">
@@ -330,10 +308,8 @@ function Orders() {
                         </div>
                     </header>
 
-                    {/* Display request errors without hiding the sidebar. */}
                     {error && <ErrorMessage message={error} />}
 
-                    {/* Filters appear when the user has orders. */}
                     {!error && orders.length > 0 && (
                         <div className="space-y-3">
                             <div
@@ -375,7 +351,6 @@ function Orders() {
                                 })}
                             </div>
 
-                            {/* Search field and date-range selector. */}
                             <div className="flex flex-col gap-2 sm:flex-row">
                                 <label className="relative flex min-w-0 flex-1 items-center">
                                     <InlineIcon
@@ -412,7 +387,6 @@ function Orders() {
                         </div>
                     )}
 
-                    {/* Empty state when the user has not ordered anything. */}
                     {!error && orders.length === 0 && (
                         <div className="rounded-xl bg-white px-5 py-12 text-center shadow-sm dark:bg-gray-900">
                             <EmptyState
@@ -430,7 +404,6 @@ function Orders() {
                         </div>
                     )}
 
-                    {/* Empty state when filters return no matches. */}
                     {!error &&
                         orders.length > 0 &&
                         filteredOrders.length === 0 && (
@@ -457,7 +430,6 @@ function Orders() {
                             </div>
                         )}
 
-                    {/* Render the filtered order cards. */}
                     {!error && filteredOrders.length > 0 && (
                         <div className="space-y-5">
                             {filteredOrders.map((order) => {
@@ -487,7 +459,6 @@ function Orders() {
                                         key={order._id}
                                         className="overflow-hidden rounded-xl bg-white shadow-[0_2px_5px_rgba(24,28,32,0.08)] transition-shadow hover:shadow-md dark:bg-gray-900"
                                     >
-                                        {/* Order number, date, amount, and status. */}
                                         <div className="flex flex-wrap items-center justify-between gap-4 bg-[#f1f4f9] px-5 py-4 sm:px-6">
                                             <div className="flex flex-wrap gap-x-7 gap-y-3">
                                                 <div>
@@ -546,7 +517,6 @@ function Orders() {
                                         </div>
 
                                         <div className="space-y-5 p-5 sm:p-6">
-                                            {/* Status message and progress indicator. */}
                                             <div className="flex flex-col justify-between gap-3 rounded-lg bg-[#e5f4ed]/55 p-4 sm:flex-row sm:items-center sm:p-5 dark:bg-emerald-950/30">
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#436558] text-white">
@@ -623,7 +593,6 @@ function Orders() {
                                                 )}
                                             </div>
 
-                                            {/* Products and kits included in this order. */}
                                             <div className="divide-y divide-[#edf0f5] dark:divide-gray-800">
                                                 {items.map((item, index) => (
                                                     <div
@@ -701,7 +670,6 @@ function Orders() {
                                                 ))}
                                             </div>
 
-                                            {/* Shipping destination saved with the order. */}
                                             <div className="flex items-start gap-2 border-t border-[#edf0f5] pt-4 text-xs leading-5 text-[#414845] dark:border-gray-800 dark:text-gray-300">
                                                 <InlineIcon
                                                     name="pin"
@@ -716,7 +684,6 @@ function Orders() {
                                                 </div>
                                             </div>
 
-                                            {/* Navigate to the existing order details route. */}
                                             <div className="flex flex-col gap-3 border-t border-[#edf0f5] pt-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
                                                 <p className="text-xs text-[#626c68] dark:text-gray-400">
                                                     {items.length}{" "}

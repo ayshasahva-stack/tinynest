@@ -15,7 +15,7 @@ import {
     Sun,
     ChevronDown,
     ChevronUp,
-    ShoppingCart 
+    ShoppingCart
 } from "lucide-react";
 import { useTheme } from "../app/ThemeContext";
 
@@ -35,7 +35,6 @@ import { getMyCartThunk } from "../features/cart/cartThunk";
 import NotificationBell from "./NotificationBell";
 
 function Navbar() {
-    // Control the mobile menu and desktop account dropdown.
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
@@ -45,13 +44,11 @@ function Navbar() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Read existing authentication and shopping information from Redux.
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectAuthUser);
     const cartItemCount = useSelector(selectCartItemCount);
     const wishlistCount = useSelector(selectWishlistCount);
 
-    // Load the customer's cart and wishlist after authentication.
     useEffect(() => {
         if (isAuthenticated) {
             dispatch(getMyWishlistThunk());
@@ -59,13 +56,11 @@ function Navbar() {
         }
     }, [dispatch, isAuthenticated]);
 
-    // Close both menus when the user changes pages.
     useEffect(() => {
         setIsMenuOpen(false);
         setIsAccountMenuOpen(false);
     }, [location.pathname]);
 
-    // Keep the existing logout functionality.
     const handleLogout = () => {
         dispatch(logout());
         setIsMenuOpen(false);
@@ -74,31 +69,26 @@ function Navbar() {
         navigate("/login");
     };
 
-    // Desktop navigation link styling.
     const linkClass = ({ isActive }) =>
         `rounded-full px-4 py-2.5 text-sm font-medium transition-colors duration-200 ${isActive
             ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
             : "text-[#414845] hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
         }`;
 
-    // Mobile links occupy the full width to prevent horizontal wrapping.
     const mobileLinkClass = ({ isActive }) =>
         `block w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors ${isActive
             ? "bg-[#DCE8E1] text-[#2B4D41] dark:bg-[#344638] dark:text-[#E2EBDD]"
             : "text-[#414845] hover:bg-[#EBEEF3] dark:text-gray-300 dark:hover:bg-gray-800"
         }`;
 
-    // Shared styling for account menu links.
     const accountLinkClass =
         "flex w-full items-center gap-3 px-5 py-3 text-sm text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white";
 
-    // Display a friendly account name.
     const accountName =
         user?.fullName ||
         user?.email?.split("@")[0] ||
         "My Account";
 
-    // Reuse the theme toggle in the desktop and mobile account menus.
     const renderThemeToggle = () => (
         <button
             type="button"
@@ -177,10 +167,10 @@ function Navbar() {
                 className="relative mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10"
                 aria-label="Main navigation"
             >
-                {/* Main navbar row. */}
+
                 <div className="flex min-h-[76px] items-center justify-between gap-3 sm:gap-5">
 
-                    {/* Brand logo. */}
+
                     <Link
                         to="/"
                         aria-label="TinyNest home"
@@ -198,7 +188,7 @@ function Navbar() {
                         </span>
                     </Link>
 
-                    {/* Desktop shopping links. */}
+
                     <div className="hidden items-center gap-1 lg:flex">
                         <NavLink to="/" end className={linkClass}>
                             Home
@@ -216,23 +206,21 @@ function Navbar() {
 
                     </div>
 
-                    {/* Desktop account actions. */}
                     <div className="hidden items-center gap-2 md:flex ">
-                            
-{/* Cart icon beside the profile dropdown. */}
-<NavLink
-    to="/cart"
-    aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
-    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
->
-    <ShoppingCart size={21} strokeWidth={1.7} />
 
-    {cartItemCount > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
-            {cartItemCount}
-        </span>
-    )}
-</NavLink>
+                        <NavLink
+                            to="/cart"
+                            aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
+                            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
+                        >
+                            <ShoppingCart size={21} strokeWidth={1.7} />
+
+                            {cartItemCount > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
+                                    {cartItemCount}
+                                </span>
+                            )}
+                        </NavLink>
 
                         {isAuthenticated ? (
                             <div className="relative">
@@ -257,7 +245,6 @@ function Navbar() {
                                     </span>
                                 </button>
 
-                                {/* Desktop account dropdown. */}
                                 <div
                                     className={`absolute right-0 top-full z-50 mt-3 w-72 overflow-hidden rounded-2xl border border-[#E0E4E8] bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-gray-900 ${isAccountMenuOpen ? "block" : "hidden"
                                         }`}
@@ -307,7 +294,6 @@ function Navbar() {
                         )}
                     </div>
 
-                    {/* Mobile menu toggle. */}
                     <div className="flex items-center gap-2 md:hidden">
                         <button
                             type="button"
@@ -322,13 +308,11 @@ function Navbar() {
                     </div>
                 </div>
 
-                {/* Mobile dropdown: overlays the page and scrolls independently. */}
                 {isMenuOpen && (
                     <div
                         id="mobile-navigation"
                         className="absolute left-0 right-0 top-[76px] z-50 max-h-[calc(100dvh-108px)] space-y-2 overflow-y-auto overscroll-contain rounded-b-2xl border-t border-[#E0E4E8] bg-[#F7F9FF] px-4 py-4 shadow-xl dark:border-gray-800 dark:bg-gray-950 md:hidden"
                     >
-                        {/* Each main navigation link uses its own row. */}
                         <NavLink
                             to="/"
                             end
@@ -353,25 +337,23 @@ function Navbar() {
 
 
 
-                        
-{/* Cart icon beside the profile dropdown. */}
-<NavLink
-    to="/cart"
-    aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
-    className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
->
-    <ShoppingCart size={21} strokeWidth={1.7} />
 
-    {cartItemCount > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
-            {cartItemCount}
-        </span>
-    )}
-</NavLink>
+                        <NavLink
+                            to="/cart"
+                            aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""}`}
+                            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#414845] transition-colors hover:bg-[#EBEEF3] hover:text-[#436558] dark:text-gray-200 dark:hover:bg-gray-800"
+                        >
+                            <ShoppingCart size={21} strokeWidth={1.7} />
+
+                            {cartItemCount > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#436558] px-1 text-[10px] font-semibold text-white dark:bg-[#B5D0AC] dark:text-gray-900">
+                                    {cartItemCount}
+                                </span>
+                            )}
+                        </NavLink>
 
                         {isAuthenticated ? (
                             <div className="mt-3 border-t border-[#E0E4E8] pt-3 dark:border-gray-800">
-                                {/* Account details. */}
                                 <div className="px-4 py-3">
                                     <p className="font-semibold text-[#252A28] dark:text-white">
                                         Your Account

@@ -29,22 +29,18 @@ function Wishlist() {
     const loading = useSelector(selectWishlistLoading);
     const error = useSelector(selectWishlistError);
 
-    // Count both saved products and saved kits.
     const totalItems = products.length + kits.length;
 
-    // Fetch both wishlist collections when the page loads.
     useEffect(() => {
         dispatch(getMyWishlistThunk());
     }, [dispatch]);
 
-    // Clear products and kits together.
     const handleClearWishlist = () => {
         if (totalItems > 0 && window.confirm("Clear your entire wishlist?")) {
             dispatch(clearWishlistThunk());
         }
     };
 
-    // Display the loading component during the initial fetch.
     if (loading && totalItems === 0) {
         return <Loading />;
     }
@@ -53,7 +49,6 @@ function Wishlist() {
         <main className="min-h-screen bg-[#F7F9FF] px-4 py-8 text-[#181C20] dark:bg-gray-950 dark:text-white sm:px-6 lg:px-10">
             <div className="mx-auto max-w-[1440px]">
 
-                {/* Breadcrumb navigation from the TinyNest reference. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"
@@ -69,7 +64,6 @@ function Wishlist() {
                     </span>
                 </nav>
 
-                {/* Editorial header inspired by the uploaded design. */}
                 <section className="mb-6 flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-7 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-2xl">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -109,7 +103,6 @@ function Wishlist() {
                     )}
                 </section>
 
-                {/* Show API errors without hiding the saved items. */}
                 {error && (
                     <div className="mb-5">
                         <ErrorMessage message={error} />
@@ -136,7 +129,6 @@ function Wishlist() {
                     </section>
                 ) : (
                     <>
-                        {/* Saved products and kits use the same responsive grid. */}
                         <section aria-label="Saved wishlist items">
                             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -176,7 +168,6 @@ function Wishlist() {
                     </>
                 )}
 
-                {/* Helpful discovery section without fabricated product data. */}
                 <section className="mt-12 rounded-2xl bg-[#EAF0F8] p-6 dark:bg-gray-900 sm:p-8">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>

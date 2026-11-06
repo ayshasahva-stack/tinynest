@@ -24,21 +24,17 @@ function ReviewForm({
 
     const loading = useSelector(selectReviewLoading);
 
-    // Rating selected by the user
     const [rating, setRating] = useState(
         existingReview?.rating || 0
     );
 
-    // Review comment
     const [comment, setComment] = useState(
         existingReview?.comment || ""
     );
 
-    // Frontend validation error
     const [error, setError] = useState("");
 
 
-    // Update form when editing a different review
     useEffect(() => {
 
         setRating(existingReview?.rating || 0);
@@ -48,26 +44,18 @@ function ReviewForm({
     }, [existingReview]);
 
 
-    // Handle review submission
     const handleSubmit = async (event) => {
 
         event.preventDefault();
 
         setError("");
 
-
-        // Rating is required
         if (!rating) {
             setError("Please select a rating.");
             return;
         }
 
-
         try {
-
-            // -----------------------------------------
-            // UPDATE EXISTING REVIEW
-            // -----------------------------------------
 
             if (existingReview) {
 
@@ -81,13 +69,7 @@ function ReviewForm({
                         },
                     })
                 ).unwrap();
-
             }
-
-            // -----------------------------------------
-            // CREATE NEW REVIEW
-            // -----------------------------------------
-
             else {
 
                 await dispatch(
@@ -103,12 +85,9 @@ function ReviewForm({
 
             }
 
-
-            // Clear form
             setRating(0);
             setComment("");
 
-            // Tell parent that the operation succeeded
             if (onSuccess) {
                 onSuccess();
             }
@@ -141,7 +120,6 @@ function ReviewForm({
             </h3>
 
 
-            {/* Validation error */}
             {error && (
 
                 <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
@@ -151,7 +129,6 @@ function ReviewForm({
             )}
 
 
-            {/* Rating */}
             <div className="mb-5">
 
                 <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -184,7 +161,6 @@ function ReviewForm({
             </div>
 
 
-            {/* Comment */}
             <div className="mb-5">
 
                 <label
@@ -208,7 +184,6 @@ function ReviewForm({
             </div>
 
 
-            {/* Actions */}
             <div className="flex gap-3">
 
                 <Button

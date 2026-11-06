@@ -11,7 +11,6 @@ function AdminReviews() {
     const [ratingFilter, setRatingFilter] = useState("all");
     const [deletingId, setDeletingId] = useState(null);
 
-    // Fetch all reviews using the existing admin API.
     const fetchReviews = useCallback(async () => {
         setLoading(true);
         setError("");
@@ -19,7 +18,6 @@ function AdminReviews() {
         try {
             const response = await api.get("/reviews/admin");
 
-            // Your backend wraps successful responses in { data: ... }.
             setReviews(response.data.data || []);
         } catch (err) {
             setError(
@@ -35,7 +33,6 @@ function AdminReviews() {
         fetchReviews();
     }, [fetchReviews]);
 
-    // Calculate the average rating and rating distribution.
     const averageRating = useMemo(() => {
         if (reviews.length === 0) return "0.0";
 
@@ -56,7 +53,6 @@ function AdminReviews() {
         }));
     }, [reviews]);
 
-    // Search by product title, customer email, or comment.
     const filteredReviews = useMemo(() => {
         const query = search.trim().toLowerCase();
 
@@ -75,7 +71,6 @@ function AdminReviews() {
         });
     }, [reviews, search, ratingFilter]);
 
-    // Delete any review as an administrator.
     const handleDelete = async (review) => {
         const confirmed = window.confirm(
             `Delete this review for "${review.product?.title || "this product"}"?`
@@ -89,7 +84,6 @@ function AdminReviews() {
         try {
             await api.delete(`/reviews/admin/${review._id}`);
 
-            // Update the UI immediately after successful deletion.
             setReviews((previous) =>
                 previous.filter((item) => item._id !== review._id)
             );
@@ -108,7 +102,6 @@ function AdminReviews() {
 return (
     <main className="min-h-screen space-y-6 bg-[#f7f9ff] p-4 text-[#263d32] transition-colors duration-200 dark:bg-gray-950 dark:text-gray-100 sm:p-6">
 
-        {/* Page heading */}
         <div>
             <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#263d32] dark:text-white sm:text-3xl">
                 Reviews & Ratings
@@ -119,7 +112,6 @@ return (
             </p>
         </div>
 
-        {/* Summary cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
                 {

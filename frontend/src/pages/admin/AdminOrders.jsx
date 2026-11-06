@@ -24,7 +24,6 @@ import {
     clearAdminOrderFeedback,
 } from "../../features/orders/orderSlice";
 
-// These transitions must match the backend controller.
 const allowedTransitions = {
     pending: ["confirmed", "cancelled"],
     confirmed: ["processing", "cancelled"],
@@ -33,8 +32,6 @@ const allowedTransitions = {
     delivered: [],
     cancelled: [],
 };
-
-// Consistent status badge colours.
 const statusStyles = {
     pending: "bg-yellow-100 text-yellow-800",
     confirmed: "bg-blue-100 text-blue-800",
@@ -44,7 +41,6 @@ const statusStyles = {
     cancelled: "bg-red-100 text-red-800",
 };
 
-// Format dates for the orders table.
 const formatDate = (date) => {
     if (!date) return "N/A";
 
@@ -55,7 +51,6 @@ const formatDate = (date) => {
     });
 };
 
-// Format amounts as Indian rupees.
 const formatPrice = (amount) =>
     `₹${Number(amount || 0).toLocaleString("en-IN", {
         minimumFractionDigits: 2,
@@ -74,22 +69,18 @@ function AdminOrders() {
     const confirmingCodOrderId = useSelector(selectConfirmingCodOrderId);
     const codPaymentError = useSelector(selectCodPaymentError);
     const codPaymentSuccess = useSelector(selectCodPaymentSuccess);
-    // Local UI state for searching, filtering, and the details modal.
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    // Fetch all orders when the page opens.
     useEffect(() => {
         dispatch(getAllOrdersForAdminThunk());
     }, [dispatch]);
 
-    // Remove old update feedback when the page is first mounted.
     useEffect(() => {
         dispatch(clearAdminOrderFeedback());
     }, [dispatch]);
 
-    // Keep the selected modal order in sync with Redux after updates.
     useEffect(() => {
         if (!selectedOrder) return;
 
@@ -102,8 +93,6 @@ function AdminOrders() {
         }
     }, [orders, selectedOrder?._id]);
 
-    // Search by order ID, customer email, phone, or customer name.
-    // Filter by status without changing the stored Redux list.
     const filteredOrders = useMemo(() => {
         const searchText = search.trim().toLowerCase();
 
@@ -132,7 +121,6 @@ function AdminOrders() {
         });
     }, [orders, search, statusFilter]);
 
- // Confirm COD collection after delivery.
 const handleConfirmCodPayment = async (order) => {
     const confirmed = window.confirm(
         `Confirm that ₹${Number(order.paymentDetails?.amount ?? order.totalAmount).toFixed(2)} has been collected for this delivered COD order?`
@@ -143,16 +131,13 @@ const handleConfirmCodPayment = async (order) => {
     dispatch(clearAdminOrderFeedback());
 
     try {
-        // The thunk updates the matching order in Redux on success.
         await dispatch(
             confirmCodPaymentThunk(order._id)
         ).unwrap();
     } catch {
-        // Redux stores the error for display on the page.
     }
 };
 
-    // Send the status update to the backend.
     const handleStatusChange = async (orderId, status) => {
         const confirmed = window.confirm(
             `Change this order's status to "${status}"?`
@@ -167,11 +152,9 @@ const handleConfirmCodPayment = async (order) => {
                 updateOrderStatusThunk({ orderId, status })
             ).unwrap();
         } catch {
-            // Redux stores the error for display below.
         }
     };
 
-    // Count orders in each status for the summary cards.
     const statusCounts = useMemo(() => {
         return {
             total: orders.length,
@@ -187,7 +170,6 @@ const handleConfirmCodPayment = async (order) => {
 
   return (
     <div className="min-h-screen bg-[#f7f9ff] p-4 text-[#263d32] dark:bg-slate-950 dark:text-white md:p-8">
-        {/* Page heading */}
         <div className="mb-8">
             <h1 className="font-serif text-3xl font-semibold text-[#263d32] dark:text-white">
                 Order Management

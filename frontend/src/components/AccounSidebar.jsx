@@ -1,7 +1,6 @@
 
 import { Link, NavLink, useLocation } from "react-router-dom";
 
-// Shared icons used by the customer account navigation.
 function AccountIcon({ type }) {
     const common = {
         fill: "none",
@@ -64,7 +63,6 @@ function AccountIcon({ type }) {
     );
 }
 
-// Reusable sidebar shared by Profile, Orders, and Saved Addresses.
 function AccountSidebar({ user, className = "" }) {
     const location = useLocation();
 
@@ -95,7 +93,7 @@ function AccountSidebar({ user, className = "" }) {
 
     return (
         <aside className={`space-y-5 self-start lg:sticky lg:top-24 ${className}`}>
-            {/* Customer identity card */}
+        
             <div className="flex items-center gap-3 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#dcece4] text-sm font-semibold text-[#436558]">
                     {initials}
@@ -120,8 +118,7 @@ function AccountSidebar({ user, className = "" }) {
                 className="rounded-2xl bg-white p-2.5 shadow-sm dark:bg-gray-900"
             >
                 {links.map((item) => {
-                    // Account Settings shares the profile route, so keep
-                    // Overview as the only active link on /profile.
+                   
                     const isCurrentPage =
                         item.key !== "settings" &&
                         location.pathname === item.to;
@@ -144,7 +141,7 @@ function AccountSidebar({ user, className = "" }) {
                 })}
             </nav>
 
-            {/* Concierge card */}
+          
             <div className="rounded-2xl bg-[#f8eeec] p-5 dark:bg-[#382925]">
                 <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#8a604c] dark:text-[#e0b8a7]">
                     TinyNest Concierge

@@ -32,17 +32,14 @@ function AdminEditProduct() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Get selected product and Redux states.
     const selectedProduct = useSelector(selectSelectedProduct);
     const productLoading = useSelector(selectProductsLoading);
     const productError = useSelector(selectProductsError);
 
-    // Get category data from Redux.
     const categories = useSelector(selectCategories);
     const categoriesLoading = useSelector(selectCategoriesLoading);
     const categoriesError = useSelector(selectCategoriesError);
 
-    // React Hook Form + Yup validation.
     const {
         register,
         handleSubmit,
@@ -51,7 +48,6 @@ function AdminEditProduct() {
     } = useForm({
         resolver: yupResolver(productSchema),
 
-        // Initial values before the product is loaded.
         defaultValues: {
             title: "",
             description: "",
@@ -64,40 +60,30 @@ function AdminEditProduct() {
             tags: "",
         },
     });
-
-    // Existing Cloudinary image URLs.
     const [existingImages, setExistingImages] = useState([]);
 
-    // Newly selected image files.
     const [newImages, setNewImages] = useState([]);
 
-    // Image validation error.
     const [imageError, setImageError] = useState("");
 
-    // Update button loading state.
     const [submitting, setSubmitting] = useState(false);
 
-    // Fetch product and categories when the page loads.
     useEffect(() => {
         dispatch(fetchProductById(id));
         dispatch(fetchCategories());
     }, [dispatch, id]);
 
-    // Populate the form when the selected product is loaded.
     useEffect(() => {
         if (!selectedProduct) return;
 
-        // Make sure this is the product requested by the URL.
         if (selectedProduct._id !== id) return;
 
-        // Fill the form with the existing product details.
         reset({
             title: selectedProduct.title || "",
             description: selectedProduct.description || "",
             price: selectedProduct.price ?? "",
             discount: selectedProduct.discount ?? 0,
 
-            // Handle populated category or category ID.
             category:
                 selectedProduct.category?._id ||
                 selectedProduct.category ||
@@ -107,26 +93,21 @@ function AdminEditProduct() {
             ageGroup: selectedProduct.ageGroup || "",
             stock: selectedProduct.stock ?? "",
 
-            // Convert tags array into comma-separated text.
             tags: Array.isArray(selectedProduct.tags)
                 ? selectedProduct.tags.join(", ")
                 : selectedProduct.tags || "",
         });
 
-        // Keep existing images separate from new uploads.
         setExistingImages(selectedProduct.images || []);
 
-        // Clear previously selected new images.
         setNewImages([]);
 
         setImageError("");
     }, [selectedProduct, id, reset]);
 
-    // Handle new image selection.
     const handleImageChange = (event) => {
         const selectedFiles = Array.from(event.target.files || []);
 
-        // Only allow JPEG, PNG and WebP images.
         const allowedTypes = [
             "image/jpeg",
             "image/png",
@@ -157,7 +138,6 @@ function AdminEditProduct() {
             return;
         }
 
-        // Add newly selected files.
         setNewImages((previousImages) => [
             ...previousImages,
             ...selectedFiles,
@@ -165,11 +145,9 @@ function AdminEditProduct() {
 
         setImageError("");
 
-        // Allow selecting the same file again.
         event.target.value = "";
     };
 
-    // Remove one existing image.
     const removeExistingImage = (indexToRemove) => {
         setExistingImages((previousImages) =>
             previousImages.filter(
@@ -180,7 +158,6 @@ function AdminEditProduct() {
         setImageError("");
     };
 
-    // Remove one newly selected image.
     const removeNewImage = (indexToRemove) => {
         setNewImages((previousImages) =>
             previousImages.filter(
@@ -190,10 +167,7 @@ function AdminEditProduct() {
 
         setImageError("");
     };
-
-    // Handle valid form submission.
     const onSubmit = async (values) => {
-        // At least one image must remain.
         if (
             existingImages.length === 0 &&
             newImages.length === 0
@@ -202,7 +176,6 @@ function AdminEditProduct() {
             return;
         }
 
-        // Maximum five images in total.
         if (existingImages.length + newImages.length > 5) {
             setImageError("You can have a maximum of 5 images.");
             return;
@@ -212,10 +185,7 @@ function AdminEditProduct() {
         setSubmitting(true);
 
         try {
-            // FormData is needed because the request may contain files.
             const data = new FormData();
-
-            // Append validated product fields.
             data.append("title", values.title);
             data.append("description", values.description);
             data.append("price", values.price);
@@ -225,32 +195,25 @@ function AdminEditProduct() {
             data.append("ageGroup", values.ageGroup);
             data.append("stock", values.stock);
             data.append("tags", values.tags || "");
-
-            // Send the existing image URLs that should be retained.
             data.append(
                 "existingImages",
                 JSON.stringify(existingImages)
             );
 
-            // Append newly selected image files.
             newImages.forEach((image) => {
                 data.append("images", image);
             });
 
-            // Keep the existing Redux update thunk and payload structure.
             const result = await dispatch(
                 updateProductThunk({
                     productId: id,
                     formData: data,
                 })
             );
-
-            // Navigate only after a successful update.
             if (updateProductThunk.fulfilled.match(result)) {
                 alert("Product updated successfully!");
                 navigate("/admin/products");
             } else {
-                // Display backend or Redux error.
                 console.error(
                     "Product update failed:",
                     result.payload || result.error
@@ -270,8 +233,6 @@ function AdminEditProduct() {
             setSubmitting(false);
         }
     };
-
-    // Show loading while fetching product.
     if (productLoading && !selectedProduct) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center">
@@ -282,7 +243,6 @@ function AdminEditProduct() {
         );
     }
 
-    // Show product error.
     if (productError && !selectedProduct) {
         return (
             <div className="p-6">
@@ -293,7 +253,6 @@ function AdminEditProduct() {
         );
     }
 
-    // Shared input styles.
     const inputClass = `
         w-full rounded-lg border border-[#dce3df]
         bg-white px-4 py-3 text-sm text-[#34443d]
@@ -302,13 +261,11 @@ function AdminEditProduct() {
         dark:border-gray-600 dark:bg-gray-700 dark:text-white
     `;
 
-    // Shared label styles.
     const labelClass = `
         mb-2 block text-sm font-medium
         text-[#46574e] dark:text-gray-200
     `;
 
-    // Display a field validation error.
     const renderError = (field) =>
         errors[field] && (
             <p className="mt-1 text-sm text-red-600">
@@ -320,7 +277,6 @@ function AdminEditProduct() {
         <div className="min-h-screen bg-[#f7f9ff] px-4 py-6 sm:px-6 lg:px-8 dark:bg-gray-900">
             <div className="mx-auto max-w-5xl">
 
-                {/* Page heading */}
                 <div className="mb-7">
                     <button
                         type="button"

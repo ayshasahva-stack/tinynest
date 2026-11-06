@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,10 +15,8 @@ import {
 
 function Register() {
 
-    // // Controls password visibility independently.
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    // Initialize React Hook Form with Yup validation.
     const {
         control,
         handleSubmit,
@@ -36,23 +33,18 @@ function Register() {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    // Clear errors left behind by Login or another auth page.
     useEffect(() => {
         dispatch(clearAuthError());
     }, [dispatch]);
 
-    // Read the current request status and API error from Redux.
     const loading = useSelector(selectAuthLoading);
     const error = useSelector(selectAuthError);
 
-    // Validate the form, register the user, and navigate to OTP verification.
-    // Called only when all registration fields pass Yup validation.
     const handleRegister = async (data) => {
         const cleanedEmail = data.email.trim();
         const cleanedPhone = data.phone.trim();
 
         try {
-            // Submit valid registration data through the existing Redux thunk.
             await dispatch(
                 registerUserThunk({
                     email: cleanedEmail,
@@ -62,23 +54,19 @@ function Register() {
                 })
             ).unwrap();
 
-            // Navigate to OTP verification after successful registration.
             navigate(
                 `/verify-otp?email=${encodeURIComponent(cleanedEmail)}`
             );
         } catch {
-            // Redux handles and stores the API error.
         }
     };
 
-    // Display errors returned by the backend through Redux.
     const displayedError = error;
 
 
 
     return (
         <main className="relative min-h-[calc(100dvh-80px)] overflow-hidden bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-12">
-            {/* Soft decorative background shapes from the TinyNest design. */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#dce7e2]/70 blur-3xl dark:bg-emerald-950/30"
@@ -89,19 +77,15 @@ function Register() {
                 className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-[#f0bba5]/20 blur-3xl dark:bg-amber-950/20"
             />
 
-            {/* Main two-column authentication card. */}
             <div className="relative mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#e0e3e8] bg-white shadow-[0_8px_40px_-12px_rgba(43,47,51,0.12)] dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[0.9fr_1.1fr]">
 
-                {/* LEFT PANEL: TinyNest branding and editorial image. */}
                 <aside className="relative flex flex-col justify-between overflow-hidden bg-[#f1f4f9] p-6 dark:bg-gray-800 sm:p-8 lg:p-10">
-                    {/* Decorative circle. */}
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full border-[24px] border-[#dce7e2]/70 dark:border-white/5"
                     />
 
                     <div className="relative z-10">
-                        {/* Brand logo. */}
                         <Link
                             to="/"
                             aria-label="TinyNest home"
@@ -111,13 +95,11 @@ function Register() {
                             <span className="text-[#7d5543]">.</span>
                         </Link>
 
-                        {/* Brand badge. */}
                         <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#dce7e2] px-3 py-2 text-xs font-semibold text-[#315447] dark:bg-emerald-950 dark:text-emerald-200">
                             <span aria-hidden="true">✿</span>
                             Thoughtfully chosen for little ones
                         </div>
 
-                        {/* Main image from the reference design. */}
                         <div className="group relative mt-5 h-52 overflow-hidden rounded-xl shadow-sm sm:h-64 lg:h-60">
                             <img
                                 src="https://images.unsplash.com/photo-1510154221590-ff63e90a136f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
@@ -125,7 +107,6 @@ function Register() {
                                 className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                             />
 
-                            {/* Image gradient overlay. */}
                             <div className="absolute inset-0 bg-gradient-to-t from-[#181c20]/50 via-transparent to-transparent" />
 
                             <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
@@ -139,7 +120,6 @@ function Register() {
                             </div>
                         </div>
 
-                        {/* Editorial heading and description. */}
                         <div className="mt-7">
                             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#436558] dark:text-[#a9cfbe]">
                                 LITTLE THINGS, LOTS OF LOVE
@@ -157,7 +137,6 @@ function Register() {
                         </div>
                     </div>
 
-                    {/* Bottom reassurance section. */}
                     <div className="relative z-10 mt-8 border-t border-[#c1c8c3]/70 pt-5 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl text-[#436558] shadow-sm dark:bg-gray-700 dark:text-[#a9cfbe]">
@@ -177,11 +156,9 @@ function Register() {
                     </div>
                 </aside>
 
-                {/* RIGHT PANEL: Registration form. */}
                 <section className="flex items-center justify-center bg-white p-6 dark:bg-gray-900 sm:p-8 lg:p-12">
                     <div className="w-full max-w-md">
 
-                        {/* Sign-in and registration switch. */}
                         <div className="mb-8 flex items-center justify-between gap-3">
                             <div className="inline-flex rounded-full bg-[#ebeef3] p-1 dark:bg-gray-800">
                                 <Link
@@ -200,7 +177,6 @@ function Register() {
                             </div>
                         </div>
 
-                        {/* Registration heading. */}
                         <div className="mb-7">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#7d5543]">
                                 JOIN THE TINYNEST FAMILY
@@ -215,7 +191,6 @@ function Register() {
                             </p>
                         </div>
 
-                        {/* Preserve your existing error variable and behavior. */}
                         {displayedError && (
                             <p
                                 role="alert"
@@ -227,12 +202,10 @@ function Register() {
                             </p>
                         )}
 
-                        {/* Existing form logic is preserved. */}
                         <form
                             onSubmit={handleSubmit(handleRegister)}
                             className="space-y-5"
                         >
-                            {/* Email field */}
                             <div>
                                 <Controller
                                     name="email"
@@ -259,7 +232,6 @@ function Register() {
                                 )}
                             </div>
 
-                            {/* Phone field */}
                             <div>
                                 <Controller
                                     name="phone"
@@ -286,9 +258,7 @@ function Register() {
                                 )}
                             </div>
 
-                            {/* Password field */}
                             <div>
-                                {/* Password field */}
                                 <div>
                                     <Controller
                                         name="password"
@@ -307,7 +277,6 @@ function Register() {
                                                     disabled={loading}
                                                 />
 
-                                                {/* Show/Hide password */}
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowPassword((prev) => !prev)}
@@ -339,9 +308,7 @@ function Register() {
                                 )}
                             </div>
 
-                            {/* Confirm password field */}
                             <div>
-                                {/* Confirm password field */}
                                 <div>
                                     <Controller
                                         name="confirmPassword"
@@ -360,7 +327,6 @@ function Register() {
                                                     disabled={loading}
                                                 />
 
-                                                {/* Show/Hide confirm password */}
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowConfirmPassword((prev) => !prev)}
@@ -390,7 +356,6 @@ function Register() {
                                 </div>
 
                             </div>
-                            {/* Existing TinyNest button */}
                             <div className="pt-1">
                                 <Button
                                     type="submit"
@@ -403,7 +368,6 @@ function Register() {
                             </div>
                         </form>
 
-                        {/* Footer text from the reference. */}
                         <p className="mt-6 text-center text-xs leading-5 text-[#717974] dark:text-gray-500">
                             <span aria-hidden="true">♡ </span>
                             Little things, lots of love.
@@ -415,7 +379,6 @@ function Register() {
     );
 
 }
-// Eye icon for showing the password.
 function EyeIcon() {
     return (
         <svg
@@ -435,7 +398,6 @@ function EyeIcon() {
     );
 }
 
-// Eye-off icon for hiding the password.
 function EyeOffIcon() {
     return (
         <svg

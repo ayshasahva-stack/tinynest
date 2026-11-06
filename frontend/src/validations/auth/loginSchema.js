@@ -1,7 +1,6 @@
 
 import * as yup from "yup";
 
-// Validation rules for TinyNest login.
 export const loginSchema = yup.object({
     email: yup
         .string()

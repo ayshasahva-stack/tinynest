@@ -13,7 +13,6 @@ function OrderStatusTimeline({ status }) {
         (item) => item.value === status
     );
 
-    // A cancelled order needs a separate message, not a completed timeline.
     if (isCancelled) {
         return (
             <section className="rounded-xl bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-6">
@@ -58,7 +57,6 @@ function OrderStatusTimeline({ status }) {
                 </span>
             </div>
 
-            {/* Horizontal on larger screens, vertically stacked on small screens. */}
             <div className="relative">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-5 sm:gap-2">
                     {ORDER_STATUSES.map((item, index) => {
@@ -73,7 +71,6 @@ function OrderStatusTimeline({ status }) {
                                 key={item.value}
                                 className="relative flex items-center gap-3 sm:flex-col sm:items-center sm:text-center"
                             >
-                                {/* Progress track behind the indicators on desktop. */}
                                 {index < ORDER_STATUSES.length - 1 && (
                                     <div className="absolute left-4 top-9 h-[calc(100%+1rem)] w-0.5 bg-[#e0e3e8] sm:left-[calc(50%+18px)] sm:top-[18px] sm:h-0.5 sm:w-[calc(100%-36px)]">
                                         <div
@@ -86,7 +83,6 @@ function OrderStatusTimeline({ status }) {
                                     </div>
                                 )}
 
-                                {/* Step indicator. */}
                                 <div
                                     className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-colors ${
                                         isReached
@@ -102,7 +98,6 @@ function OrderStatusTimeline({ status }) {
                                     {isCompleted ? "✓" : index + 1}
                                 </div>
 
-                                {/* Step label. */}
                                 <div className="relative z-10 min-w-0 pb-1 sm:mt-3 sm:pb-0">
                                     <p
                                         className={`text-sm sm:text-xs ${

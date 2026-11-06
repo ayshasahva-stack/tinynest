@@ -17,17 +17,14 @@ import ErrorMessage from "../../components/ErrorMessage";
 
 import KitCard from "./components/KitCard";
 
-// Baby kits listing page styled to match the TinyNest product catalogue.
 function Kits() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Read kits and request status from Redux.
     const kits = useSelector(selectKits);
     const loading = useSelector(selectKitLoading);
     const error = useSelector(selectKitError);
 
-    // Fetch kits when the page mounts.
     useEffect(() => {
         dispatch(fetchKitsThunk());
     }, [dispatch]);
@@ -38,7 +35,6 @@ function Kits() {
         <main className="min-h-screen bg-[#F7F9FF] px-4 py-7 text-[#181C20] transition-colors duration-300 dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:py-10">
          <div className="mx-auto max-w-6xl">
 
-                {/* Breadcrumbs match the product pages. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-7 flex items-center gap-2 text-sm text-[#414845] dark:text-gray-400"
@@ -58,7 +54,6 @@ function Kits() {
                     </span>
                 </nav>
 
-                {/* Page heading. */}
                 <header className="mb-9 sm:mb-12">
                     <span className="inline-flex rounded-full bg-[#C5EBDA] px-4 py-2 text-xs font-semibold tracking-wide text-[#2B4D41]">
                         Thoughtfully Bundled
@@ -72,8 +67,6 @@ function Kits() {
                         Discover thoughtfully bundled essentials for your
                         little one, all in one convenient kit.
                     </p>
-
-                    {/* Show the actual number of kits only after loading. */}
                     {!loading && !error && pageKits.length > 0 && (
                         <p className="mt-5 text-sm text-[#717974] dark:text-gray-400">
                             {pageKits.length}{" "}
@@ -82,10 +75,8 @@ function Kits() {
                     )}
                 </header>
 
-                {/* Loading state. */}
                 {loading && <Loading />}
 
-                {/* Error state. */}
                 {!loading && error && (
                     <ErrorMessage
                         title="Unable to load kits"
@@ -93,7 +84,6 @@ function Kits() {
                     />
                 )}
 
-                {/* Empty state. */}
                 {!loading && !error && pageKits.length === 0 && (
                     <EmptyState
                         title="No kits available"
@@ -101,7 +91,6 @@ function Kits() {
                     />
                 )}
 
-                {/* Responsive kit grid. */}
                 {!loading && !error && pageKits.length > 0 && (
                     <section
                         aria-label="Available baby essentials kits"

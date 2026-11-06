@@ -12,19 +12,15 @@ import {
 } from "../features/auth/authSelectors";
 
 function NotificationBell({ badgeOnly = false }) {
-    // Get the current authentication state and logged-in user.
     const isAuthenticated = useSelector(selectIsAuthenticated);
     const user = useSelector(selectAuthUser);
 
-    // Store notifications and dropdown state.
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
-    // Reference the complete bell and dropdown area.
     const dropdownRef = useRef(null);
 
-    // Close the dropdown when the user clicks outside it.
     useEffect(() => {
         if (!isOpen) return;
 
@@ -43,18 +39,14 @@ function NotificationBell({ badgeOnly = false }) {
             document.removeEventListener("mousedown", handleOutsideClick);
         };
     }, [isOpen]);
-    // Detect navigation between the dropdown and full notifications page.
+    
     const location = useLocation();
-    // Choose the correct full notifications page for the current role.
     const notificationsPath =
         user?.role === "admin" ? "/admin/notifications" : "/notifications";
 
-    // Count only unread notifications.
     const unreadCount = notifications.filter(
         (notification) => !notification.isRead
     ).length;
-    // Sort newest first and display only five in the dropdown.
-    // The full notifications page can still show every notification.
     const visibleNotifications = [...notifications]
         .sort(
             (a, b) =>
@@ -62,7 +54,6 @@ function NotificationBell({ badgeOnly = false }) {
                 new Date(a.createdAt).getTime()
         )
         .slice(0, 5);
-    // Listen for read/unread changes made on the full notifications page.
     useEffect(() => {
         const handleNotificationUpdated = (event) => {
             const updatedNotification = event.detail;
@@ -92,7 +83,6 @@ function NotificationBell({ badgeOnly = false }) {
     }, []);
 
     useEffect(() => {
-        // Clear notification state when the user logs out.
         if (!isAuthenticated) {
             setNotifications([]);
             setIsOpen(false);
@@ -102,7 +92,6 @@ function NotificationBell({ badgeOnly = false }) {
 
         let isMounted = true;
 
-        // Fetch notifications saved in MongoDB.
         const fetchNotifications = async () => {
             try {
                 setIsLoading(true);
@@ -126,7 +115,6 @@ function NotificationBell({ badgeOnly = false }) {
             }
         };
 
-        // Add a live notification without duplicating an existing item.
         const addNotification = (notification) => {
             setNotifications((previous) => {
                 const alreadyExists = previous.some(
@@ -141,7 +129,6 @@ function NotificationBell({ badgeOnly = false }) {
             });
         };
 
-        // Admin event: a new order has been placed.
         const handleNewOrder = (order) => {
             addNotification({
                 _id: `live-new-order-${order.orderId}`,
@@ -155,7 +142,6 @@ function NotificationBell({ badgeOnly = false }) {
             });
         };
 
-        // Customer event: an order's status has changed.
         const handleStatusUpdated = (order) => {
             addNotification({
                 _id: `live-status-${order.orderId}-${order.status}`,
@@ -169,42 +155,30 @@ function NotificationBell({ badgeOnly = false }) {
             });
         };
 
-        // Handle a saved notification sent by the backend.
         const handleNewNotification = (notification) => {
-            // Ignore invalid notification data.
             if (!notification?._id) return;
 
-            // Add the notification without creating duplicates.
-            // Saved MongoDB IDs allow read/unread actions to work.
             addNotification(notification);
         };
 
-        // Listen for existing order events.
         socket.on("order:new", handleNewOrder);
         socket.on("order:statusUpdated", handleStatusUpdated);
 
-        // Listen for new saved notifications, such as registration
-        // and order cancellation notifications.
         socket.on("notification:new", handleNewNotification);
 
 
-        // Load the saved notifications.
         fetchNotifications();
 
-        // Clean up listeners when this component unmounts.
 
         return () => {
             isMounted = false;
 
-            // Remove all listeners registered by this effect.
             socket.off("order:new", handleNewOrder);
             socket.off("order:statusUpdated", handleStatusUpdated);
             socket.off("notification:new", handleNewNotification);
         };
 
     }, [isAuthenticated]);
-    // Refresh saved notifications whenever the user navigates.
-    // This syncs the badge and dropdown with changes made on the full page.
     useEffect(() => {
         if (!isAuthenticated) return;
 
@@ -228,9 +202,7 @@ function NotificationBell({ badgeOnly = false }) {
             isMounted = false;
         };
     }, [location.pathname, isAuthenticated]);
-    // Save the new read/unread status through the backend.
     const handleToggleRead = async (notification) => {
-        // Temporary live notifications do not have MongoDB IDs.
         if (String(notification._id).startsWith("live-")) {
             setError(
                 "This live notification is not saved yet. Refresh and try again."
@@ -250,7 +222,6 @@ function NotificationBell({ badgeOnly = false }) {
 
             const updatedNotification = response.data.data;
 
-            // Update only the selected notification.
             setNotifications((previous) =>
                 previous.map((item) =>
                     item._id === notification._id
@@ -264,7 +235,6 @@ function NotificationBell({ badgeOnly = false }) {
         }
     };
 
-    // Format notification dates.
     const formatDate = (date) => {
         if (!date) return "Date unavailable";
 
@@ -277,13 +247,10 @@ function NotificationBell({ badgeOnly = false }) {
         return parsedDate.toLocaleString();
     };
 
-    // Do not show notifications to signed-out visitors.
     if (!isAuthenticated) {
         return null;
     }
 
-    // Render only the unread-count badge when used in the Navbar menu.
-    // The normal bell and notification popup remain unchanged elsewhere.
     if (badgeOnly) {
         if (unreadCount === 0) {
             return null;
@@ -301,7 +268,6 @@ function NotificationBell({ badgeOnly = false }) {
 
     return (
         <div ref={dropdownRef} className="relative w-full">
-            {/* Bell button and unread badge */}
             <button
                 type="button"
                 onClick={() => setIsOpen((previous) => !previous)}
@@ -311,12 +277,10 @@ function NotificationBell({ badgeOnly = false }) {
                 <span className="relative flex h-10 w-10 shrink-0 items-center justify-center dark:border-gray-600">
                     <Bell className="h-5 w-5 text-[#8fb9a5]" />
 
-                    {/* Notification count badge */}
                     <span className="absolute -right-1 -top-1 rounded-full bg-[#d995a2] px-1.5 py-0.5 text-xs font-semibold text-white">
                         {unreadCount}
                     </span>
                 </span>
-                {/* Clicking anywhere in this area opens or closes the dropdown */}
                 <span className="font-medium text-[#436558] dark:text-[#b7d0c3]">
                     Notifications
                 </span>
@@ -324,19 +288,16 @@ function NotificationBell({ badgeOnly = false }) {
 
             </button>
 
-            {/* Notification dropdown */}
             {isOpen && (
 
                 <div className="absolute left-0 z-[100] mt-3 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#e0e7e3] bg-white text-stone-800 shadow-xl dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
 
-                    {/* Dropdown heading */}
                     <div className="flex items-center justify-between border-b border-[#E8E0D5] px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
                         <h2 className="font-semibold text-stone-800 dark:text-gray-100">
                             Notifications
                         </h2>
                     </div>
 
-                    {/* Notification list */}
                     <div className="max-h-80 overflow-y-auto">
                         {isLoading ? (
                             <p className="px-4 py-8 text-center text-sm text-stone-500 dark:text-stone-400">
@@ -359,7 +320,6 @@ function NotificationBell({ badgeOnly = false }) {
                                         : "bg-[#FFF8F5] dark:bg-gray-800"
                                         }`}
                                 >
-                                    {/* Open the selected notification on the full page. */}
                                     <Link
                                         to={`${notificationsPath}?notificationId=${notification._id}`}
                                         onClick={() => setIsOpen(false)}
@@ -403,7 +363,6 @@ function NotificationBell({ badgeOnly = false }) {
                                         </p>
                                     </Link>
 
-                                    {/* Toggle the notification's read status. */}
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -421,7 +380,6 @@ function NotificationBell({ badgeOnly = false }) {
                         )}
                     </div>
 
-                    {/* Display errors without hiding existing notifications. */}
                     {error && notifications.length > 0 && (
                         <p
                             role="alert"
@@ -431,8 +389,6 @@ function NotificationBell({ badgeOnly = false }) {
                         </p>
                     )}
 
-                    {/* Link to the complete notifications page. */}
-                    {/* Show See All only when not already on the notifications page */}
                     {location.pathname !== "/notifications" &&
                         location.pathname !== "/admin/notifications" && (
                             <div className="border-t border-[#E8E0D5] bg-white p-3 text-center dark:border-gray-700 dark:bg-gray-900">

@@ -1,6 +1,5 @@
 import * as yup from "yup";
 
-// Reusable number validation.
 const requiredNumber = (field) =>
     yup
         .number()

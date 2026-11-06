@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 
@@ -13,19 +12,16 @@ function App() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        // Restore the session when a saved access token exists.
         const token = localStorage.getItem("token");
 
         if (token) {
             dispatch(getProfileThunk());
         } else {
-            // No saved token: the initial session check is complete.
             dispatch(setSessionChecked());
         }
     }, [dispatch]);
 
     useEffect(() => {
-        // Clear Redux authentication if automatic token refresh fails.
         const handleSessionExpired = () => {
             dispatch(logout());
         };

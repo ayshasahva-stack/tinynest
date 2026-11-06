@@ -18,9 +18,7 @@ import {
 } from "../../features/auth/authThunk";
 
 function Login() {
-    // Controls whether the password is visible or hidden.
     const [showPassword, setShowPassword] = useState(false);
-    // Initialize React Hook Form with Yup validation.
     const {
         control,
         handleSubmit,
@@ -33,30 +31,23 @@ function Login() {
         },
     });
 
-    // Access Redux and React Router functionality.
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
 
-    // Clear errors left behind by another authentication page.
     useEffect(() => {
         dispatch(clearAuthError());
     }, [dispatch]);
 
-    // Read authentication status from Redux.
     const error = useSelector(selectAuthError);
     const loading = useSelector(selectAuthLoading);
 
-    // Authenticate the user and fetch their profile.
 
 
-    // Authenticate the user and redirect based on their role.
-    // Authenticate the user and redirect based on their role.
     const handleLogin = async (data) => {
         const cleanedEmail = data.email.trim();
 
         try {
-            // Step 1: Log in using the existing Redux thunk.
             await dispatch(
                 loginUserThunk({
                     email: cleanedEmail,
@@ -64,30 +55,25 @@ function Login() {
                 })
             ).unwrap();
 
-            // Step 2: Fetch the logged-in user's profile and role.
             const profileResponse = await dispatch(
                 getProfileThunk()
             ).unwrap();
 
-            // Handle common profile response structures.
             const user =
                 profileResponse?.user ??
                 profileResponse?.data?.user ??
                 profileResponse?.data ??
                 profileResponse;
 
-            // Step 3: Redirect admins to the admin dashboard.
             if (user?.role === "admin") {
                 navigate("/admin", { replace: true });
             } else {
-                // Customers return to their requested page or Home.
                 const destination =
                     location.state?.from?.pathname || "/";
 
                 navigate(destination, { replace: true });
             }
         } catch (error) {
-            // Redux retains the error for display.
             console.error("Authentication failed:", error);
         }
     };
@@ -96,7 +82,6 @@ function Login() {
 
     return (
         <main className="relative min-h-[calc(100dvh-80px)] overflow-hidden bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-12">
-            {/* Soft decorative background shapes matching Register. */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#dce7e2]/70 blur-3xl dark:bg-emerald-950/30"
@@ -107,19 +92,15 @@ function Login() {
                 className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-[#f0bba5]/20 blur-3xl dark:bg-amber-950/20"
             />
 
-            {/* Main authentication card. */}
             <div className="relative mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#e0e3e8] bg-white shadow-[0_8px_40px_-12px_rgba(43,47,51,0.12)] dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[0.9fr_1.1fr]">
 
-                {/* LEFT PANEL: Same TinyNest branding and image as Register. */}
                 <aside className="relative flex flex-col justify-between overflow-hidden bg-[#f1f4f9] p-6 dark:bg-gray-800 sm:p-8 lg:p-10">
-                    {/* Decorative circle. */}
                     <div
                         aria-hidden="true"
                         className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full border-[24px] border-[#dce7e2]/70 dark:border-white/5"
                     />
 
                     <div className="relative z-10">
-                        {/* TinyNest logo. */}
                         <Link
                             to="/"
                             aria-label="TinyNest home"
@@ -129,13 +110,11 @@ function Login() {
                             <span className="text-[#7d5543]">.</span>
                         </Link>
 
-                        {/* Brand badge. */}
                         <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#dce7e2] px-3 py-2 text-xs font-semibold text-[#315447] dark:bg-emerald-950 dark:text-emerald-200">
                             <span aria-hidden="true">✿</span>
                             Thoughtfully chosen for little ones
                         </div>
 
-                        {/* Brand image. */}
                         <div className="group relative mt-5 h-52 overflow-hidden rounded-xl shadow-sm sm:h-64 lg:h-60">
                             <img
                                 src="https://images.unsplash.com/photo-1510154221590-ff63e90a136f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
@@ -156,7 +135,6 @@ function Login() {
                             </div>
                         </div>
 
-                        {/* Brand message. */}
                         <div className="mt-7">
                             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#436558] dark:text-[#a9cfbe]">
                                 LITTLE THINGS, LOTS OF LOVE
@@ -172,7 +150,6 @@ function Login() {
                         </div>
                     </div>
 
-                    {/* Bottom reassurance section. */}
                     <div className="relative z-10 mt-8 border-t border-[#c1c8c3]/70 pt-5 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl text-[#436558] shadow-sm dark:bg-gray-700 dark:text-[#a9cfbe]">
@@ -192,11 +169,9 @@ function Login() {
                     </div>
                 </aside>
 
-                {/* RIGHT PANEL: Login form. */}
                 <section className="flex items-center justify-center bg-white p-6 dark:bg-gray-900 sm:p-8 lg:p-12">
                     <div className="w-full max-w-md">
 
-                        {/* Login/Register switch matching Register. */}
                         <div className="mb-8">
                             <div className="inline-flex rounded-full bg-[#ebeef3] p-1 dark:bg-gray-800">
                                 <span
@@ -215,7 +190,6 @@ function Login() {
                             </div>
                         </div>
 
-                        {/* Login heading. */}
                         <div className="mb-7">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#7d5543]">
                                 WELCOME BACK TO TINYNEST
@@ -230,7 +204,6 @@ function Login() {
                             </p>
                         </div>
 
-                        {/* Preserve your existing authentication error. */}
                         {error && (
                             <p
                                 role="alert"
@@ -244,7 +217,6 @@ function Login() {
                             onSubmit={handleSubmit(handleLogin)}
                             className="space-y-5"
                         >
-                            {/* Email field */}
                             <div>
                                 <Controller
                                     name="email"
@@ -272,7 +244,6 @@ function Login() {
                                 )}
                             </div>
 
-                            {/* Password field */}
                             <div>
                                 <Controller
                                     name="password"
@@ -292,7 +263,6 @@ function Login() {
                                                 disabled={loading}
                                             />
 
-                                            {/* Show/Hide password button */}
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword((prev) => !prev)}
@@ -301,7 +271,6 @@ function Login() {
                                                 className="absolute right-4 top-[45px] text-gray-500 transition hover:text-[#436558] dark:text-gray-400 dark:hover:text-[#a9cfbe]"
                                             >
                                                 {showPassword ? (
-                                                    // Eye-off icon
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="20"
@@ -319,7 +288,6 @@ function Login() {
                                                         <path d="M6.61 6.61C3.92 8.05 2.45 10.2 2 12c1 2 5 7.13 10 7.13a10.8 10.8 0 0 0 4.11-.81" />
                                                     </svg>
                                                 ) : (
-                                                    // Eye icon
                                                     <svg
                                                         xmlns="http://www.w3.org/2000/svg"
                                                         width="20"
@@ -346,7 +314,6 @@ function Login() {
                                     </p>
                                 )}
 
-                                {/* Preserve existing forgot-password navigation. */}
                                 <div className="mt-2 flex justify-end">
                                     <Link
                                         to="/forgot-password"
@@ -357,7 +324,6 @@ function Login() {
                                 </div>
                             </div>
 
-                            {/* Existing TinyNest button */}
                             <div className="pt-1">
                                 <Button
                                     type="submit"

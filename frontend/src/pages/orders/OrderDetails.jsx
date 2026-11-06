@@ -19,18 +19,15 @@ import ErrorMessage from "../../components/ErrorMessage";
 import OrderStatusTimeline from "./components/OrderStatusTimeline";
 import socket from "../../realtime/socket";
 
-// Format currency consistently throughout the page.
 const formatPrice = (value) =>
     `₹${Number(value || 0).toLocaleString("en-IN", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })}`;
 
-// Convert order status to a customer-friendly label.
 const getStatusLabel = (status = "pending") =>
     status.charAt(0).toUpperCase() + status.slice(1);
 
-// Choose a badge color based on the real order status.
 const getStatusClasses = (status) => {
     const styles = {
         pending: "bg-[#f7e1a9] text-[#6d5d31]",
@@ -44,7 +41,6 @@ const getStatusClasses = (status) => {
     return styles[status] || "bg-[#ebeef3] text-[#414845]";
 };
 
-// Reusable card heading in the TinyNest style.
 function SectionHeading({ eyebrow, children }) {
     return (
         <div className="mb-5">
@@ -61,7 +57,6 @@ function SectionHeading({ eyebrow, children }) {
     );
 }
 
-// Reusable row for order totals and payment information.
 function SummaryRow({ label, value, valueClass = "" }) {
     return (
         <div className="flex items-start justify-between gap-4 text-sm">
@@ -95,14 +90,12 @@ function OrderDetails() {
     const [cancelMessage, setCancelMessage] = useState("");
     const [cancelMessageType, setCancelMessageType] = useState("");
 
-    // Load the requested order from the existing backend API.
     useEffect(() => {
         if (orderId) {
             dispatch(getMyOrderByIdThunk(orderId));
         }
     }, [dispatch, orderId]);
 
-    // Keep the page updated when the backend emits an order status change.
     useEffect(() => {
         const handleOrderStatusUpdate = (data) => {
             if (String(data.orderId) === String(orderId)) {
@@ -116,8 +109,6 @@ function OrderDetails() {
             socket.off("order:statusUpdated", handleOrderStatusUpdate);
         };
     }, [dispatch, orderId]);
-
-    // Use the existing cancellation thunk and backend rules.
     const handleCancelOrder = async () => {
         if (!["pending", "confirmed"].includes(order?.status)) {
             return;
@@ -131,7 +122,6 @@ function OrderDetails() {
             setCancelMessage("Your order has been cancelled successfully.");
             setCancelMessageType("success");
 
-            // Refresh the order so the page displays the latest status.
             await dispatch(getMyOrderByIdThunk(orderId));
         } catch (err) {
             setCancelMessage(
@@ -143,7 +133,6 @@ function OrderDetails() {
         }
     };
 
-    // Loading state.
     if (loading) {
         return (
             <main className="min-h-screen bg-[#f7f9ff] px-4 py-10 dark:bg-gray-950">
@@ -154,7 +143,6 @@ function OrderDetails() {
         );
     }
 
-    // API error state.
     if (error) {
         return (
             <main className="min-h-screen bg-[#f7f9ff] px-4 py-10 dark:bg-gray-950">
@@ -173,7 +161,6 @@ function OrderDetails() {
         );
     }
 
-    // Handle a missing order.
     if (!order) {
         return (
             <main className="min-h-screen bg-[#f7f9ff] px-4 py-10 dark:bg-gray-950">
@@ -207,7 +194,6 @@ function OrderDetails() {
         <main className="min-h-screen bg-[#f7f9ff] px-4 pb-12 pt-6 text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1400px]">
 
-                {/* Breadcrumb navigation. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-5 flex flex-wrap items-center gap-2 text-xs text-[#626c68] dark:text-gray-400"
@@ -229,7 +215,6 @@ function OrderDetails() {
                     </span>
                 </nav>
 
-                {/* Order heading and primary actions. */}
                 <header className="mb-6 rounded-xl bg-gradient-to-r from-white via-[#f1f4f9] to-[#e5f4ed] p-5 dark:from-gray-900 dark:via-gray-900 dark:to-emerald-950/30 sm:p-7 lg:p-8">
                     <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
                         <div>
@@ -276,12 +261,10 @@ function OrderDetails() {
                     </div>
                 </header>
 
-                {/* Horizontal order progress, styled in the same palette. */}
                 <div className="mb-6">
                     <OrderStatusTimeline status={order.status} />
                 </div>
 
-                {/* Customer cancellation feedback. */}
                 {cancelMessage && (
                     <div
                         role="status"
@@ -295,13 +278,10 @@ function OrderDetails() {
                     </div>
                 )}
 
-                {/* Main two-column layout. */}
                 <div className="grid items-start gap-6 lg:grid-cols-12">
 
-                    {/* Left column: items, delivery, cancellation. */}
                     <div className="space-y-6 lg:col-span-8">
 
-                        {/* Ordered products and kits. */}
                         <section className="rounded-xl bg-white p-5 shadow-[0_2px_10px_rgba(24,28,32,0.035)] dark:bg-gray-900 sm:p-6">
                             <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#edf0f5] pb-4 dark:border-gray-800">
                                 <SectionHeading eyebrow="Your TinyNest package">
@@ -332,7 +312,6 @@ function OrderDetails() {
                                             key={`${order._id}-${index}`}
                                             className="flex flex-col gap-4 py-5 first:pt-5 sm:flex-row"
                                         >
-                                            {/* Product image. */}
                                             <div className="h-28 w-28 shrink-0 overflow-hidden rounded-lg bg-[#f1f4f9] dark:bg-gray-800">
                                                 {item.image ? (
                                                     <img
@@ -347,7 +326,6 @@ function OrderDetails() {
                                                 )}
                                             </div>
 
-                                            {/* Item details. */}
                                             <div className="min-w-0 flex-1">
                                                 <div className="mb-2 flex flex-wrap items-center gap-2">
                                                     {isKit && (
@@ -382,7 +360,6 @@ function OrderDetails() {
                                                 )}
                                             </div>
 
-                                            {/* Item total. */}
                                             <div className="shrink-0 sm:text-right">
                                                 <p className="text-[10px] uppercase tracking-wide text-[#717974]">
                                                     Item total
@@ -398,7 +375,6 @@ function OrderDetails() {
                             </div>
                         </section>
 
-                        {/* Delivery address. */}
                         <section className="rounded-xl bg-white p-5 shadow-[0_2px_10px_rgba(24,28,32,0.035)] dark:bg-gray-900 sm:p-6">
                             <div className="mb-5 flex items-start justify-between gap-3">
                                 <SectionHeading eyebrow="Shipping information">
@@ -443,7 +419,6 @@ function OrderDetails() {
                             </div>
                         </section>
 
-                        {/* Cancellation controls remain subject to backend rules. */}
                         {canCancel && (
                             <section className="rounded-xl border border-[#edf0f5] bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
                                 <SectionHeading eyebrow="Order management">
@@ -495,7 +470,6 @@ function OrderDetails() {
                             </section>
                         )}
 
-                        {/* Order cancellation confirmation. */}
                         {isCancelled && (
                             <section className="rounded-xl bg-[#ffdad6] p-5 text-[#93000a] dark:bg-red-950 dark:text-red-200">
                                 <h2 className="font-semibold">
@@ -508,10 +482,8 @@ function OrderDetails() {
                         )}
                     </div>
 
-                    {/* Right column: summary and payment. */}
                     <aside className="space-y-6 lg:sticky lg:top-28 lg:col-span-4">
 
-                        {/* Order summary. */}
                         <section className="overflow-hidden rounded-xl bg-white shadow-[0_2px_10px_rgba(24,28,32,0.035)] dark:bg-gray-900">
                             <div className="bg-[#f1f4f9] p-5 dark:bg-gray-800">
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#626c68] dark:text-gray-400">
@@ -576,7 +548,6 @@ function OrderDetails() {
                             </div>
                         </section>
 
-                        {/* Payment information. */}
                         <section className="rounded-xl bg-white p-5 shadow-[0_2px_10px_rgba(24,28,32,0.035)] dark:bg-gray-900">
                             <SectionHeading eyebrow="Transaction information">
                                 Payment Details
@@ -637,8 +608,6 @@ function OrderDetails() {
                                     )}
                             </div>
                         </section>
-
-                        {/* Customer reassurance panel. */}
                         <section className="rounded-xl bg-gradient-to-br from-[#e5f4ed] to-[#f1f4f9] p-5 dark:from-emerald-950/50 dark:to-gray-900">
                             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#436558] dark:text-emerald-300">
                                 The TinyNest Promise

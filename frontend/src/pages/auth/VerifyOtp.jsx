@@ -14,13 +14,10 @@ import {
 } from "../../features/auth/authSelectors";
 
 function VerifyOtp() {
-    // Store the OTP entered by the user.
     const [otp, setOtp] = useState("");
-    // Store references to the six OTP inputs so we can move focus.
     const otpRefs = useRef([]);
 
 
-    // Initialize React Hook Form with Yup validation.
     const {
         handleSubmit: handleFormSubmit,
         setValue,
@@ -35,24 +32,18 @@ function VerifyOtp() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    // The registration page passes the email through the URL.
     const email = searchParams.get("email") || "";
 
-    // Read loading and error states from Redux.
     const loading = useSelector(selectAuthLoading);
     const error = useSelector(selectAuthError);
 
-    // Verify the OTP and redirect after success.
-    // Verify the OTP and redirect after successful verification.
     const handleVerifyOtp = async (data) => {
 
-        // Check whether the email exists in the URL.
         if (!email.trim()) {
             return;
         }
 
         try {
-            // Send the email and validated OTP to the backend.
             await dispatch(
                 verifyOtpThunk({
                     email,
@@ -60,21 +51,16 @@ function VerifyOtp() {
                 })
             ).unwrap();
 
-            // Navigate to Login after successful verification.
             navigate("/login", { replace: true });
 
         } catch {
-            // Redux error is displayed in the form.
         }
     };
-    // Update the OTP digits and automatically move to the next box.
-    // Update OTP digits and automatically move to the next box.
     const handleOtpChange = (index, value) => {
         dispatch(clearAuthError());
         const digits = value.replace(/\D/g, "");
         const nextOtp = otp.split("");
 
-        // Support pasting multiple digits into a box.
         if (digits.length > 1) {
             digits.slice(0, 6 - index).split("").forEach((digit, offset) => {
                 nextOtp[index + offset] = digit;
@@ -84,7 +70,6 @@ function VerifyOtp() {
 
             setOtp(updatedOtp);
 
-            // Synchronize the OTP with React Hook Form.
             setValue("otp", updatedOtp, {
                 shouldValidate: true,
             });
@@ -95,31 +80,26 @@ function VerifyOtp() {
             return;
         }
 
-        // Store a single digit.
         nextOtp[index] = digits;
 
         const updatedOtp = nextOtp.join("").slice(0, 6);
 
         setOtp(updatedOtp);
 
-        // Synchronize the OTP with React Hook Form.
         setValue("otp", updatedOtp, {
             shouldValidate: true,
         });
 
-        // Move to the next box automatically.
         if (digits && index < 5) {
             otpRefs.current[index + 1]?.focus();
         }
     };
 
-    // Move to the previous box when Backspace is pressed on an empty box.
     const handleOtpKeyDown = (event, index) => {
         if (event.key === "Backspace" && !otp[index] && index > 0) {
             otpRefs.current[index - 1]?.focus();
         }
 
-        // Allow arrow keys to navigate between boxes.
         if (event.key === "ArrowLeft" && index > 0) {
             otpRefs.current[index - 1]?.focus();
         }
@@ -134,7 +114,6 @@ function VerifyOtp() {
 
     return (
         <main className="relative min-h-[calc(100dvh-80px)] overflow-hidden bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-12">
-            {/* Same decorative background shapes as Login.jsx */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#dce7e2]/70 blur-3xl dark:bg-emerald-950/30"
@@ -145,10 +124,8 @@ function VerifyOtp() {
                 className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-[#f0bba5]/20 blur-3xl dark:bg-amber-950/20"
             />
 
-            {/* Same main authentication card */}
             <div className="relative mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#e0e3e8] bg-white shadow-[0_8px_40px_-12px_rgba(43,47,51,0.12)] dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[0.9fr_1.1fr]">
 
-                {/* LEFT PANEL: Identical to Login.jsx */}
                 <aside className="relative flex flex-col justify-between overflow-hidden bg-[#f1f4f9] p-6 dark:bg-gray-800 sm:p-8 lg:p-10">
                     <div
                         aria-hidden="true"
@@ -156,7 +133,6 @@ function VerifyOtp() {
                     />
 
                     <div className="relative z-10">
-                        {/* TinyNest logo */}
                         <Link
                             to="/"
                             aria-label="TinyNest home"
@@ -166,13 +142,11 @@ function VerifyOtp() {
                             <span className="text-[#7d5543]">.</span>
                         </Link>
 
-                        {/* Brand badge */}
                         <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#dce7e2] px-3 py-2 text-xs font-semibold text-[#315447] dark:bg-emerald-950 dark:text-emerald-200">
                             <span aria-hidden="true">✿</span>
                             Thoughtfully chosen for little ones
                         </div>
 
-                        {/* Same image and styling */}
                         <div className="group relative mt-5 h-52 overflow-hidden rounded-xl shadow-sm sm:h-64 lg:h-60">
                             <img
                                 src="https://images.unsplash.com/photo-1510154221590-ff63e90a136f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
@@ -193,7 +167,6 @@ function VerifyOtp() {
                             </div>
                         </div>
 
-                        {/* Same brand message */}
                         <div className="mt-7">
                             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#436558] dark:text-[#a9cfbe]">
                                 LITTLE THINGS, LOTS OF LOVE
@@ -209,7 +182,6 @@ function VerifyOtp() {
                         </div>
                     </div>
 
-                    {/* Same bottom reassurance section */}
                     <div className="relative z-10 mt-8 border-t border-[#c1c8c3]/70 pt-5 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl text-[#436558] shadow-sm dark:bg-gray-700 dark:text-[#a9cfbe]">
@@ -229,12 +201,10 @@ function VerifyOtp() {
                     </div>
                 </aside>
 
-                {/* RIGHT PANEL: Same structure and styling as Login.jsx */}
                 <section className="flex items-center justify-center bg-white p-6 dark:bg-gray-900 sm:p-8 lg:p-12">
                     <div className="w-full max-w-md">
 
 
-                        {/* OTP heading — same typography as Login */}
                         <div className="mb-7">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#7d5543]">
                                 ONE LITTLE STEP
@@ -250,7 +220,6 @@ function VerifyOtp() {
                             </p>
                         </div>
 
-                        {/* Existing error handling */}
                         {error && (
                             <p
                                 role="alert"
@@ -262,13 +231,11 @@ function VerifyOtp() {
                             </p>
                         )}
 
-                        {/* Existing OTP form logic preserved */}
                         <form
                             onSubmit={handleFormSubmit(handleVerifyOtp)}
                             className="space-y-5"
                         >
 
-                            {/* Email being verified */}
                             {email && (
                                 <p className="text-sm leading-6 text-[#626c68] dark:text-gray-400">
                                     Verification code for{" "}
@@ -278,7 +245,6 @@ function VerifyOtp() {
                                 </p>
                             )}
 
-                            {/* Six OTP input boxes */}
                             <div>
                                 <label
                                     id="otp-label"
@@ -331,7 +297,6 @@ function VerifyOtp() {
                                                 if (pastedDigits) {
                                                     setOtp(pastedDigits);
 
-                                                    // Keep React Hook Form synchronized with pasted OTP.
                                                     setValue("otp", pastedDigits, {
                                                         shouldValidate: true,
                                                     });
@@ -350,7 +315,6 @@ function VerifyOtp() {
                                         />
 
                                     ))}
-                                    {/* Display OTP validation errors. */}
 
                                 </div>
                                 {errors.otp && (
@@ -364,7 +328,6 @@ function VerifyOtp() {
                                 </p>
                             </div>
 
-                            {/* Existing button component and conditions */}
                             <div className="pt-1">
                                 <Button
                                     type="submit"
@@ -377,7 +340,6 @@ function VerifyOtp() {
                             </div>
                         </form>
 
-                        {/* Same footer styling as Login */}
                         <p className="mt-6 text-center text-xs leading-5 text-[#717974] dark:text-gray-500">
                             <span aria-hidden="true">♡ </span>
                             Little things, lots of love.

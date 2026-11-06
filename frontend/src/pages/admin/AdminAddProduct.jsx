@@ -24,25 +24,20 @@ function AdminAddProduct() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Existing Redux state.
     const loading = useSelector(selectProductsLoading);
     const error = useSelector(selectProductsError);
     const categories = useSelector(selectCategories);
     const categoriesLoading = useSelector(selectCategoriesLoading);
     const categoriesError = useSelector(selectCategoriesError);
 
-    // Existing form state.
 
-    // Store selected image files.
     const [images, setImages] = useState([]);
     const [imageError, setImageError] = useState("");
 
-    // Fetch categories for the dropdown.
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
 
-    // Handle text and select inputs.
     const {
         register,
         handleSubmit,
@@ -62,12 +57,9 @@ function AdminAddProduct() {
             tags: "",
         },
     });
-    // Store all selected image files, up to five.
-    // Handle product image selection.
     const handleImageChange = (e) => {
         const selectedFiles = Array.from(e.target.files || []);
 
-        // Allow only JPEG, PNG and WebP images.
         const allowedTypes = [
             "image/jpeg",
             "image/png",
@@ -87,7 +79,6 @@ function AdminAddProduct() {
         setImages((previousImages) => {
             const combinedImages = [...previousImages, ...selectedFiles];
 
-            // Maximum five product images.
             if (combinedImages.length > 5) {
                 setImageError("You can upload a maximum of 5 images.");
                 return previousImages;
@@ -97,11 +88,8 @@ function AdminAddProduct() {
             return combinedImages;
         });
 
-        // Allow selecting the same file again.
         e.target.value = "";
     };
-    // Remove a selected image.
-    // Remove a selected product image.
     const handleRemoveImage = (indexToRemove) => {
         setImages((previousImages) =>
             previousImages.filter((_, index) => index !== indexToRemove)
@@ -110,10 +98,7 @@ function AdminAddProduct() {
         setImageError("");
     };
 
-    // Submit the product form.
-    // Handle valid product form submission.
     const onSubmit = async (values) => {
-        // Images are required, but they are managed separately from React Hook Form.
         if (images.length === 0) {
             setImageError("Please select at least one product image.");
             return;
@@ -121,7 +106,6 @@ function AdminAddProduct() {
 
         setImageError("");
 
-        // FormData is required because the request contains image files.
         const data = new FormData();
 
         data.append("title", values.title);
@@ -134,12 +118,10 @@ function AdminAddProduct() {
         data.append("stock", values.stock);
         data.append("tags", values.tags || "");
 
-        // Append every selected image using the backend field name.
         images.forEach((image) => {
             data.append("images", image);
         });
 
-        // Keep the existing Redux thunk and success navigation.
         const result = await dispatch(createProductThunk(data));
 
         if (createProductThunk.fulfilled.match(result)) {
@@ -149,7 +131,6 @@ function AdminAddProduct() {
         }
     };
 
-    // Shared styles use the TinyNest sage-green palette.
     const inputClass = `
         w-full rounded-lg border border-[#dce3df]
         bg-white px-4 py-3 text-sm text-[#34443d]
@@ -175,7 +156,6 @@ function AdminAddProduct() {
         <div className="min-h-screen bg-[#f7f9ff] px-4 py-6 sm:px-6 lg:px-8 dark:bg-gray-900">
             <div className="mx-auto max-w-5xl">
 
-                {/* Page heading */}
                 <header className="mb-7">
                     <button
                         type="button"
@@ -207,7 +187,6 @@ function AdminAddProduct() {
                     </div>
                 </header>
 
-                {/* Existing error display */}
                 {error && (
                     <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
                         {error}
@@ -216,7 +195,6 @@ function AdminAddProduct() {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
 
-                    {/* Basic Information */}
                     <section className={cardClass}>
                         <div className="mb-6 flex items-center gap-3">
                             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf4f0] text-lg text-[#436558] dark:bg-gray-700 dark:text-[#b9d6c9]">
@@ -233,7 +211,6 @@ function AdminAddProduct() {
                             </div>
                         </div>
 
-                        {/* Product title */}
                         <div className="mb-5">
                             <label htmlFor="title" className={labelClass}>
                                 Product Name
@@ -247,7 +224,6 @@ function AdminAddProduct() {
                                 className={inputClass}
                             />
 
-                            {/* Display validation error */}
                             {errors.title && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.title.message}
@@ -255,7 +231,6 @@ function AdminAddProduct() {
                             )}
                         </div>
 
-                        {/* Description */}
                         <div className="mb-5">
                             <label htmlFor="description" className={labelClass}>
                                 Description
@@ -269,7 +244,6 @@ function AdminAddProduct() {
                                 className={`${inputClass} resize-none`}
                             />
 
-                            {/* Display validation error */}
                             {errors.description && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.description.message}
@@ -277,7 +251,6 @@ function AdminAddProduct() {
                             )}
                         </div>
 
-                        {/* Price and discount */}
                         <div className="grid gap-5 md:grid-cols-2">
                             <div>
                                 <label htmlFor="price" className={labelClass}>
@@ -298,7 +271,6 @@ function AdminAddProduct() {
                                         className={`${inputClass} pl-9`}
                                     />
 
-                                    {/* Display validation error */}
                                     {errors.price && (
                                         <p className="mt-1 text-sm text-red-600">
                                             {errors.price.message}
@@ -321,7 +293,6 @@ function AdminAddProduct() {
                                     className={`${inputClass} pr-10`}
                                 />
 
-                                {/* Display validation error */}
                                 {errors.discount && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {errors.discount.message}
@@ -336,7 +307,6 @@ function AdminAddProduct() {
 
                     </section>
 
-                    {/* Product Details */}
                     <section className={cardClass}>
                         <div className="mb-6 flex items-center gap-3">
                             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#fbf0eb] text-lg text-[#bd8069] dark:bg-gray-700">
@@ -355,7 +325,6 @@ function AdminAddProduct() {
 
                         <div className="grid gap-5 md:grid-cols-2">
 
-                            {/* Category */}
                             <div>
                                 <label htmlFor="category" className={labelClass}>
                                     Category
@@ -378,14 +347,12 @@ function AdminAddProduct() {
                                     ))}
                                 </select>
 
-                                {/* Yup validation error */}
                                 {errors.category && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {errors.category.message}
                                     </p>
                                 )}
 
-                                {/* Existing category API error */}
                                 {categoriesError && (
                                     <p className="mt-2 text-sm text-red-600">
                                         {categoriesError}
@@ -394,7 +361,6 @@ function AdminAddProduct() {
 
                             </div>
 
-                            {/* Brand */}
                             <div>
                                 <label htmlFor="brand" className={labelClass}>
                                     Brand
@@ -415,7 +381,6 @@ function AdminAddProduct() {
                                 )}
                             </div>
 
-                            {/* Age group */}
                             <div>
                                 <label htmlFor="ageGroup" className={labelClass}>
                                     Age Group
@@ -442,7 +407,6 @@ function AdminAddProduct() {
                                 )}
                             </div>
 
-                            {/* Stock */}
                             <div>
                                 <label htmlFor="stock" className={labelClass}>
                                     Stock
@@ -465,7 +429,6 @@ function AdminAddProduct() {
                             </div>
                         </div>
 
-                        {/* Tags */}
                         <div className="mt-5">
                             <label htmlFor="tags" className={labelClass}>
                                 Tags
@@ -489,11 +452,9 @@ function AdminAddProduct() {
                                 </p>
                             )}
 
-
                         </div>
                     </section>
 
-                    {/* Product Images */}
                     <section className={cardClass}>
                         <div className="mb-6 flex items-center gap-3">
                             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#edf4f0] text-lg text-[#436558] dark:bg-gray-700 dark:text-[#b9d6c9]">
@@ -510,7 +471,6 @@ function AdminAddProduct() {
                             </div>
                         </div>
 
-                        {/* Existing file input and selection handler */}
                         <label
                             htmlFor="productImages"
                             className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-[#cbdcd3] bg-[#f7faf8] px-5 py-8 text-center transition hover:border-[#7a9e8f] hover:bg-[#edf4f0] dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600"
@@ -536,14 +496,12 @@ function AdminAddProduct() {
                                 className="sr-only"
                             />
                         </label>
-                        {/* Display image validation error */}
                         {imageError && (
                             <p className="mt-2 text-sm text-red-600">
                                 {imageError}
                             </p>
                         )}
 
-                        {/* Existing image previews and remove behaviour */}
                         {images.length > 0 && (
                             <div className="mt-6">
                                 <div className="mb-3 flex items-center justify-between">
@@ -589,7 +547,6 @@ function AdminAddProduct() {
                         )}
                     </section>
 
-                    {/* Form actions */}
                     <div className="flex flex-wrap justify-end gap-3 pb-4">
                         <button
                             type="button"

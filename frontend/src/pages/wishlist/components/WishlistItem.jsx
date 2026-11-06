@@ -7,18 +7,15 @@ import { removeFromWishlistThunk } from "../../../features/wishlist/wishlistThun
 function WishlistItem({ product }) {
     const dispatch = useDispatch();
 
-    // Remove only this product from the wishlist.
     const handleRemove = () => {
         dispatch(removeFromWishlistThunk(product._id));
     };
 
-    // Use the first product image, with a fallback for older records.
     const image = product.images?.[0] || product.image;
     const title = product.title || "Baby essential";
     const price = Number(product.price) || 0;
     const discount = Number(product.discount) || 0;
 
-    // Calculate the original price when discount is a percentage.
     const originalPrice =
         discount > 0 && discount < 100
             ? price / (1 - discount / 100)
@@ -27,7 +24,6 @@ function WishlistItem({ product }) {
     return (
         <article className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E5E8ED] bg-white p-2.5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-900">
 
-            {/* Product image and discount badge. */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#F1F4F9] dark:bg-gray-800">
                 {image ? (
                     <img
@@ -36,7 +32,6 @@ function WishlistItem({ product }) {
                         loading="lazy"
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         onError={(event) => {
-                            // Hide a broken image instead of showing a broken-image icon.
                             event.currentTarget.style.visibility = "hidden";
                         }}
                     />
@@ -53,7 +48,6 @@ function WishlistItem({ product }) {
                 )}
 
 
-                {/* Heart button removes the product from the wishlist. */}
                 <button
                     type="button"
                     onClick={handleRemove}
@@ -65,7 +59,6 @@ function WishlistItem({ product }) {
                 </button>
             </div>
 
-            {/* Product information follows the kit card layout. */}
             <div className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
                 <p className="mb-1 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     {product.brand || "TinyNest Essential"}
@@ -87,7 +80,6 @@ function WishlistItem({ product }) {
                     )}
                 </div>
 
-                {/* Keep the action at the bottom of every card. */}
                 <div className="mt-auto pt-4">
                     <Link
                         to={`/products/${product._id}`}

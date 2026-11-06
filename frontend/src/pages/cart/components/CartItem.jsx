@@ -1,4 +1,3 @@
-
 import { useDispatch } from "react-redux";
 
 import {
@@ -9,7 +8,6 @@ import {
 function CartItem({ item }) {
     const dispatch = useDispatch();
 
-    // Work out the discounted price in one reusable function.
     const getSellingPrice = (entry) => {
         const price = Number(entry?.price) || 0;
         const discount = Number(entry?.discount) || 0;
@@ -17,17 +15,12 @@ function CartItem({ item }) {
         return Math.max(0, price - (price * discount) / 100);
     };
 
-    // Shared styling for the quantity controls.
     const quantityButtonClass =
         "flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-lg text-gray-700 transition hover:border-[#436558] hover:text-[#436558] disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200";
 
-    // ---------------------------------------------
-    // PRODUCT ITEM
-    // ---------------------------------------------
     if (item.itemType === "product") {
         const product = item.product;
 
-        // Handle products that no longer exist in the database.
         if (!product || typeof product !== "object") {
             return (
                 <article className="rounded-2xl border border-red-100 bg-white p-5 dark:border-red-900 dark:bg-gray-900">
@@ -60,7 +53,6 @@ function CartItem({ item }) {
         const handleQuantityChange = (quantity) => {
             if (quantity < 1) return;
 
-            // Prevent increasing beyond the available stock.
             if (product.stock != null && quantity > product.stock) return;
 
             dispatch(
@@ -84,7 +76,6 @@ function CartItem({ item }) {
         return (
             <article className="rounded-2xl bg-white p-4 shadow-[0_2px_14px_-8px_rgba(43,47,51,0.12)] transition-shadow hover:shadow-[0_6px_22px_-10px_rgba(43,47,51,0.2)] sm:p-5 dark:bg-gray-900 dark:ring-1 dark:ring-gray-800">
                 <div className="flex gap-4 sm:gap-5">
-                    {/* Product image */}
                     <div className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-[#f0f1f2] sm:h-32 sm:w-32 dark:bg-gray-800">
                         {product.images?.length > 0 ? (
                             <img
@@ -99,7 +90,6 @@ function CartItem({ item }) {
                         )}
                     </div>
 
-                    {/* Product details and controls */}
                     <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -116,7 +106,6 @@ function CartItem({ item }) {
                                 </span>
                             </div>
 
-                            {/* Item total */}
                             <div className="shrink-0 text-right">
                                 <p className="font-semibold text-gray-900 dark:text-white">
                                     ₹{(sellingPrice * item.quantity).toFixed(2)}
@@ -133,7 +122,6 @@ function CartItem({ item }) {
                             </div>
                         </div>
 
-                        {/* Unit price and discount */}
                         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                             <span className="font-medium text-gray-700 dark:text-gray-200">
                                 ₹{sellingPrice.toFixed(2)} each
@@ -146,7 +134,6 @@ function CartItem({ item }) {
                             )}
                         </div>
 
-                        {/* Quantity and remove actions */}
                         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                             <div className="flex items-center gap-3 rounded-full bg-[#f4f5f7] p-1 dark:bg-gray-800">
                                 <button
@@ -195,13 +182,10 @@ function CartItem({ item }) {
         );
     }
 
-    // ---------------------------------------------
-    // KIT ITEM
-    // ---------------------------------------------
+
     if (item.itemType === "kit") {
         const kit = item.kit;
 
-        // Keep stale kit entries removable from the cart.
         if (!kit || typeof kit !== "object") {
             return (
                 <article className="rounded-2xl border border-red-100 bg-white p-5 dark:border-red-900 dark:bg-gray-900">
@@ -255,7 +239,6 @@ function CartItem({ item }) {
         return (
             <article className="rounded-2xl bg-white p-4 shadow-[0_2px_14px_-8px_rgba(43,47,51,0.12)] transition-shadow hover:shadow-[0_6px_22px_-10px_rgba(43,47,51,0.2)] sm:p-5 dark:bg-gray-900 dark:ring-1 dark:ring-gray-800">
                 <div className="flex gap-4 sm:gap-5">
-                    {/* Kit image */}
                     <div className="h-28 w-24 shrink-0 overflow-hidden rounded-xl bg-[#f0f1f2] sm:h-32 sm:w-32 dark:bg-gray-800">
                         {kit.image ? (
                             <img
@@ -270,7 +253,6 @@ function CartItem({ item }) {
                         )}
                     </div>
 
-                    {/* Kit details and controls */}
                     <div className="flex min-w-0 flex-1 flex-col">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -287,7 +269,6 @@ function CartItem({ item }) {
                                 </span>
                             </div>
 
-                            {/* Kit total */}
                             <div className="shrink-0 text-right">
                                 <p className="font-semibold text-gray-900 dark:text-white">
                                     ₹{(sellingPrice * item.quantity).toFixed(2)}
@@ -304,7 +285,6 @@ function CartItem({ item }) {
                             </div>
                         </div>
 
-                        {/* Unit price and discount */}
                         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                             <span className="font-medium text-gray-700 dark:text-gray-200">
                                 ₹{sellingPrice.toFixed(2)} each
@@ -317,7 +297,6 @@ function CartItem({ item }) {
                             )}
                         </div>
 
-                        {/* Quantity and remove actions */}
                         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                             <div className="flex items-center gap-3 rounded-full bg-[#f4f5f7] p-1 dark:bg-gray-800">
                                 <button
@@ -359,7 +338,6 @@ function CartItem({ item }) {
                     </div>
                 </div>
 
-                {/* Display the kit's included products when available. */}
                 {kit.items?.length > 0 && (
                     <div className="mt-4 rounded-xl bg-[#f7f8fb] p-4 dark:bg-gray-800">
                         <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -388,7 +366,6 @@ function CartItem({ item }) {
         );
     }
 
-    // Don't render unsupported cart item types.
     return null;
 }
 

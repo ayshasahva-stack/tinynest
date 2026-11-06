@@ -1,13 +1,8 @@
-// Import Redux Toolkit's store creator
 import { configureStore } from "@reduxjs/toolkit";
 
-// Import the products reducer
-import productReducer from "../features/products/productSlice";
-// Import the authentication reducer
 import authReducer from "../features/auth/authSlice";
-// Import the category reducer
+import productReducer from "../features/products/productSlice";
 import categoryReducer from "../features/categories/categorySlice";
-// Import the cart reducer
 import cartReducer from "../features/cart/cartSlice";
 import wishlistReducer from "../features/wishlist/wishlistSlice";
 import checkoutReducer from "../features/checkout/checkoutSlice";
@@ -16,19 +11,15 @@ import addressReducer from "../features/addresses/addressSlice";
 import reviewReducer from "../features/reviews/reviewSlice";
 import kitReducer from "../features/kits/kitSlice";
 import couponReducer from "../features/coupons/couponSlice";
+import adminReducer from "../features/admin/adminSlice";
 import userReducer from "../features/users/userSlice";
 import paymentReducer from "../features/payments/paymentSlice";
-// Import the refund reducer.
 import refundReducer from "../features/refund/refundSlice";
 
-
-import adminReducer from "../features/admin/adminSlice";
-// Create the application's Redux store
 const store = configureStore({
     reducer: {
-        // Store all product-related state under "products"
-        products: productReducer,
         auth: authReducer,
+        products: productReducer,
         categories: categoryReducer,
         cart: cartReducer,
         wishlist: wishlistReducer,
@@ -38,7 +29,6 @@ const store = configureStore({
         reviews: reviewReducer,
         kits: kitReducer,
         coupons: couponReducer,
-
         admin: adminReducer,
         users: userReducer,
         payments: paymentReducer,
@@ -46,5 +36,4 @@ const store = configureStore({
     },
 });
 
-// Export the configured Redux store
 export default store;

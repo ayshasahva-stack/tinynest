@@ -1,14 +1,10 @@
 
-// Import React state to display deletion errors
 import { useState } from "react";
 
-// Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
 
-// Import delete review thunk
 import { deleteReviewThunk } from "../../../features/reviews/reviewThunk";
 
-// Import review loading selector
 import { selectReviewLoading } from "../../../features/reviews/reviewSelectors";
 
 function ReviewList({ reviews, currentUser, onEdit }) {
@@ -16,20 +12,16 @@ function ReviewList({ reviews, currentUser, onEdit }) {
 
     const loading = useSelector(selectReviewLoading);
 
-    // Store deletion errors so customers can see them
     const [deleteError, setDeleteError] = useState("");
 
-    // Check whether the review belongs to the logged-in user
     const isReviewOwnedByUser = (review) => {
         const currentUserId = currentUser?._id || currentUser?.id;
         const reviewUserId = review.user?._id || review.user?.id;
 
-        // Prefer comparing user IDs
         if (currentUserId && reviewUserId) {
             return String(currentUserId) === String(reviewUserId);
         }
 
-        // Fall back to email comparison when IDs aren't available
         if (currentUser?.email && review.user?.email) {
             return (
                 currentUser.email.toLowerCase() ===
@@ -40,7 +32,6 @@ function ReviewList({ reviews, currentUser, onEdit }) {
         return false;
     };
 
-    // Delete the logged-in user's review
     const handleDelete = async (reviewId) => {
         const confirmed = window.confirm(
             "Are you sure you want to delete this review?"
@@ -48,15 +39,12 @@ function ReviewList({ reviews, currentUser, onEdit }) {
 
         if (!confirmed) return;
 
-        // Clear an earlier error before trying again
         setDeleteError("");
 
         try {
             await dispatch(deleteReviewThunk(reviewId)).unwrap();
 
-            // The Redux slice removes the deleted review on success
         } catch (error) {
-            // Display the error in the page instead of only the console
             setDeleteError(
                 typeof error === "string"
                     ? error
@@ -65,7 +53,6 @@ function ReviewList({ reviews, currentUser, onEdit }) {
         }
     };
 
-    // Show a message when there are no reviews
     if (reviews.length === 0) {
         return (
             <div className="space-y-4">
@@ -89,7 +76,6 @@ function ReviewList({ reviews, currentUser, onEdit }) {
 
     return (
         <div className="space-y-5">
-            {/* Show deletion errors above the review list */}
             {deleteError && (
                 <p
                     role="alert"
@@ -107,14 +93,12 @@ function ReviewList({ reviews, currentUser, onEdit }) {
                         key={review._id}
                         className="rounded-xl border border-gray-200 p-5 dark:border-gray-700"
                     >
-                        {/* Reviewer information */}
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                                 <p className="font-semibold text-gray-900 dark:text-white">
                                     {review.user?.email || "Customer"}
                                 </p>
 
-                                {/* Display the review's star rating */}
                                 <div className="mt-1 flex items-center gap-2">
                                     <div className="flex">
                                         {[1, 2, 3, 4, 5].map((star) => (
@@ -137,7 +121,6 @@ function ReviewList({ reviews, currentUser, onEdit }) {
                                 </div>
                             </div>
 
-                            {/* Review creation date */}
                             <span className="text-sm text-gray-500 dark:text-gray-400">
                                 {review.createdAt
                                     ? new Date(review.createdAt).toLocaleDateString()
@@ -145,14 +128,12 @@ function ReviewList({ reviews, currentUser, onEdit }) {
                             </span>
                         </div>
 
-                        {/* Review comment */}
                         {review.comment && (
                             <p className="mt-4 leading-7 text-gray-700 dark:text-gray-300">
                                 {review.comment}
                             </p>
                         )}
 
-                        {/* Only show edit/delete actions to the owner */}
                         {isOwnReview && (
                             <div className="mt-4 flex gap-4">
                                 <button

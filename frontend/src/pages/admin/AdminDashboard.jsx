@@ -61,13 +61,7 @@ import {
 } from "../../features/admin/adminSelectors";
 
 function AdminDashboard() {
-    // Redux dispatch allows us to send actions/thunks.
     const dispatch = useDispatch();
-
-    // -----------------------------------------
-    // Dashboard overview
-    // -----------------------------------------
-
     const overview = useSelector(selectAdminOverview);
 
     const overviewLoading = useSelector(
@@ -78,9 +72,6 @@ function AdminDashboard() {
         selectAdminError
     );
 
-    // -----------------------------------------
-    // Recent activity
-    // -----------------------------------------
 
     const recentOrders = useSelector(
         selectRecentOrders
@@ -105,10 +96,6 @@ function AdminDashboard() {
     const lowStockLoading = useSelector(
         selectLowStockLoading
     );
-
-    // -----------------------------------------
-    // Sales analytics
-    // -----------------------------------------
 
     const sales = useSelector(selectSales);
 
@@ -148,63 +135,37 @@ function AdminDashboard() {
         selectTopProductsLoading
     );
 
-    // -----------------------------------------
-    // Fetch all admin dashboard data
-    // -----------------------------------------
-
     useEffect(() => {
-        // Dashboard overview.
         dispatch(getDashboardOverviewThunk());
 
-        // Recent activity.
         dispatch(getRecentOrdersThunk());
         dispatch(getRecentCustomersThunk());
         dispatch(getLowStockProductsThunk());
 
-        // Sales analytics.
         dispatch(getSalesStatisticsThunk());
         dispatch(getMonthlySalesThunk());
 
-        // Order and payment analytics.
         dispatch(getOrderStatisticsThunk());
         dispatch(getPaymentStatisticsThunk());
 
-        // Top-selling products.
         dispatch(getTopSellingProductsThunk());
     }, [dispatch]);
-
-    // -----------------------------------------
-    // Main dashboard loading
-    // -----------------------------------------
-
-    // Show the reusable loading animation while dashboard data loads.
 if (overviewLoading) {
     return <Loading />;
 }
 
-    // -----------------------------------------
-    // Main dashboard error
-    // -----------------------------------------
-
    if (overviewError) {
     return (
         <div className="min-h-screen bg-[#f7f9ff] p-6 text-[#181c20] dark:bg-gray-950 dark:text-gray-100">
-            {/* Display the existing dashboard error */}
             <p className="text-red-500 dark:text-red-400">
                 {overviewError}
             </p>
         </div>
     );
 }
-
-    // Wait until overview data is available.
     if (!overview) {
         return null;
     }
-
-    // -----------------------------------------
-    // Prepare monthly sales chart data
-    // -----------------------------------------
 
     const monthlySalesChartData = monthlySales.map(
         (item) => ({
@@ -214,10 +175,6 @@ if (overviewLoading) {
         })
     );
 
-    // -----------------------------------------
-    // Prepare daily sales chart data
-    // -----------------------------------------
-
     const dailySalesChartData = sales.map(
         (item) => ({
             date: item._id,
@@ -226,20 +183,12 @@ if (overviewLoading) {
         })
     );
 
-    // -----------------------------------------
-    // Prepare order statistics chart data
-    // -----------------------------------------
-
     const orderChartData = orderStatistics.map(
         (item) => ({
             name: item._id,
             value: item.count,
         })
     );
-
-    // -----------------------------------------
-    // Prepare payment statistics chart data
-    // -----------------------------------------
 
     const paymentChartData = paymentStatistics.map(
         (item) => ({
@@ -249,10 +198,6 @@ if (overviewLoading) {
         })
     );
 
-    // -----------------------------------------
-    // Prepare top-selling products chart data
-    // -----------------------------------------
-
     const topProductsChartData =
         topSellingProducts.map((product) => ({
             name: product.title,
@@ -261,12 +206,8 @@ if (overviewLoading) {
 
     
 return (
-    // AdminLayout continues to handle the sidebar and page structure.
     <div className="min-h-screen bg-[#f7f9ff] px-4 pb-8 pt-5 font-sans text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8">
 
-        {/* =====================================================
-            1. PAGE HEADER — matches the ZIP's Store Overview
-        ====================================================== */}
         <header className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
             <div>
                 <div className="mb-2 flex items-center gap-2 text-xs text-[#626c68] dark:text-gray-400">
@@ -286,8 +227,6 @@ return (
                 </p>
             </div>
 
-            {/* Styled like the reference's quick-action toolbar.
-                No new actions or business logic are introduced. */}
             <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#436558] shadow-sm dark:bg-gray-900 dark:text-[#a9cfbe]">
                     <span aria-hidden="true">▦</span>
@@ -301,13 +240,8 @@ return (
             </div>
         </header>
 
-        {/* =====================================================
-            2. FOUR KEY METRIC CARDS
-            Uses the real overview values already in Redux.
-        ====================================================== */}
         <section className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-            {/* Total Revenue */}
             <article className="group relative overflow-hidden rounded-xl border border-transparent bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                 <div className="pointer-events-none absolute -right-5 -top-5 h-24 w-24 rounded-full bg-[#c5ebda]/50 blur-2xl transition-transform group-hover:scale-125" />
 
@@ -329,7 +263,6 @@ return (
                 </p>
             </article>
 
-            {/* Total Orders */}
             <article className="group relative overflow-hidden rounded-xl border border-transparent bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                 <div className="pointer-events-none absolute -right-5 -top-5 h-24 w-24 rounded-full bg-[#f0bba5]/30 blur-2xl transition-transform group-hover:scale-125" />
 
@@ -352,7 +285,6 @@ return (
                 </p>
             </article>
 
-            {/* Total Products */}
             <article className="group relative overflow-hidden rounded-xl border border-transparent bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
                 <div className="pointer-events-none absolute -right-5 -top-5 h-24 w-24 rounded-full bg-[#c5ebda]/50 blur-2xl transition-transform group-hover:scale-125" />
 
@@ -397,10 +329,6 @@ return (
             </article>
         </section>
 
-        {/* =====================================================
-            3. MAIN ANALYTICS — large chart + donut chart
-            Mirrors the ZIP's 8-column / 4-column arrangement.
-        ====================================================== */}
         <section className="mb-6 grid grid-cols-1 gap-5 xl:grid-cols-12">
 
             {/* Sales & Order Volume */}

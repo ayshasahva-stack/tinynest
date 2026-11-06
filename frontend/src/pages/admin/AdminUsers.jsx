@@ -23,7 +23,6 @@ import { clearUserFeedback } from "../../features/users/userSlice";
 function AdminUsers() {
     const dispatch = useDispatch();
 
-    // Read customer information and request states from Redux.
     const users = useSelector(selectUsers);
     const loading = useSelector(selectUsersLoading);
     const error = useSelector(selectUsersError);
@@ -31,15 +30,12 @@ function AdminUsers() {
     const actionError = useSelector(selectUserActionError);
     const actionSuccess = useSelector(selectUserActionSuccess);
 
-    // Keep the search input local to this page.
     const [search, setSearch] = useState("");
 
-    // Fetch customers when the page first opens.
     useEffect(() => {
         dispatch(getAllUsersThunk());
     }, [dispatch]);
 
-    // Search locally without making a new API request per keystroke.
     const filteredUsers = useMemo(() => {
         const query = search.trim().toLowerCase();
 
@@ -51,7 +47,6 @@ function AdminUsers() {
         );
     }, [users, search]);
 
-    // Block or unblock a customer after confirmation.
     const handleToggleBlock = async (user) => {
         const action = user.isBlocked ? "unblock" : "block";
 
@@ -70,7 +65,6 @@ function AdminUsers() {
         }
     };
 
-    // Permanently delete a customer after confirmation.
     const handleDelete = async (user) => {
         const confirmed = window.confirm(
             `Permanently delete ${user.email}? This action cannot be undone.`
@@ -86,7 +80,6 @@ function AdminUsers() {
 return (
     <div className="min-h-screen space-y-6 bg-[#f7f9ff] p-4 text-[#263d32] transition-colors duration-200 dark:bg-gray-950 dark:text-gray-100 sm:p-6 md:p-8">
 
-        {/* Page heading */}
         <div>
             <h1 className="font-serif text-2xl font-semibold tracking-tight text-[#263d32] dark:text-white sm:text-3xl">
                 User Management
@@ -97,7 +90,6 @@ return (
             </p>
         </div>
 
-        {/* Summary cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
                 {
@@ -138,7 +130,6 @@ return (
             ))}
         </div>
 
-        {/* Search customers */}
         <section className="rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm transition-colors dark:border-gray-800 dark:bg-gray-900">
             <label
                 htmlFor="userSearch"
@@ -157,7 +148,6 @@ return (
             />
         </section>
 
-        {/* API error */}
         {error && (
             <div
                 role="alert"

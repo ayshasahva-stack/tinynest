@@ -11,8 +11,6 @@ import {
 } from "../../features/refund/refundSelectors";
 import { selectAuthUser } from "../../features/auth/authSelectors";
 
-// Use the same TinyNest sage-green color for the refund status indicators,
-// while keeping rejected requests visually distinct.
 const refundStatusStyles = {
     requested:
         "bg-[#f8edcf] text-[#80621f] dark:bg-amber-950 dark:text-amber-200",
@@ -34,7 +32,6 @@ const refundStatusLabels = {
     completed: "Completed",
 };
 
-// Small reusable line icons.
 function Icon({ type, className = "h-5 w-5" }) {
     const paths = {
         overview: (
@@ -96,27 +93,22 @@ function Icon({ type, className = "h-5 w-5" }) {
 }
 
 
-// Main customer refund history page.
 function MyRefunds() {
     const dispatch = useDispatch();
 
-    // Keep using the existing Redux selectors and thunk.
     const user = useSelector(selectAuthUser);
     const refunds = useSelector(selectMyRefunds);
     const loading = useSelector(selectRefundsLoading);
     const error = useSelector(selectRefundsError);
 
-    // Fetch the customer's refund history when the page opens.
     useEffect(() => {
         dispatch(getMyRefundsThunk());
     }, [dispatch]);
 
-    // Refresh the existing refund history from the backend.
     const handleRefresh = () => {
         dispatch(getMyRefundsThunk());
     };
 
-    // Format amounts as Indian Rupees.
     const formatAmount = (amount) =>
         new Intl.NumberFormat("en-IN", {
             style: "currency",
@@ -124,7 +116,6 @@ function MyRefunds() {
             maximumFractionDigits: 2,
         }).format(Number(amount) || 0);
 
-    // Format request dates safely.
     const formatDate = (date) => {
         if (!date) return "Date unavailable";
 
@@ -141,7 +132,6 @@ function MyRefunds() {
         });
     };
 
-    // Avoid showing a populated order object as [object Object].
     const getOrderId = (order) => {
         if (!order) return "Unavailable";
 
@@ -160,7 +150,6 @@ function MyRefunds() {
     return (
         <main className="min-h-screen bg-[#f7f9ff] px-4 py-7 text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1400px]">
-                {/* Page header */}
                 <header className="mb-7 rounded-2xl bg-gradient-to-r from-white via-[#f1f4f9] to-[#e5f4ed] p-6 dark:from-gray-900 dark:via-gray-900 dark:to-emerald-950/30 sm:p-8">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#436558] dark:text-emerald-300">
                         Your TinyNest account
@@ -184,12 +173,10 @@ function MyRefunds() {
                     </p>
                 </header>
 
-                {/* Sidebar and refund content */}
                 <div className="grid items-start gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
                     <AccountSidebar user={user} />
 
                     <section className="min-w-0 rounded-2xl bg-white p-5 shadow-sm dark:bg-gray-900 sm:p-7 lg:p-8">
-                        {/* Section heading */}
                         <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-b border-[#edf0f5] pb-5 dark:border-gray-800">
                             <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#436558] dark:text-emerald-300">
@@ -229,7 +216,6 @@ function MyRefunds() {
                             </button>
                         </div>
 
-                        {/* Pending summary */}
                         {!loading && refunds.length > 0 && (
                             <div className="mb-6 flex items-start gap-3 rounded-xl border border-[#dce7e2] bg-[#f3f8f5] p-4 dark:border-gray-800 dark:bg-emerald-950/20">
                                 <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#dce7e2] text-[#436558] dark:bg-emerald-950 dark:text-emerald-300">
@@ -255,7 +241,6 @@ function MyRefunds() {
                             </div>
                         )}
 
-                        {/* Fetch error */}
                         {error && (
                             <div
                                 role="alert"
@@ -265,7 +250,6 @@ function MyRefunds() {
                             </div>
                         )}
 
-                        {/* Loading state */}
                         {loading && refunds.length === 0 ? (
                             <div className="flex min-h-64 flex-col items-center justify-center rounded-xl bg-[#f7f9ff] dark:bg-gray-800">
                                 <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#dce7e2] border-t-[#436558]" />
@@ -274,7 +258,6 @@ function MyRefunds() {
                                 </p>
                             </div>
                         ) : refunds.length === 0 ? (
-                            /* Empty state */
                             <div className="flex min-h-72 flex-col items-center justify-center rounded-xl bg-[#f7f9ff] px-5 py-10 text-center dark:bg-gray-800">
                                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#dce7e2] text-[#436558] dark:bg-emerald-950 dark:text-emerald-300">
                                     <Icon
@@ -300,7 +283,6 @@ function MyRefunds() {
                                 </Link>
                             </div>
                         ) : (
-                            /* Refund cards */
                             <div className="space-y-5">
                                 {refunds.map((refund) => {
                                     const status =
@@ -323,7 +305,6 @@ function MyRefunds() {
                                             key={refund._id}
                                             className="overflow-hidden rounded-2xl border border-[#e7ebe8] bg-white transition hover:border-[#cbdad2] dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
                                         >
-                                            {/* Card top */}
                                             <div className="flex flex-wrap items-start justify-between gap-4 bg-[#fbfcfb] p-5 dark:bg-gray-900 sm:p-6">
                                                 <div className="flex min-w-0 items-start gap-3">
                                                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#e5f0ea] text-[#436558] dark:bg-emerald-950 dark:text-emerald-300">
@@ -357,7 +338,6 @@ function MyRefunds() {
                                                 </span>
                                             </div>
 
-                                            {/* Refund details */}
                                             <div className="grid gap-4 border-t border-[#edf0f5] p-5 dark:border-gray-800 sm:grid-cols-2 sm:p-6">
                                                 <div className="rounded-xl bg-[#f7f9ff] p-4 dark:bg-gray-800">
                                                     <p className="text-xs font-medium text-[#717974] dark:text-gray-400">
@@ -404,7 +384,6 @@ function MyRefunds() {
                                                 </div>
                                             </div>
 
-                                            {/* Customer reason and admin note */}
                                             <div className="border-t border-[#edf0f5] p-5 dark:border-gray-800 sm:p-6">
                                                 <div>
                                                     <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[#717974] dark:text-gray-400">
@@ -428,7 +407,6 @@ function MyRefunds() {
                                                 )}
                                             </div>
 
-                                            {/* Card footer */}
                                             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#edf0f5] bg-[#fbfcfb] px-5 py-4 dark:border-gray-800 dark:bg-gray-900 sm:px-6">
                                                 <p className="text-xs leading-5 text-[#717974] dark:text-gray-400">
                                                     {status === "completed"

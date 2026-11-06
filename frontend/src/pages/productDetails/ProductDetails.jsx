@@ -1,92 +1,48 @@
-// Import React hooks
 import { useEffect, useState } from "react";
 
-// Import Redux hooks
 import { useDispatch, useSelector } from "react-redux";
 
-// Import React Router hooks
 import { useNavigate, useParams } from "react-router-dom";
 
-// -----------------------------------------
-// PRODUCT IMPORTS
-// -----------------------------------------
-
-// Import the product fetching thunk
 import {
     fetchProductById,
 } from "../../features/products/productThunk";
 
-// -----------------------------------------
-// CART IMPORTS
-// -----------------------------------------
-
-// Import cart thunk
 import {
     addToCartThunk,
 } from "../../features/cart/cartThunk";
 
-// -----------------------------------------
-// WISHLIST IMPORTS
-// -----------------------------------------
-
-// Import wishlist thunks
 import {
     addToWishlistThunk,
     getMyWishlistThunk,
     removeFromWishlistThunk,
 } from "../../features/wishlist/wishlistThunk";
 
-// -----------------------------------------
-// AUTH IMPORTS
-// -----------------------------------------
-
-// Import authentication selectors
 import {
     selectAuthUser,
     selectIsAuthenticated,
 } from "../../features/auth/authSelectors";
 
-// -----------------------------------------
-// PRODUCT SELECTORS
-// -----------------------------------------
-
-// Import product selectors
 import {
     selectSelectedProduct,
     selectProductsLoading,
     selectProductsError,
 } from "../../features/products/productSelectors";
 
-// -----------------------------------------
-// CART SELECTORS
-// -----------------------------------------
-
-// Import cart selectors
 import {
     selectCartLoading,
     selectCartError,
 } from "../../features/cart/cartSelectors";
 
-// -----------------------------------------
-// WISHLIST SELECTORS
-// -----------------------------------------
-
-// Import wishlist selectors
 import {
     selectWishlistLoading,
     selectWishlistProducts,
 } from "../../features/wishlist/wishlistSelectors";
 
-// -----------------------------------------
-// REVIEW IMPORTS
-// -----------------------------------------
-
-// Import review thunk
 import {
     getProductReviewsThunk,
 } from "../../features/reviews/reviewThunk";
 
-// Import review selectors
 import {
     selectReviews,
     selectReviewLoading,
@@ -94,58 +50,24 @@ import {
 } from "../../features/reviews/reviewSelectors";
 
 
-// -----------------------------------------
-// REVIEW COMPONENTS
-// -----------------------------------------
-
 import ReviewForm from "./components/ReviewForm";
 import ReviewList from "./components/ReviewList";
 
 import BabyKitSection from "../home/components/BabyKitSection"
 
 
-// Product Details page component
 function ProductDetails() {
 
-    // -----------------------------------------
-    // URL PARAMETERS
-    // -----------------------------------------
-
-    // Get the product ID from the URL
     const { id } = useParams();
-
-
-    // -----------------------------------------
-    // REDUX
-    // -----------------------------------------
-
-    // Get Redux dispatch function
     const dispatch = useDispatch();
-
-    // Get navigation function
     const navigate = useNavigate();
-
-
-    // -----------------------------------------
-    // AUTH STATE
-    // -----------------------------------------
-
-    // Get the currently logged-in user
     const user = useSelector(selectAuthUser);
 
-    // Check whether the user is authenticated
     const isAuthenticated = useSelector(
         selectIsAuthenticated
     );
 
-
-    // -----------------------------------------
-    // PRODUCT STATE
-    // -----------------------------------------
-
-    // Get selected product from Redux
     const product = useSelector(selectSelectedProduct);
-    // TEMP: Check how many images the backend returned.
     useEffect(() => {
         if (product) {
             console.log("Product title:", product.title);
@@ -154,126 +76,68 @@ function ProductDetails() {
         }
     }, [product]);
 
-    // Get product loading state
     const productLoading = useSelector(
         selectProductsLoading
     );
 
-    // Get product error
     const productError = useSelector(
         selectProductsError
     );
 
-
-    // -----------------------------------------
-    // CART STATE
-    // -----------------------------------------
-
-    // Get cart loading state
     const cartLoading = useSelector(
         selectCartLoading
     );
 
-    // Get cart error
     const cartError = useSelector(
         selectCartError
     );
-
-
-    // -----------------------------------------
-    // WISHLIST STATE
-    // -----------------------------------------
-
-    // Get wishlist loading state
     const wishlistLoading = useSelector(
         selectWishlistLoading
     );
 
-    // Get all products currently saved in wishlist
     const wishlistProducts = useSelector(
         selectWishlistProducts
     );
 
-
-    // -----------------------------------------
-    // REVIEW STATE
-    // -----------------------------------------
-
-    // Get reviews for the current product
     const reviews = useSelector(
         selectReviews
     );
 
-    // Get review loading state
     const reviewsLoading = useSelector(
         selectReviewLoading
     );
 
-    // Get review error
     const reviewsError = useSelector(
         selectReviewError
     );
-
-
-    // -----------------------------------------
-    // REVIEW FORM STATE
-    // -----------------------------------------
-
-    // Controls whether the new review form is visible
     const [showReviewForm, setShowReviewForm] =
         useState(false);
 
-    // Stores the review currently being edited
     const [editingReview, setEditingReview] =
         useState(null);
 
-    // Stores the image currently displayed in the gallery.
     const [selectedImage, setSelectedImage] = useState("");
-    // Controls which product-details tab is currently visible.
     const [activeTab, setActiveTab] = useState("description");
 
-    // Stores the quantity the customer wants to purchase.
     const [quantity, setQuantity] = useState(1);
-    // -----------------------------------------
-    // FETCH PRODUCT, WISHLIST AND REVIEWS
-    // -----------------------------------------
 
     useEffect(() => {
 
-        // Fetch the selected product
         dispatch(fetchProductById(id));
-
-        // Fetch the user's wishlist
         dispatch(getMyWishlistThunk());
-
-        // Fetch reviews for this product
         dispatch(getProductReviewsThunk(id));
-
     }, [dispatch, id]);
-    // Select the first product image whenever the product changes.
-    // Reset the gallery and quantity when a different product loads.
     useEffect(() => {
         setSelectedImage(product?.images?.[0] || "");
         setQuantity(1);
     }, [product?._id, product?.images]);
 
-    // -----------------------------------------
-    // CHECK WISHLIST STATUS
-    // -----------------------------------------
-
-    // Check whether this product is already
-    // inside the user's wishlist
     const isInWishlist =
         product &&
         wishlistProducts.some(
             (wishlistProduct) =>
                 wishlistProduct._id === product._id
         );
-
-
-    // -----------------------------------------
-    // CALCULATE AVERAGE RATING
-    // -----------------------------------------
 
     const averageRating =
         reviews.length > 0
@@ -293,8 +157,6 @@ function ProductDetails() {
 
         const reviewUserId =
             review.user?._id || review.user?.id;
-
-        // Compare IDs when available
         if (
             currentUserId &&
             reviewUserId
@@ -302,7 +164,6 @@ function ProductDetails() {
             return currentUserId === reviewUserId;
         }
 
-        // Fallback to email comparison
         if (
             user?.email &&
             review.user?.email
@@ -315,17 +176,11 @@ function ProductDetails() {
 
         return false;
     });
-    // -----------------------------------------
-    // HANDLE ADD TO CART
-    // -----------------------------------------
-
-    // Add the selected quantity of this product to the cart.
     const handleAddToCart = async () => {
         if (!product || product.stock <= 0) {
             return;
         }
 
-        // Never request more items than are currently in stock.
         const safeQuantity = Math.min(quantity, product.stock);
 
         const result = await dispatch(
@@ -336,26 +191,17 @@ function ProductDetails() {
             })
         );
 
-        // Navigate only after Redux confirms the cart update succeeded.
         if (addToCartThunk.fulfilled.match(result)) {
             navigate("/cart");
         }
     };
 
-
-    // -----------------------------------------
-    // HANDLE WISHLIST TOGGLE
-    // -----------------------------------------
-
     const handleWishlistToggle = () => {
 
-        // Make sure a product exists
         if (!product) {
             return;
         }
 
-        // If product is already in wishlist,
-        // remove it
         if (isInWishlist) {
 
             dispatch(
@@ -363,8 +209,6 @@ function ProductDetails() {
             );
 
         } else {
-
-            // Otherwise add it to wishlist
             dispatch(
                 addToWishlistThunk(product._id)
             );
@@ -372,12 +216,6 @@ function ProductDetails() {
         }
     };
 
-
-    // -----------------------------------------
-    // PRODUCT LOADING
-    // -----------------------------------------
-
-    // Show loading while product is being fetched
     if (productLoading) {
 
         return (
@@ -392,11 +230,6 @@ function ProductDetails() {
 
         );
     }
-
-
-    // -----------------------------------------
-    // PRODUCT ERROR
-    // -----------------------------------------
 
     if (productError) {
 
@@ -413,11 +246,6 @@ function ProductDetails() {
         );
     }
 
-
-    // -----------------------------------------
-    // PRODUCT NOT FOUND
-    // -----------------------------------------
-
     if (!product) {
 
         return (
@@ -433,18 +261,10 @@ function ProductDetails() {
         );
     }
 
-
-    // -----------------------------------------
-    // PAGE
-    // -----------------------------------------
-
-
-
     return (
         <main className="min-h-screen bg-[#F7F9FF] px-4 py-7 text-[#181C20] transition-colors dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:py-10">
             <div className="mx-auto max-w-[1240px]">
 
-                {/* Breadcrumbs: preserve the existing application routes. */}
                 <nav
                     aria-label="Breadcrumb"
                     className="mb-6 flex flex-wrap items-center gap-2 text-sm text-[#414845] dark:text-gray-400"
@@ -470,10 +290,8 @@ function ProductDetails() {
                     </span>
                 </nav>
 
-                {/* Main product showcase: gallery left, information right. */}
                 <section className="grid grid-cols-1 items-start gap-7 lg:grid-cols-12 lg:gap-10">
 
-                    {/* Product image gallery */}
                     <div className="lg:col-span-6">
                         <div className="relative flex min-h-[350px] items-center justify-center sm:min-h-[500px]">
                             {product.discount > 0 && (
@@ -496,7 +314,6 @@ function ProductDetails() {
                             )}
                         </div>
 
-                        {/* Thumbnails only appear when multiple real images exist. */}
                         {product.images?.length > 1 && (
                             <div className="mt-4 flex flex-wrap gap-3">
                                 {product.images.map((image, index) => (
@@ -521,7 +338,6 @@ function ProductDetails() {
                             </div>
                         )}
 
-                        {/* Small information cards use no unsupported product claims. */}
                         <div className="mt-4 grid grid-cols-2 gap-3">
                             <div className="rounded-xl bg-[#F1F4F9] p-4 dark:bg-gray-900">
                                 <p className="font-semibold text-[#436558] dark:text-[#C5EBDA]">
@@ -546,7 +362,6 @@ function ProductDetails() {
                         </div>
                     </div>
 
-                    {/* Product information and purchase actions */}
                     <div className="flex flex-col py-2 lg:col-span-6 lg:pt-4">
                         <div className="mb-5 flex flex-wrap gap-2">
                             {product.category?.name && (
@@ -561,8 +376,6 @@ function ProductDetails() {
                             )}
                         </div>
 
-                        {/* Newsreader-style serif heading, matching the reference. */}
-                        {/* Product title with a smaller, responsive font size */}
                         <h1 className="font-serif text-2xl font-normal leading-tight tracking-tight text-[#181C20] dark:text-white sm:text-3xl lg:text-4xl">
                             {product.title}
                         </h1>
@@ -576,7 +389,6 @@ function ProductDetails() {
                             </p>
                         )}
 
-                        {/* Never show a fake 0.0 rating when there are no reviews. */}
                         {reviews.length > 0 && (
                             <div className="mt-5 flex flex-wrap items-center gap-2">
                                 <div
@@ -613,7 +425,6 @@ function ProductDetails() {
                             {product.description}
                         </p>
 
-                        {/* Price and stock */}
                         <div className="mt-7 border-y border-[#E0E3E8] py-6 dark:border-gray-800">
                             <div className="flex flex-wrap items-center gap-3">
                                 <span className="font-serif text-4xl font-normal text-[#436558] dark:text-[#C5EBDA]">
@@ -644,9 +455,6 @@ function ProductDetails() {
                             </p>
                         )}
 
-                       
-
-                        {/* Primary Add to Cart and secondary Wishlist actions. */}
                         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                             <button
                                 type="button"
@@ -683,8 +491,6 @@ function ProductDetails() {
                         </div>
                     </div>
                 </section>
-
-                {/* Tab navigation inspired by the Stitch product-details reference. */}
                 <section id="product-details-tabs" className="mt-12 scroll-mt-6 sm:mt-16">
                     <div className="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-gray-900">
                         <div
@@ -717,7 +523,6 @@ function ProductDetails() {
                         </div>
 
                         <div className="p-5 sm:p-8">
-                            {/* Description tab: show the actual saved description. */}
                             {activeTab === "description" && (
                                 <div
                                     role="tabpanel"
@@ -736,7 +541,6 @@ function ProductDetails() {
                                 </div>
                             )}
 
-                            {/* Details tab: only display fields actually available in the product record. */}
                             {activeTab === "details" && (
                                 <div
                                     role="tabpanel"
@@ -784,7 +588,6 @@ function ProductDetails() {
                                 </div>
                             )}
 
-                            {/* Care tab: avoid inventing material-specific instructions. */}
                             {activeTab === "care" && (
                                 <div
                                     role="tabpanel"
@@ -803,7 +606,6 @@ function ProductDetails() {
                                 </div>
                             )}
 
-                            {/* Parent Reviews tab: retain existing review CRUD and ownership logic. */}
                             {activeTab === "reviews" && (
                                 <div
                                     role="tabpanel"

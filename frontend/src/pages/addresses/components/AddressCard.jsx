@@ -1,6 +1,5 @@
 
 
-// Displays one saved delivery address in the redesigned account page.
 function AddressCard({
     address,
     onEdit,
@@ -10,7 +9,6 @@ function AddressCard({
     return (
         <article className="flex h-full flex-col rounded-xl border border-[#edf0f5] bg-white p-5 shadow-[0_2px_8px_rgba(24,28,32,0.025)] transition-shadow hover:shadow-[0_6px_18px_rgba(24,28,32,0.06)] dark:border-gray-800 dark:bg-gray-900">
 
-            {/* Address type and default status. */}
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                     {address.isDefault ? (
@@ -35,7 +33,6 @@ function AddressCard({
                 )}
             </div>
 
-            {/* Recipient details. */}
             <div>
                 <h2 className="break-words font-serif text-xl leading-7 text-[#181c20] dark:text-white">
                     {address.fullName}
@@ -49,7 +46,6 @@ function AddressCard({
                 </p>
             </div>
 
-            {/* Full address. */}
             <div className="mt-4 flex-1">
                 <p className="break-words text-sm leading-6 text-[#414845] dark:text-gray-300">
                     {address.addressLine}
@@ -64,15 +60,11 @@ function AddressCard({
                 </p>
             </div>
 
-            {/* Address status and actions. */}
             
-{/* Bottom action row: status on the left, actions on the right. */}
 <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#edf0f5] pt-4 dark:border-gray-800">
 
-    {/* Default status or Set as Default action. */}
     {address.isDefault ? (
         <div className="flex min-w-0 items-center gap-2 text-sm text-[#436558] dark:text-emerald-300">
-            {/* Check icon for the active default address. */}
             <svg
                 className="h-4 w-4 shrink-0"
                 viewBox="0 0 24 24"
@@ -95,7 +87,6 @@ function AddressCard({
             className="flex min-w-0 items-center gap-2 text-sm text-[#436558] transition hover:text-[#315447] dark:text-emerald-300"
             aria-label="Set this address as default"
         >
-            {/* Empty circular selector, matching the reference. */}
             <svg
                 className="h-[18px] w-[18px] shrink-0"
                 viewBox="0 0 24 24"
@@ -111,10 +102,8 @@ function AddressCard({
         </button>
     )}
 
-    {/* Edit and delete icon buttons. */}
     <div className="flex shrink-0 items-center gap-4">
 
-        {/* Edit address. */}
         <button
             type="button"
             onClick={() => onEdit(address)}
@@ -137,7 +126,6 @@ function AddressCard({
             </svg>
         </button>
 
-        {/* Delete address. */}
         <button
             type="button"
             onClick={() => onDelete(address._id)}

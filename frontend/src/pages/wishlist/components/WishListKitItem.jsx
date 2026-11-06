@@ -3,11 +3,9 @@ import { Link } from "react-router-dom";
 
 import { removeKitFromWishlistThunk } from "../../../features/wishlist/wishlistThunk";
 function WishlistKitItem({ kit }) {
-    // Your kit card JSX goes here.
 
     const dispatch = useDispatch();
 
-    // Remove only this kit from the wishlist.
     const handleRemove = () => {
         dispatch(removeKitFromWishlistThunk(kit._id));
     };
@@ -20,7 +18,6 @@ function WishlistKitItem({ kit }) {
     return (
         <article className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E5E8ED] bg-white p-2.5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md dark:border-gray-700 dark:bg-gray-900">
 
-            {/* Kit image and remove button. */}
             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-[#F1F4F9] dark:bg-gray-800">
                 {image ? (
                     <img
@@ -56,7 +53,6 @@ function WishlistKitItem({ kit }) {
                 </button>
             </div>
 
-            {/* Kit details from the actual database record. */}
             <div className="flex flex-1 flex-col px-1.5 pb-1 pt-3">
                 <p className="mb-1 text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
                     TinyNest curated collection

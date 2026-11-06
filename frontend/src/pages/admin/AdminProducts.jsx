@@ -7,10 +7,8 @@ import {
     deleteProductThunk,
 } from "../../features/products/productThunk";
 
-// Fetch categories from the backend.
 import { fetchCategories } from "../../features/categories/categoryThunk";
 
-// Read categories from Redux.
 import { selectCategories } from "../../features/categories/categorySelectors";
 import {
     selectProducts,
@@ -22,70 +20,50 @@ import {
 function AdminProducts() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    // Get product information from Redux.
     const products = useSelector(selectProducts);
 
-    // Get loading state from Redux.
     const loading = useSelector(selectProductsLoading);
 
-    // Get error message from Redux.
     const error = useSelector(selectProductsError);
 
-    // Get pagination information from Redux.
     const pagination = useSelector(
         selectProductsPagination
     );
 
-    // Store the search text.
     const [search, setSearch] = useState("");
 
-    // Store the current page number.
     const [page, setPage] = useState(1);
-    // Store the selected category ID.
-// An empty string means all categories.
 const [category, setCategory] = useState("");
 
-// Get available categories from Redux.
 const categories = useSelector(selectCategories);
-// Load active categories for the filter dropdown.
 useEffect(() => {
     dispatch(fetchCategories());
 }, [dispatch]);
 
-    // Fetch products whenever page or search changes.
-   
-// Fetch products whenever the page, search, or category changes.
 useEffect(() => {
     dispatch(
         fetchProducts({
             page,
             limit: 10,
             search,
-            category, // Send the selected category ID to the backend.
+            category, 
             includeOutOfStock: true,
         })
     );
 }, [dispatch, page, search, category]);
 
 
-    // Delete a product.
     const handleDelete = async (productId) => {
         const confirmed = window.confirm(
             "Are you sure you want to delete this product?"
         );
-
-        // Stop if the admin cancels.
         if (!confirmed) {
             return;
         }
-
-        // Dispatch the delete request.
         const result = await dispatch(
             deleteProductThunk(productId)
         );
 
-        // If the last product on the current page
-        // was deleted, go back to the previous page.
         if (
             deleteProductThunk.fulfilled.match(result) &&
             products.length === 1 &&
@@ -94,15 +72,11 @@ useEffect(() => {
             setPage((currentPage) => currentPage - 1);
         }
     };
-
-    // Go to the next page.
     const handleNextPage = () => {
         if (page < pagination.totalPages) {
             setPage((currentPage) => currentPage + 1);
         }
     };
-
-    // Go to the previous page.
     const handlePreviousPage = () => {
         if (page > 1) {
             setPage((currentPage) => currentPage - 1);
@@ -113,9 +87,7 @@ useEffect(() => {
     
 
 <div className="min-h-screen min-w-0 overflow-x-hidden bg-[#f7f9ff] p-3 sm:p-5 md:p-6 lg:p-8 dark:bg-slate-950">
-        {/* =========================================
-            PAGE HEADER
-        ========================================== */}
+        
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
                <h1 className="font-serif text-2xl font-semibold text-[#263d32] dark:text-white sm:text-3xl">
@@ -127,7 +99,6 @@ useEffect(() => {
                 </p>
             </div>
 
-            {/* Navigate to the Add Product page */}
             <button
                 type="button"
                 onClick={() => navigate("/admin/products/new")}
@@ -148,12 +119,9 @@ useEffect(() => {
             </button>
         </div>
 
-        {/* Total products summary */}
         <div className="mb-6">
             <div className="flex items-center gap-4 rounded-2xl border border-[#e0e7e3] bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                {/* Product icon */}
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#edf4f0] text-[#436558] dark:bg-gray-700 dark:text-[#a9cfbe]">
-                    {/* Simple package icon */}
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
                         width="24"

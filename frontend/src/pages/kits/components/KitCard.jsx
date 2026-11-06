@@ -1,9 +1,7 @@
 
 import { Link } from "react-router-dom";
 
-// Baby kit card styled consistently with the TinyNest ProductCard.
 function KitCard({ kit }) {
-    // Convert API values to numbers before calculating the discounted price.
     const price = Number(kit.price) || 0;
     const discount = Math.min(
         100,
@@ -12,10 +10,8 @@ function KitCard({ kit }) {
 
     const discountedPrice = price - (price * discount) / 100;
 
-    // Safely handle a kit without an items array.
     const itemCount = Array.isArray(kit.items) ? kit.items.length : 0;
 
-    // Format prices using the Indian numbering system.
     const formattedPrice = discountedPrice.toLocaleString("en-IN", {
         maximumFractionDigits: 2,
     });
@@ -27,7 +23,6 @@ function KitCard({ kit }) {
     return (
         <article className="group flex h-full flex-col rounded-2xl border border-[#ECEDE6] bg-white p-2.5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-md dark:border-gray-800 dark:bg-gray-900 sm:p-3">
 
-            {/* Kit image with a discount badge. */}
             <Link
                 to={`/kits/${kit._id}`}
                 aria-label={`View ${kit.name} kit details`}
@@ -50,7 +45,6 @@ function KitCard({ kit }) {
                         </div>
                     )}
 
-                    {/* Display the real discount only when one exists. */}
                     {discount > 0 && (
                         <span className="absolute left-3 top-3 rounded-full bg-[#FFC9B2] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#623E2D] shadow-sm">
                             {discount}% OFF
@@ -59,30 +53,25 @@ function KitCard({ kit }) {
                 </div>
             </Link>
 
-            {/* Kit information follows the ProductCard spacing. */}
             <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
 
-                {/* Kit name. */}
                 <Link to={`/kits/${kit._id}`}>
                     <h2 className="line-clamp-2 min-h-10 font-serif text-base leading-5 text-[#292D29] transition-colors group-hover:text-[#52745C] dark:text-gray-100 dark:group-hover:text-[#B5D0AC]">
                         {kit.name || "Untitled kit"}
                     </h2>
                 </Link>
 
-                {/* Kit description. */}
                 {kit.description && (
                     <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#777C75] dark:text-gray-400">
                         {kit.description}
                     </p>
                 )}
 
-                {/* Number of included products. */}
                 <p className="mt-2 text-xs text-[#777C75] dark:text-gray-400">
                     {itemCount}{" "}
                     {itemCount === 1 ? "product" : "products"} included
                 </p>
 
-                {/* Price and compact action button, like ProductCard. */}
                 <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                     <div className="flex min-w-0 flex-wrap items-baseline gap-1.5">
                         <span className="font-serif text-lg font-medium text-[#292D29] dark:text-white">

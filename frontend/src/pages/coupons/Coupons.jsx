@@ -1,11 +1,9 @@
-
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { fetchActiveCouponsThunk } from "../../features/coupons/couponThunk";
 import AccountSidebar from "../../components/AccounSidebar";
-// Format coupon dates for Indian customers.
 const formatDate = (date) => {
     if (!date) return "Not specified";
 
@@ -16,14 +14,12 @@ const formatDate = (date) => {
     });
 };
 
-// Use the discount values configured by the backend.
 const getDiscountTitle = (coupon) =>
     coupon.discountType === "percentage"
         ? `Flat ${coupon.discountValue}% off`
         : `Flat ₹${coupon.discountValue} off`;
 
 
-// Coupon terms modal: retains all existing coupon information.
 function CouponTerms({ coupon, onClose }) {
     if (!coupon) return null;
 
@@ -135,7 +131,6 @@ function Coupons() {
     const dispatch = useDispatch();
     const [selectedCoupon, setSelectedCoupon] = useState(null);
 
-    // Use the existing customer coupon state and API thunk.
     const {
         activeCoupons = [],
         activeLoading = false,
@@ -151,7 +146,6 @@ function Coupons() {
     return (
         <main className="min-h-screen bg-[#f7f9ff] px-4 py-7 text-[#181c20] dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1400px]">
-                {/* Page heading */}
                 <header className="mb-7 rounded-2xl bg-gradient-to-r from-white via-[#f1f4f9] to-[#e5f4ed] p-6 dark:from-gray-900 dark:via-gray-900 dark:to-emerald-950/30 sm:p-8">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#436558] dark:text-emerald-300">
                         Special offers for your little one
@@ -166,7 +160,6 @@ function Coupons() {
                     </p>
                 </header>
 
-                {/* Sticky account sidebar + coupons content */}
                 <div className="grid items-start gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
                     <AccountSidebar user={user} />
 
@@ -196,7 +189,6 @@ function Coupons() {
                             )}
                         </div>
 
-                        {/* Loading state */}
                         {activeLoading && (
                             <div className="flex min-h-64 flex-col items-center justify-center text-center">
                                 <div className="h-9 w-9 animate-spin rounded-full border-2 border-[#dce7e2] border-t-[#436558]" />
@@ -207,7 +199,6 @@ function Coupons() {
                             </div>
                         )}
 
-                        {/* API error and retry */}
                         {!activeLoading && activeError && (
                             <div className="rounded-xl bg-[#ffdad6] p-6 text-center dark:bg-red-950">
                                 <p className="font-semibold text-[#93000a] dark:text-red-200">
@@ -230,7 +221,6 @@ function Coupons() {
                             </div>
                         )}
 
-                        {/* Empty state */}
                         {!activeLoading &&
                             !activeError &&
                             activeCoupons.length === 0 && (
@@ -253,7 +243,6 @@ function Coupons() {
                                 </div>
                             )}
 
-                        {/* Coupon cards */}
                         {!activeLoading &&
                             !activeError &&
                             activeCoupons.length > 0 && (
@@ -263,7 +252,6 @@ function Coupons() {
                                             key={coupon._id}
                                             className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#dce7e2] bg-white transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-gray-700 dark:bg-gray-900"
                                         >
-                                            {/* Offer banner */}
                                             <div className="relative overflow-hidden bg-gradient-to-br from-[#e5f4ed] to-[#f1f4f9] p-5 dark:from-emerald-950/70 dark:to-gray-800 sm:p-6">
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div>
@@ -284,14 +272,12 @@ function Coupons() {
                                                 </div>
                                             </div>
 
-                                            {/* Ticket-style perforation */}
                                             <div className="relative flex items-center">
                                                 <span className="-ml-2 h-4 w-4 rounded-full bg-[#f7f9ff] dark:bg-gray-950" />
                                                 <div className="mx-1 flex-1 border-t-2 border-dashed border-[#dce7e2] dark:border-gray-700" />
                                                 <span className="-mr-2 h-4 w-4 rounded-full bg-[#f7f9ff] dark:bg-gray-950" />
                                             </div>
 
-                                            {/* Coupon information */}
                                             <div className="flex flex-1 flex-col p-5 sm:p-6">
                                                 <div className="flex flex-wrap items-center justify-between gap-2">
                                                     <div>
@@ -361,7 +347,6 @@ function Coupons() {
                 </div>
             </div>
 
-            {/* Existing coupon terms functionality */}
             <CouponTerms
                 coupon={selectedCoupon}
                 onClose={() => setSelectedCoupon(null)}

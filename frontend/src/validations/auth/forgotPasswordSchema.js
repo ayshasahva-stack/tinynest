@@ -1,7 +1,6 @@
 
 import * as yup from "yup";
 
-// Validation rules for TinyNest forgot password.
 export const forgotPasswordSchema = yup.object({
     email: yup
         .string()

@@ -4,9 +4,7 @@ import { Link } from "react-router-dom";
 import AccountSidebar from "../../components/AccounSidebar";
 
 function Profile() {
-  // Get the currently logged-in user from Redux.
 const user = useSelector((state) => state.auth.user);
-  // Use a fallback when some user details are unavailable.
   const fullName =
     user?.fullName ||
     user?.name ||
@@ -19,7 +17,6 @@ const user = useSelector((state) => state.auth.user);
   return (
     <main className="min-h-screen bg-[#f7f9ff] px-4 py-8 text-gray-800 transition-colors dark:bg-gray-950 dark:text-gray-100 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        {/* Page heading */}
         <div className="mb-8">
           <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-[#436558] dark:text-emerald-300">
             My Account
@@ -35,17 +32,13 @@ const user = useSelector((state) => state.auth.user);
           </p>
         </div>
 
-        {/* Sidebar and profile content */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[290px_minmax(0,1fr)] lg:items-start">
           {/* Shared sidebar used by Orders and Saved Addresses too */}
           <AccountSidebar user={user} />
 
-          {/* Main profile content */}
           <section className="min-w-0 space-y-6">
-            {/* Profile overview card */}
             <div className="rounded-3xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-8">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                {/* User initials avatar */}
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[#dce7e2] font-serif text-2xl font-semibold text-[#436558] dark:bg-emerald-950 dark:text-emerald-300">
                   {fullName
                     .trim()
@@ -72,14 +65,12 @@ const user = useSelector((state) => state.auth.user);
               </div>
             </div>
 
-            {/* Account shortcuts */}
             <div>
               <h2 className="mb-4 font-serif text-2xl font-semibold">
                 Your Account
               </h2>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Orders shortcut */}
                 <Link
                   to="/orders"
                   className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
@@ -99,7 +90,6 @@ const user = useSelector((state) => state.auth.user);
                   </span>
                 </Link>
 
-                {/* Saved addresses shortcut */}
                 <Link
                   to="/addresses"
                   className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
@@ -119,7 +109,6 @@ const user = useSelector((state) => state.auth.user);
                   </span>
                 </Link>
 
-                {/* Wishlist shortcut */}
                 <Link
                   to="/wishlist"
                   className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
@@ -139,7 +128,6 @@ const user = useSelector((state) => state.auth.user);
                   </span>
                 </Link>
 
-                {/* Products shortcut */}
                 <Link
                   to="/products"
                   className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-gray-800 dark:bg-gray-900"
@@ -161,7 +149,6 @@ const user = useSelector((state) => state.auth.user);
               </div>
             </div>
 
-            {/* Customer support card */}
             <div className="rounded-3xl bg-[#dce7e2] p-6 dark:bg-gray-900 sm:p-8">
               <p className="text-sm font-medium uppercase tracking-wider text-[#436558] dark:text-emerald-300">
                 We're here to help

@@ -16,25 +16,19 @@ import {
 } from "../../features/auth/authSelectors";
 
 function VerifyResetOtp() {
-    // Store the six OTP digits as a string.
     const [otp, setOtp] = useState("");
 
-    // Store client-side validation errors separately from API errors.
     const [validationError, setValidationError] = useState("");
-    // Store OTP verification errors locally so they appear on the page.
     const [apiError, setApiError] = useState("");
 
-    // Keep references to all six inputs for automatic focus management.
     const otpRefs = useRef([]);
 
-    // Read the email passed from the Forgot Password page.
     const [searchParams] = useSearchParams();
     const email = searchParams.get("email") || "";
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    // Read loading and error states from Redux.
     const loading = useSelector(selectAuthLoading);
     const error = useSelector(selectAuthError);
     const {
@@ -47,9 +41,7 @@ function VerifyResetOtp() {
             otp: "",
         },
     });
-    // Handle typing into an OTP box.
     const handleOtpChange = (index, value) => {
-        // Allow only numbers and keep the last entered digit.
         const digit = value.replace(/\D/g, "").slice(-1);
 
         const updatedOtp = otp.split("");
@@ -57,26 +49,21 @@ function VerifyResetOtp() {
 
         const newOtp = updatedOtp.join("").slice(0, 6);
 
-        // Update the existing OTP state.
         setOtp(newOtp);
 
-        // Keep React Hook Form synchronized with the OTP boxes.
         setValue("otp", newOtp, {
             shouldValidate: true,
             shouldDirty: true,
         });
 
-        // Clear previous API errors when the user edits the OTP.
         setApiError("");
         dispatch(clearAuthError());
 
-        // Automatically focus the next box.
         if (digit && index < 5) {
             otpRefs.current[index + 1]?.focus();
         }
     };
 
-    // Support backspace and arrow-key navigation.
     const handleOtpKeyDown = (event, index) => {
         if (
             event.key === "Backspace" &&
@@ -95,11 +82,9 @@ function VerifyResetOtp() {
         }
     };
 
-    // Allow users to paste the complete OTP into any box.
     const handleOtpPaste = (event) => {
         event.preventDefault();
 
-        // Extract only numbers from the pasted text.
         const pastedOtp = event.clipboardData
             .getData("text")
             .replace(/\D/g, "")
@@ -109,28 +94,23 @@ function VerifyResetOtp() {
 
         setOtp(pastedOtp);
 
-        // Update React Hook Form after pasting.
         setValue("otp", pastedOtp, {
             shouldValidate: true,
             shouldDirty: true,
         });
 
-        // Clear previous API errors.
         setApiError("");
         dispatch(clearAuthError());
 
-        // Focus the next empty box.
         const nextIndex = Math.min(pastedOtp.length, 5);
         otpRefs.current[nextIndex]?.focus();
     };
 
-    // Validate the form and verify the reset OTP.
 
     const handleVerifyResetOtp = async (data) => {
         setValidationError("");
         setApiError("");
 
-        // Check whether the email exists in the URL.
         if (!email.trim()) {
             setValidationError(
                 "Email address is missing. Please request a new reset OTP."
@@ -139,7 +119,6 @@ function VerifyResetOtp() {
         }
 
         try {
-            // Send the validated OTP to the backend.
             await dispatch(
                 verifyResetOtpThunk({
                     email,
@@ -147,10 +126,8 @@ function VerifyResetOtp() {
                 })
             ).unwrap();
 
-            // Navigate only after successful verification.
             navigate("/reset-password");
         } catch (error) {
-            // Display the backend verification error.
             const message =
                 typeof error === "string"
                     ? error
@@ -162,13 +139,11 @@ function VerifyResetOtp() {
     };
 
 
-    // Prefer local validation messages over API errors.
     const displayedError = validationError || apiError || error;
 
 
     return (
         <main className="relative min-h-[calc(100dvh-80px)] overflow-hidden bg-[#f7f9ff] px-4 py-8 text-[#181c20] dark:bg-gray-950 sm:px-6 lg:px-8 lg:py-12">
-            {/* Same decorative background shapes as Login.jsx */}
             <div
                 aria-hidden="true"
                 className="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-[#dce7e2]/70 blur-3xl dark:bg-emerald-950/30"
@@ -179,10 +154,8 @@ function VerifyResetOtp() {
                 className="pointer-events-none absolute -right-20 bottom-10 h-80 w-80 rounded-full bg-[#f0bba5]/20 blur-3xl dark:bg-amber-950/20"
             />
 
-            {/* Same main authentication card */}
             <div className="relative mx-auto grid w-full max-w-6xl overflow-hidden rounded-2xl border border-[#e0e3e8] bg-white shadow-[0_8px_40px_-12px_rgba(43,47,51,0.12)] dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[0.9fr_1.1fr]">
 
-                {/* LEFT PANEL: Identical to Login.jsx */}
                 <aside className="relative flex flex-col justify-between overflow-hidden bg-[#f1f4f9] p-6 dark:bg-gray-800 sm:p-8 lg:p-10">
                     <div
                         aria-hidden="true"
@@ -190,7 +163,6 @@ function VerifyResetOtp() {
                     />
 
                     <div className="relative z-10">
-                        {/* TinyNest logo */}
                         <Link
                             to="/"
                             aria-label="TinyNest home"
@@ -200,13 +172,11 @@ function VerifyResetOtp() {
                             <span className="text-[#7d5543]">.</span>
                         </Link>
 
-                        {/* Brand badge */}
                         <div className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#dce7e2] px-3 py-2 text-xs font-semibold text-[#315447] dark:bg-emerald-950 dark:text-emerald-200">
                             <span aria-hidden="true">✿</span>
                             Thoughtfully chosen for little ones
                         </div>
 
-                        {/* Same image and styling */}
                         <div className="group relative mt-5 h-52 overflow-hidden rounded-xl shadow-sm sm:h-64 lg:h-60">
                             <img
                                 src="https://images.unsplash.com/photo-1510154221590-ff63e90a136f?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
@@ -227,7 +197,6 @@ function VerifyResetOtp() {
                             </div>
                         </div>
 
-                        {/* Same brand message */}
                         <div className="mt-7">
                             <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#436558] dark:text-[#a9cfbe]">
                                 LITTLE THINGS, LOTS OF LOVE
@@ -243,7 +212,6 @@ function VerifyResetOtp() {
                         </div>
                     </div>
 
-                    {/* Same bottom reassurance section */}
                     <div className="relative z-10 mt-8 border-t border-[#c1c8c3]/70 pt-5 dark:border-gray-700">
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-xl text-[#436558] shadow-sm dark:bg-gray-700 dark:text-[#a9cfbe]">
@@ -263,11 +231,9 @@ function VerifyResetOtp() {
                     </div>
                 </aside>
 
-                {/* RIGHT PANEL: Verify Reset OTP form */}
                 <section className="flex items-center justify-center bg-white p-6 dark:bg-gray-900 sm:p-8 lg:p-12">
                     <div className="w-full max-w-md">
 
-                        {/* Original page content preserved */}
                         <div className="mb-7">
                             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#7d5543]">
                                 ACCOUNT RECOVERY
@@ -282,7 +248,6 @@ function VerifyResetOtp() {
                             </p>
                         </div>
 
-                        {/* Original validation and API error handling */}
                         {displayedError && (
                             <p
                                 role="alert"
@@ -294,7 +259,6 @@ function VerifyResetOtp() {
                             </p>
                         )}
 
-                        {/* Original OTP entry form and handlers preserved */}
                         <form
                             onSubmit={handleFormSubmit(handleVerifyResetOtp)}
                             className="space-y-6"
@@ -337,7 +301,6 @@ function VerifyResetOtp() {
                                         />
                                     ))}
                                 </div>
-                                {/* Display Yup validation errors */}
                                 {errors.otp && (
                                     <p className="mt-2 text-xs text-red-600" role="alert">
                                         {errors.otp.message}
@@ -348,7 +311,6 @@ function VerifyResetOtp() {
                                 </p>
                             </div>
 
-                            {/* Original button text, loading state and condition */}
                             <div className="pt-1">
                                 <Button
                                     type="submit"
@@ -363,7 +325,6 @@ function VerifyResetOtp() {
                             </div>
                         </form>
 
-                        {/* Original footer content preserved */}
                         <div className="mt-6 border-t border-[#e0e3e8] pt-5 text-center dark:border-gray-700">
                             <p className="text-sm text-[#707771] dark:text-[#B5BDB7]">
                                 Need a new code?{" "}
